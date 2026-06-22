@@ -4,4 +4,6 @@
     Public Property PasswordHash As String
     Public Property IsActive As Boolean
     Public Property CreatedAt As DateTime
+    Public Overridable Property CreatedTasks As ICollection(Of TodoTask)
+    Public Overridable Property TaskAssignments As ICollection(Of TaskAssignment)
 End Class

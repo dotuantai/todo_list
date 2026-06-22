@@ -11,7 +11,6 @@ Public Class AuthController
         _authService = authService
     End Sub
 
-    ' POST api/auth/register
     <HttpPost>
     <Route("register")>
     <AllowAnonymous>
@@ -39,7 +38,6 @@ Public Class AuthController
 
     End Function
 
-    ' POST api/auth/login
     <HttpPost>
     <Route("login")>
     <AllowAnonymous>
@@ -55,39 +53,5 @@ Public Class AuthController
             Return Unauthorized()
         End If
         Return Ok(New With {.token = token})
-    End Function
-
-    ' GET api/auth/profile  — cần token hợp lệ
-    <HttpGet>
-    <Route("profile")>
-    <Authorize>
-    Public Function Profile() As IHttpActionResult
-        Dim Email = User.Identity.Name
-        Return Ok(New With {.Email = Email})
-    End Function
-
-
-    <HttpGet>
-    <Route("testdb")>
-    <AllowAnonymous>
-    Public Function TestDb() As IHttpActionResult
-
-        Try
-
-            Using conn As New NpgsqlConnection(
-            "Host=localhost;Port=5432;Database=todo_listt;Username=postgres;Password=123123")
-
-                conn.Open()
-
-                Return Ok("Connected Successfully")
-
-            End Using
-
-        Catch ex As Exception
-
-            Return BadRequest(ex.ToString())
-
-        End Try
-
     End Function
 End Class

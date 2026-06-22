@@ -298,8 +298,16 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.vb" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.vb" />
     <Compile Include="Controllers\AuthController.vb" />
+    <Compile Include="Controllers\HomeController.vb" />
+    <Compile Include="Controllers\TaskController.vb" />
     <Compile Include="Datas\AppDbContext.vb" />
+    <Compile Include="Datas\Configurations\TaskAssignmentConfiguration.vb" />
+    <Compile Include="Datas\Configurations\TaskConfiguration.vb" />
     <Compile Include="Datas\Configurations\UserConfiguration.vb" />
+    <Compile Include="DTOs\AssignTaskRequest.vb" />
+    <Compile Include="DTOs\CreateTaskRequest.vb" />
+    <Compile Include="DTOs\TaskResponse.vb" />
+    <Compile Include="DTOs\UpdateTaskRequest.vb" />
     <Compile Include="Global.asax.vb">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -310,9 +318,15 @@
       <DependentUpon>202606220209232_init.vb</DependentUpon>
     </Compile>
     <Compile Include="Migrations\202606220209232_init.vb" />
+    <Compile Include="Migrations\202606220358202_addtask.Designer.vb">
+      <DependentUpon>202606220358202_addtask.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202606220358202_addtask.vb" />
     <Compile Include="Migrations\Configuration.vb" />
     <Compile Include="Models\Login.vb" />
     <Compile Include="Models\Register.vb" />
+    <Compile Include="Models\TodoTask.vb" />
+    <Compile Include="Models\TaskAssignment.vb" />
     <Compile Include="Models\User.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
@@ -329,16 +343,24 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="Controllers\HomeController.vb" />
     <Compile Include="Controllers\ValuesController.vb" />
+    <Compile Include="repositorys\ITaskAssignmentRepository.vb" />
+    <Compile Include="repositorys\ITaskRepository.vb" />
     <Compile Include="repositorys\IUserRepository.vb" />
+    <Compile Include="repositorys\TaskAssignmentRepository.vb" />
+    <Compile Include="repositorys\TaskRepository.vb" />
     <Compile Include="repositorys\UserRepository.vb" />
     <Compile Include="services\AuthService.vb" />
     <Compile Include="services\IAuthService.vb" />
+    <Compile Include="services\ITaskService.vb" />
+    <Compile Include="services\TaskService.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Migrations\202606220209232_init.resx">
       <DependentUpon>202606220209232_init.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202606220358202_addtask.resx">
+      <DependentUpon>202606220358202_addtask.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
@@ -452,6 +474,7 @@
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="Properties\" />
+    <Folder Include="Views\Task\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
