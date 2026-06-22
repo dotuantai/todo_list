@@ -14,6 +14,12 @@ Public Class AutofacConfig
         builder.RegisterType(Of AuthService)().As(Of IAuthService)().InstancePerRequest()
         builder.RegisterType(Of UserRepository)().As(Of IUserRepository)().InstancePerRequest()
 
+        builder.RegisterType(Of TaskService)().As(Of ITaskService)().InstancePerRequest()
+        builder.RegisterType(Of TaskRepository)().As(Of ITaskRepository)().InstancePerRequest()
+
+
+        builder.RegisterType(Of TaskAssignmentRepository)().As(Of ITaskAssignmentRepository)().InstancePerRequest()
+
         Dim container = builder.Build()
         config.DependencyResolver = New AutofacWebApiDependencyResolver(container)
     End Sub
