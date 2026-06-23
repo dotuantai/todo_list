@@ -54,4 +54,14 @@ Public Class AuthController
         End If
         Return Ok(New With {.token = token})
     End Function
+
+    <HttpGet>
+    <Route("search")>
+    Public Function SearchUsers(q As String) As IHttpActionResult
+
+        Dim result = _authService.SearchUsers(q)
+
+        Return Ok(result)
+
+    End Function
 End Class

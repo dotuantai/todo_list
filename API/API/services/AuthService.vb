@@ -78,4 +78,14 @@ Public Class AuthService
 
         Return New JwtSecurityTokenHandler().WriteToken(token)
     End Function
+
+    Public Function SearchUsers(keyword As String) As List(Of UserSearchResponse) Implements IAuthService.SearchUsers
+
+        If String.IsNullOrWhiteSpace(keyword) Then
+            Return New List(Of UserSearchResponse)
+        End If
+
+        Return _userRepo.SearchUsers(keyword)
+
+    End Function
 End Class
