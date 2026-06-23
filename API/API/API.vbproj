@@ -314,6 +314,7 @@
     <Compile Include="DTOs\CreateTaskRequest.vb" />
     <Compile Include="DTOs\TaskResponse.vb" />
     <Compile Include="DTOs\UpdateTaskRequest.vb" />
+    <Compile Include="DTOs\UserSearchResponse.vb" />
     <Compile Include="Global.asax.vb">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>

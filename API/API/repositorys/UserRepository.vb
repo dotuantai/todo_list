@@ -40,4 +40,21 @@ Public Class UserRepository
         _db.SaveChanges()
     End Sub
 
+    Public Function SearchUsers(keyword As String) As List(Of UserSearchResponse) Implements IUserRepository.SearchUsers
+
+        keyword = keyword.Trim().ToLower()
+
+        Return _db.Users _
+            .Where(Function(u) u.IsActive AndAlso
+                (u.Email.ToLower().Contains(keyword))) _
+            .OrderBy(Function(u) u.Email) _
+            .Take(10) _
+            .Select(Function(u) New UserSearchResponse With {
+                .UserId = u.Id,
+                .Email = u.Email
+            }) _
+            .ToList()
+
+    End Function
+
 End Class
