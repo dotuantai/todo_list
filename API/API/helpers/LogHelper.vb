@@ -1,105 +1,4 @@
-﻿'Imports System.IO
-'Imports System.Configuration
-'Imports Newtonsoft.Json
-'Imports Newtonsoft.Json.Linq
-
-'Public Enum LogLevel
-'    Info = 1
-'    Warning = 2
-'    [Error] = 3
-'End Enum
-
-'Public Class LogHelper
-
-'    Private Shared ReadOnly _logPath As String =
-'        ConfigurationManager.AppSettings("LogPath")
-
-'    Private Shared ReadOnly _minLevel As LogLevel =
-'        [Enum].Parse(GetType(LogLevel),
-'            If(ConfigurationManager.AppSettings("LogLevel"), "Info"))
-
-'    ' ─── Public methods ───────────────────────────
-
-'    Public Shared Sub Info(message As String,
-'                           Optional data As Object = Nothing)
-'        WriteLog(LogLevel.Info, message, data)
-'    End Sub
-
-'    Public Shared Sub Warning(message As String,
-'                              Optional data As Object = Nothing)
-'        WriteLog(LogLevel.Warning, message, data)
-'    End Sub
-
-'    Public Shared Sub [Error](message As String,
-'                              Optional ex As Exception = Nothing,
-'                              Optional data As Object = Nothing)
-'        WriteLog(LogLevel.Error, message, data, ex)
-'    End Sub
-
-'    ' ─── Ẩn field nhạy cảm ───────────────────────
-
-'    Public Shared Function MaskSensitiveFields(body As String) As Object
-'        If String.IsNullOrEmpty(body) Then Return Nothing
-'        Try
-'            Dim json = JObject.Parse(body)
-'            Dim sensitiveFields = {"password", "token",
-'                                   "secret", "cardNumber", "cvv"}
-'            For Each field In sensitiveFields
-'                If json(field) IsNot Nothing Then
-'                    json(field) = "***"
-'                End If
-'            Next
-'            Return json
-'        Catch
-'            Return body
-'        End Try
-'    End Function
-
-'    ' ─── Core ─────────────────────────────────────
-
-'    Private Shared Sub WriteLog(level As LogLevel,
-'                                message As String,
-'                                Optional data As Object = Nothing,
-'                                Optional ex As Exception = Nothing)
-'        If level < _minLevel Then Return
-
-'        Try
-'            If Not Directory.Exists(_logPath) Then
-'                Directory.CreateDirectory(_logPath)
-'            End If
-
-'            Dim fileName = Path.Combine(_logPath,
-'                DateTime.Now.ToString("yyyy-MM-dd") & ".log")
-
-'            Dim levelStr = level.ToString().ToUpper().PadRight(7)
-'            Dim timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")
-
-'            Dim sb As New System.Text.StringBuilder()
-'            sb.AppendLine($"[{timestamp}] [{levelStr}] {message}")
-
-'            If data IsNot Nothing Then
-'                sb.AppendLine($"  Data      : {JsonConvert.SerializeObject(data)}")
-'            End If
-
-'            If ex IsNot Nothing Then
-'                sb.AppendLine($"  Exception : {ex.GetType().Name}: {ex.Message}")
-'                sb.AppendLine($"  StackTrace: {ex.StackTrace}")
-'            End If
-
-'            sb.AppendLine(New String("-"c, 80))
-
-'            SyncLock GetType(LogHelper)
-'                File.AppendAllText(fileName, sb.ToString(),
-'                    System.Text.Encoding.UTF8)
-'            End SyncLock
-
-'        Catch
-'            ' Không throw — tránh vòng lặp vô tận
-'        End Try
-'    End Sub
-'End Class
-
-Imports System.IO
+﻿Imports System.IO
 Imports System.Configuration
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
@@ -111,9 +10,6 @@ Public Enum LogLevel
 End Enum
 
 Public Class LogHelper
-
-    ' ─── Cấu hình tập trung — tương đương winston.createLogger ───
-
     Private Shared ReadOnly _logPath As String =
         If(ConfigurationManager.AppSettings("LogPath"), "C:\Logs\testapi\")
 

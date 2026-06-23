@@ -1,4 +1,6 @@
-﻿Public Class TodoTask
+﻿Imports System.Threading.Tasks
+
+Public Class TodoTask
 
     Public Property Id As Integer
 
@@ -6,6 +8,10 @@
     Public Property Description As String
 
     Public Property CreatedAt As DateTime
+    Public Property Deadline As DateTime?
+
+    Public Property Status As TaskStatus
+
 
     Public Property CreatorId As Guid
 
@@ -14,3 +20,9 @@
     Public Overridable Property Assignments As ICollection(Of TaskAssignment)
 
 End Class
+Public Enum TaskStatus
+    ToDo = 0
+    InProgress = 1
+    Done = 2
+    Closed = 3
+End Enum
