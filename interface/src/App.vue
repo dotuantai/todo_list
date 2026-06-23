@@ -146,7 +146,7 @@ const openCreateTaskModal = () => { createTaskModal.value?.openModal() }
 
 .sidebar-link {
   color: #64748b;
-  font-size: 0.85rem;
+  font-size: 1rem;
   transition: background 0.15s, color 0.15s;
   text-decoration: none;
 }
@@ -214,4 +214,5 @@ const openCreateTaskModal = () => { createTaskModal.value?.openModal() }
   object-fit: cover;
   border: 2px solid #e2e8f0;
 }
+
 </style>
