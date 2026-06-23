@@ -12,11 +12,22 @@
     End Sub
     Public Function CreateTask(req As CreateTaskRequest, creatorId As Guid) As String Implements ITaskService.CreateTask
 
+        Dim temp As TaskStatus
+
+        If Not String.IsNullOrWhiteSpace(req.Status) Then
+
+            If Not [Enum].TryParse(Of TaskStatus)(req.Status, temp) Then
+                Throw New Exception("Trạng thái không hợp lệ")
+            End If
+
+        End If
         Dim task As New TodoTask With {
             .Title = req.Title,
             .Description = req.Description,
             .CreatedAt = DateTime.UtcNow,
-            .CreatorId = creatorId
+            .CreatorId = creatorId,
+            .Deadline = req.Deadline,
+            .Status = If(String.IsNullOrWhiteSpace(req.Status), TaskStatus.ToDo, CType([Enum].Parse(GetType(TaskStatus), req.Status), TaskStatus))
         }
 
         _taskRepo.Add(task)
@@ -51,6 +62,8 @@
 
         task.Title = req.Title
         task.Description = req.Description
+        task.Deadline = req.Deadline
+        task.Status = CType([Enum].Parse(GetType(TaskStatus), req.Status), TaskStatus)
 
         _taskRepo.Save()
 
@@ -120,6 +133,8 @@
             .Description = t.Description,
             .CreatedAt = t.CreatedAt,
             .CreatorId = t.CreatorId,
+            .Deadline = t.Deadline,
+            .Status = t.Status.ToString(),
             .AssignedUsers = t.Assignments.
                 Select(Function(a) New AssignedUserResponse With {
                     .UserId = a.UserId,
@@ -140,7 +155,9 @@
                 .Title = x.Task.Title,
                 .Description = x.Task.Description,
                 .CreatedAt = x.Task.CreatedAt,
-                .CreatorId = x.Task.CreatorId
+                .CreatorId = x.Task.CreatorId,
+                .Deadline = x.Task.Deadline,
+                .Status = x.Task.Status.ToString()
             }).
             ToList()
 

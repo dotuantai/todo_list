@@ -7,6 +7,9 @@
     Public Property Description As String
 
     Public Property CreatedAt As DateTime
+    Public Property Deadline As DateTime?
+
+    Public Property Status As String
 
     Public Property CreatorId As Guid
 
@@ -21,6 +24,9 @@ Public Class TaskDetailResponse
     Public Property Description As String
 
     Public Property CreatedAt As DateTime
+    Public Property Deadline As DateTime?
+
+    Public Property Status As String
 
     Public Property CreatorId As Guid
 

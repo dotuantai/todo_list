@@ -20,7 +20,11 @@ Public Class TaskConfiguration
 
         [Property](Function(x) x.CreatedAt).
             IsRequired()
+        [Property](Function(x) x.Deadline).
+            IsOptional()
 
+        [Property](Function(x) x.Status).
+            IsRequired()
         HasRequired(Function(x) x.Creator).
             WithMany(Function(x) x.CreatedTasks).
             HasForeignKey(Function(x) x.CreatorId).
