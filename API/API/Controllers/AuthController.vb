@@ -1,4 +1,8 @@
-﻿Imports System.Web.Http
+﻿Imports System.Net
+Imports System.Net.Http
+Imports System.Net.Http.Headers
+Imports System.Web.Http
+Imports System.Web.Http.Results
 Imports Npgsql
 
 <RoutePrefix("api/auth")>
@@ -42,17 +46,35 @@ Public Class AuthController
     <Route("login")>
     <AllowAnonymous>
     Public Function Login(<FromBody> req As Login) As IHttpActionResult
+
         If req Is Nothing OrElse
-           String.IsNullOrEmpty(req.Email) OrElse
-           String.IsNullOrEmpty(req.Password) Then
-            Return BadRequest("Email và Password không được để trống")
+       String.IsNullOrWhiteSpace(req.Email) OrElse
+       String.IsNullOrWhiteSpace(req.Password) Then
+
+            Return BadRequest(
+            "Email và Password không được để trống")
         End If
 
-        Dim token = _authService.Login(req)
-        If token Is Nothing Then
+        Dim result = _authService.Login(req)
+
+        If result Is Nothing Then
             Return Unauthorized()
         End If
-        Return Ok(New With {.token = token})
+
+        Dim cookie As New HttpCookie("refreshToken", result.RefreshToken)
+
+        cookie.HttpOnly = True
+        cookie.Secure = True
+        cookie.Path = "/"
+        cookie.SameSite = SameSiteMode.None
+        cookie.Expires = DateTime.UtcNow.AddDays(30)
+
+        HttpContext.Current.Response.Cookies.Add(cookie)
+
+        Return Ok(New With {
+        .AccessToken = result.AccessToken
+    })
+
     End Function
 
     <HttpGet>
@@ -62,6 +84,71 @@ Public Class AuthController
         Dim result = _authService.SearchUsers(q)
 
         Return Ok(result)
+
+    End Function
+    <HttpPost>
+    <Route("refresh")>
+    <AllowAnonymous>
+    Public Function Refresh() As IHttpActionResult
+        Dim cookie = Request.Headers.GetCookies("refreshToken").FirstOrDefault()
+
+        If cookie Is Nothing Then
+            Return BadRequest("Không tìm thấy refresh token")
+        End If
+
+        Dim refreshToken = cookie.Cookies.FirstOrDefault()?.Value
+
+        If String.IsNullOrEmpty(refreshToken) Then
+            Return BadRequest("Refresh token không hợp lệ")
+        End If
+
+        Dim newAccessToken = _authService.Refresh(refreshToken)
+
+        If newAccessToken Is Nothing Then
+            Return Unauthorized()
+        End If
+
+        Return Ok(New With {.accessToken = newAccessToken})
+    End Function
+    <HttpPost>
+    <Route("logout")>
+    Public Function Logout() As IHttpActionResult
+
+        Dim refreshToken As String = Nothing
+
+        Dim cookies = Request.Headers.GetCookies("refreshToken")
+
+        If cookies IsNot Nothing AndAlso cookies.Any() Then
+
+            refreshToken =
+            cookies.First().
+            Cookies.
+            First().
+            Value
+
+        End If
+
+        If Not String.IsNullOrEmpty(refreshToken) Then
+
+            _authService.Logout(refreshToken)
+
+        End If
+
+        Dim response = Request.CreateResponse(HttpStatusCode.OK)
+
+        Dim expiredCookie As New CookieHeaderValue("refreshToken", "")
+
+        expiredCookie.HttpOnly = True
+
+        expiredCookie.Secure = True
+
+        expiredCookie.Path = "/"
+
+        expiredCookie.Expires = DateTimeOffset.UtcNow.AddDays(-1)
+
+        response.Headers.AddCookies(New CookieHeaderValue() {expiredCookie})
+
+        Return ResponseMessage(response)
 
     End Function
 End Class

@@ -1,7 +1,10 @@
 import api from '../api/axios'
 
-export const login = (data) => {
-  return api.post('/login', data)
+export const loginn = (data) => {
+  return api.post('/auth/login', data)
+}
+export const logout = () => {
+  return api.post('/auth/logout')
 }
 
 export const searchUsers = (keyword) => {

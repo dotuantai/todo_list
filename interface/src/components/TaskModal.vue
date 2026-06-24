@@ -4,7 +4,6 @@
       v-if="show" 
       class="modal fade show" 
       style="display: block; background: rgba(0,0,0,0.65);"
-      @click.self="closeModal"
     >
       <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content shadow-xl">

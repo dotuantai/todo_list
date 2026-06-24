@@ -47,7 +47,7 @@
         If task.CreatorId <> currentUserId Then
 
             Dim permission =
-                _assignRepo.GetPermission(
+                _assignRepo.GetAssignment(
                     req.TaskId,
                     currentUserId)
 
@@ -160,6 +160,69 @@
                 .Status = x.Task.Status.ToString()
             }).
             ToList()
+
+    End Function
+
+    Public Function UpdatePermission(req As AssignTaskRequest, currentUserId As Guid) As String Implements ITaskService.UpdatePermission
+
+        Dim task = _taskRepo.GetById(req.TaskId)
+
+        If task Is Nothing Then
+            Throw New Exception("Task không tồn tại")
+        End If
+
+        If task.CreatorId <> currentUserId Then
+            Throw New Exception(
+                "Chỉ người tạo task mới được cập nhật quyền")
+        End If
+
+        Dim assignment =
+            _assignRepo.GetAssignment(
+                req.TaskId,
+                req.UserId)
+
+        If assignment Is Nothing Then
+            Throw New Exception(
+                "User chưa được giao task")
+        End If
+
+        assignment.CanView = req.CanView
+        assignment.CanEdit = req.CanEdit
+
+        _assignRepo.Save()
+
+        Return "Cập nhật quyền thành công"
+
+    End Function
+
+    Public Function RemoveAssignment(req As RemoveAssignmentRequest, currentUserId As Guid) As String Implements ITaskService.RemoveAssignment
+
+        Dim task = _taskRepo.GetById(req.TaskId)
+
+        If task Is Nothing Then
+            Throw New Exception("Task không tồn tại")
+        End If
+
+        If task.CreatorId <> currentUserId Then
+            Throw New Exception(
+                "Chỉ người tạo task mới được thu hồi quyền")
+        End If
+
+        Dim assignment =
+            _assignRepo.GetAssignment(
+                req.TaskId,
+                req.UserId)
+
+        If assignment Is Nothing Then
+            Throw New Exception(
+                "User chưa được assign task")
+        End If
+
+        _assignRepo.Remove(assignment)
+
+        _assignRepo.Save()
+
+        Return "Thu hồi quyền thành công"
 
     End Function
 End Class

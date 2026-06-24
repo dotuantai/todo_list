@@ -10,7 +10,7 @@ Public Module WebApiConfig
             "*",
             "*"
         )
-
+        cors.SupportsCredentials = True
         config.EnableCors(cors)
 
         config.MapHttpAttributeRoutes()

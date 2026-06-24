@@ -73,7 +73,7 @@
     <!-- ── Modal ── -->
     <Teleport to="body">
       <Transition name="tm-fade">
-        <div v-if="modal.open" class="modal-overlay d-flex align-items-center justify-content-center p-3" @click.self="closeModal">
+        <div v-if="modal.open" class="modal-overlay d-flex align-items-center justify-content-center p-3" >
           <Transition name="tm-slide">
             <div v-if="modal.open" class="task-modal" role="dialog" aria-modal="true">
 
@@ -154,15 +154,56 @@
                   </div>
                   <div v-if="modal.task.AssignedUsers.length === 0" class="text-muted small fst-italic mt-1">No users assigned.</div>
                   <div v-else class="d-flex flex-column gap-2 mt-1">
-                    <div v-for="user in modal.task.AssignedUsers" :key="user.UserId" class="user-row d-flex align-items-center gap-2 p-2 rounded-3 border bg-light">
-                      <div class="user-avatar">{{ userInitial(user.Email) }}</div>
-                      <div class="flex-grow-1 min-w-0">
-                        <div class="small fw-semibold text-truncate">{{ user.Email }}</div>
-                        <div class="user-id text-truncate">{{ user.UserId }}</div>
+                    <div
+                      v-for="user in modal.task.AssignedUsers"
+                      :key="user.UserId"
+                      class="user-row d-flex flex-column gap-2 p-2 rounded-3 border bg-light"
+                    >
+                      <!-- Row trên: avatar + email + action buttons -->
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="user-avatar">{{ userInitial(user.Email) }}</div>
+                        <div class="flex-grow-1 min-w-0">
+                          <div class="small fw-semibold text-truncate">{{ user.Email }}</div>
+                          <div class="user-id text-truncate">{{ user.UserId }}</div>
+                        </div>
+
+                        <!-- View mode: badges + edit + delete -->
+                        <template v-if="editingPermUserId !== user.UserId">
+                          <span v-if="user.CanView" class="perm-badge perm-badge--view"><i class="bi bi-eye-fill"></i> View</span>
+                          <span v-if="user.CanEdit" class="perm-badge perm-badge--edit"><i class="bi bi-pencil-fill"></i> Edit</span>
+                          <button class="btn-icon-action ms-1" @click="startEditPerm(user)" title="Edit permissions">
+                            <i class="bi bi-pencil-fill" style="font-size:11px"></i>
+                          </button>
+                          <button class="btn-icon-action text-danger-action ms-1" @click="removeUser(user)" title="Remove assignment">
+                            <i class="bi bi-trash3-fill" style="font-size:11px"></i>
+                          </button>
+                        </template>
+
+                        <!-- Edit mode: cancel button -->
+                        <template v-else>
+                          <button class="btn-icon-action ms-auto" @click="cancelEditPerm" title="Cancel">
+                            <i class="bi bi-x-lg" style="font-size:12px"></i>
+                          </button>
+                        </template>
                       </div>
-                      <div class="d-flex gap-1">
-                        <span v-if="user.CanView" class="perm-badge perm-badge--view"><i class="bi bi-eye-fill"></i> View</span>
-                        <span v-if="user.CanEdit" class="perm-badge perm-badge--edit"><i class="bi bi-pencil-fill"></i> Edit</span>
+
+                      <!-- Row dưới: inline edit quyền (chỉ hiện khi đang edit user đó) -->
+                      <div v-if="editingPermUserId === user.UserId" class="d-flex align-items-center gap-3 pt-1 border-top">
+                        <label class="perm-check">
+                          <input type="checkbox" v-model="editingPerms.canView" />
+                          <span>View</span>
+                        </label>
+                        <label class="perm-check">
+                          <input type="checkbox" v-model="editingPerms.canEdit" />
+                          <span>Edit</span>
+                        </label>
+                        <button
+                          class="btn btn-sm btn-primary ms-auto px-3"
+                          @click="savePermission(user)"
+                          :disabled="!editingPerms.canView && !editingPerms.canEdit"
+                        >
+                          <i class="bi bi-check2 me-1"></i> Save
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -207,27 +248,40 @@
 
               </div>
 
-              <!-- ── FOOTER — View mode, Creator ── -->
-              <div v-if="!editMode && activeTab === 'created'" class="task-modal-footer d-flex align-items-center gap-2 flex-wrap">
-                <div class="search-box flex-grow-1 position-relative">
-                  <input
-                    v-model="searchKeyword"
-                    type="text"
-                    class="form-control form-control-sm"
-                    placeholder="Search email to assign..."
-                    @input="handleSearchUser"
-                  />
-                  <div v-if="searchResults.length" class="search-dropdown">
-                    <div v-for="user in searchResults" :key="user.UserId" class="search-item" @click="selectUser(user)">
-                      <i class="bi bi-person text-muted me-2"></i>{{ user.Email }}
+              
+                <div v-if="!editMode && activeTab === 'created'" class="task-modal-footer d-flex align-items-center gap-2 flex-wrap">
+                  <div class="search-box flex-grow-1 position-relative">
+                    <input
+                      v-model="searchKeyword"
+                      type="text"
+                      class="form-control form-control-sm"
+                      placeholder="Search email to assign..."
+                      @input="handleSearchUser"
+                    />
+                    <div v-if="searchResults.length" class="search-dropdown">
+                      <div v-for="user in searchResults" :key="user.UserId" class="search-item" @click="selectUser(user)">
+                        <i class="bi bi-person text-muted me-2"></i>{{ user.Email }}
+                      </div>
                     </div>
                   </div>
+
+                  <!-- Permission checkboxes — hiện ra khi đã chọn user -->
+                  <div v-if="selectedUser" class="perm-selector d-flex align-items-center gap-3">
+                    <label class="perm-check">
+                      <input type="checkbox" v-model="assignPerms.canView" />
+                      <span>View</span>
+                    </label>
+                    <label class="perm-check">
+                      <input type="checkbox" v-model="assignPerms.canEdit" />
+                      <span>Edit</span>
+                    </label>
+                  </div>
+
+                  <button class="btn btn-sm btn-primary px-3" @click="assignUser" :disabled="!selectedUser || (!assignPerms.canView && !assignPerms.canEdit)">
+                    <i class="bi bi-person-plus-fill me-1"></i> Assign
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary px-3" @click="closeModal">Close</button>
                 </div>
-                <button class="btn btn-sm btn-primary px-3" @click="assignUser" :disabled="!selectedUser">
-                  <i class="bi bi-person-plus-fill me-1"></i> Assign
-                </button>
-                <button class="btn btn-sm btn-outline-secondary px-3" @click="closeModal">Close</button>
-              </div>
 
               <!-- ── FOOTER — View mode, Assigned ── -->
               <div v-else-if="!editMode && activeTab === 'assigned'" class="task-modal-footer d-flex justify-content-end">
@@ -257,7 +311,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { getAssignedTasks, getCreatedTasks, assignTask, updateTask } from '../Services/taskService.js'
+import { getAssignedTasks, getCreatedTasks, assignTask, updateTask, updatePermission, removeAssignment } from '../Services/taskService.js'
 import { searchUsers } from '../Services/authService.js'
 
 const assignedTasks = ref([])
@@ -271,6 +325,9 @@ const editForm      = reactive({ title: '', description: '', deadline: '', statu
 const searchKeyword = ref('')
 const searchResults = ref([])
 const selectedUser  = ref(null)
+const assignPerms = reactive({ canView: true, canEdit: false })
+const editingPermUserId = ref(null)
+const editingPerms = reactive({ canView: false, canEdit: false })
 
 const columns = [
   { status: 'ToDo',       label: 'To Do',       color: '#64748B', bgLight: '#F8FAFC', bgMid: '#E2E8F0', borderColor: '#CBD5E1' },
@@ -299,6 +356,11 @@ const closeModal = () => {
   modal.open = false
   editMode.value = false
   document.body.style.overflow = ''
+  searchKeyword.value = ''
+  searchResults.value = []
+  selectedUser.value = null
+  assignPerms.canView = true
+  assignPerms.canEdit = false
 }
 
 // Convert ISO string → datetime-local format (YYYY-MM-DDTHH:mm)
@@ -357,6 +419,7 @@ const loadData = async () => {
 }
 
 const handleSearchUser = async () => {
+  selectedUser.value = null
   if (searchKeyword.value.length < 2) { searchResults.value = []; return }
   try { const res = await searchUsers(searchKeyword.value); searchResults.value = res.data }
   catch (err) { console.error(err) }
@@ -366,18 +429,61 @@ const selectUser = (user) => {
   selectedUser.value  = user
   searchKeyword.value = user.Email
   searchResults.value = []
+  assignPerms.canView = true   
+  assignPerms.canEdit = false
 }
 
 const assignUser = async () => {
   if (!selectedUser.value) return
   try {
-    await assignTask({ taskId: modal.task.Id, userId: selectedUser.value.UserId, canView: true, canEdit: true })
+    await assignTask({
+      taskId:  modal.task.Id,
+      userId:  selectedUser.value.UserId,
+      canView: assignPerms.canView,
+      canEdit: assignPerms.canEdit,
+    })
     searchKeyword.value = ''; searchResults.value = []; selectedUser.value = null
+    assignPerms.canView = true; assignPerms.canEdit = false
     await loadData()
     const updated = createdTasks.value.find(t => t.Id === modal.task.Id)
     if (updated) modal.task = updated
   } catch (err) { console.error(err) }
 }
+
+const startEditPerm = (user) => {
+  editingPermUserId.value = user.UserId
+  editingPerms.canView = user.CanView
+  editingPerms.canEdit = user.CanEdit
+}
+
+const cancelEditPerm = () => {
+  editingPermUserId.value = null
+}
+
+const savePermission = async (user) => {
+  try {
+    await updatePermission({
+      taskId: modal.task.Id,
+      userId: user.UserId,
+      canView: editingPerms.canView,
+      canEdit: editingPerms.canEdit,
+    })
+    editingPermUserId.value = null
+    await loadData()
+    const updated = createdTasks.value.find(t => t.Id === modal.task.Id)
+    if (updated) modal.task = updated
+  } catch (err) { console.error(err) }
+}
+
+const removeUser = async (user) => {
+  try {
+    await removeAssignment({ taskId: modal.task.Id, userId: user.UserId })
+    await loadData()
+    const updated = createdTasks.value.find(t => t.Id === modal.task.Id)
+    if (updated) modal.task = updated
+  } catch (err) { console.error(err) }
+}
+
 
 const formatDate      = (d) => d ? new Date(d).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
 const formatDateShort = (d) => d ? new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
@@ -479,4 +585,8 @@ textarea.form-control { resize: vertical; min-height: 90px; }
 .tm-slide-leave-active { transition: opacity 0.15s ease, transform 0.15s ease; }
 .tm-slide-enter-from { opacity: 0; transform: translateY(14px) scale(0.98); }
 .tm-slide-leave-to { opacity: 0; transform: translateY(6px) scale(0.99); }
+.perm-selector { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 12px; }
+.perm-check { display: flex; align-items: center; gap: 5px; font-size: 0.85rem; font-weight: 500; color: #475569; cursor: pointer; user-select: none; }
+.perm-check input[type="checkbox"] { width: 14px; height: 14px; accent-color: #6366f1; cursor: pointer; }
+.text-danger-action:hover { background: #fee2e2 !important; color: #dc2626 !important; border-color: #fca5a5 !important; } 
 </style>
