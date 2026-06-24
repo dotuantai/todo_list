@@ -19,6 +19,7 @@ Public Class AutofacConfig
 
 
         builder.RegisterType(Of TaskAssignmentRepository)().As(Of ITaskAssignmentRepository)().InstancePerRequest()
+        builder.RegisterType(Of RefreshTokenRepository)().As(Of IRefreshTokenRepository)().InstancePerRequest()
 
         Dim container = builder.Build()
         config.DependencyResolver = New AutofacWebApiDependencyResolver(container)

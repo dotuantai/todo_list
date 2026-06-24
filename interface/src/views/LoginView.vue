@@ -36,6 +36,7 @@
 import { ref } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
+import { loginn } from '../Services/authService.js'
 
 const router = useRouter()
 
@@ -49,20 +50,17 @@ const login = async () => {
     loading.value = true
     errorMessage.value = ''
 
-    const response = await axios.post(
-      'https://localhost:44355/api/auth/login',
-      {
-        Email: email.value,
-        Password: password.value
-      }
-    )
+    const response = await loginn({
+      Email: email.value,
+      Password: password.value
+    })
 
     console.log(response.data)
 
-    if (response.data.token) {
+    if (response.data.AccessToken) {
       localStorage.setItem(
         'token',
-        response.data.token
+        response.data.AccessToken
       )
     }
 

@@ -56,5 +56,10 @@ Public Class UserRepository
             .ToList()
 
     End Function
+    Public Function GetById(id As Guid) As User Implements IUserRepository.GetById
+
+        Return _db.Users.Find(id)
+
+    End Function
 
 End Class

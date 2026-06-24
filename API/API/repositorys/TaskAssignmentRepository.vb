@@ -16,7 +16,7 @@ Public Class TaskAssignmentRepository
 
     End Function
 
-    Public Function GetPermission(taskId As Integer, userId As Guid) As TaskAssignment Implements ITaskAssignmentRepository.GetPermission
+    Public Function GetAssignment(taskId As Integer, userId As Guid) As TaskAssignment Implements ITaskAssignmentRepository.GetAssignment
 
         Return _db.TaskAssignments.FirstOrDefault(
             Function(x) x.TaskId = taskId AndAlso
@@ -43,6 +43,12 @@ Public Class TaskAssignmentRepository
     Public Sub Save() Implements ITaskAssignmentRepository.Save
 
         _db.SaveChanges()
+
+    End Sub
+
+    Public Sub Remove(assign As TaskAssignment) Implements ITaskAssignmentRepository.Remove
+
+        _db.TaskAssignments.Remove(assign)
 
     End Sub
 

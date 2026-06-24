@@ -9,4 +9,8 @@
     Function GetMyCreatedTasks(userId As Guid) As List(Of TaskDetailResponse)
 
     Function GetMyAssignedTasks(userId As Guid) As List(Of TaskResponse)
+
+    Function UpdatePermission(req As AssignTaskRequest, currentUserId As Guid) As String
+
+    Function RemoveAssignment(req As RemoveAssignmentRequest, currentUserId As Guid) As String
 End Interface

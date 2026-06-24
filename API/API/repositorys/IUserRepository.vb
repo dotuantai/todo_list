@@ -7,4 +7,5 @@
     Sub Create(user As User)
     Function SearchUsers(keyword As String) As List(Of UserSearchResponse)
 
+    Function GetById(id As Guid) As User
 End Interface

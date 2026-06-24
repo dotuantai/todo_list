@@ -9,3 +9,10 @@
     Public Property CanEdit As Boolean
 
 End Class
+Public Class RemoveAssignmentRequest
+
+    Public Property TaskId As Integer
+
+    Public Property UserId As Guid
+
+End Class

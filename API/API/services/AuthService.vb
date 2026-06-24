@@ -1,16 +1,19 @@
-﻿Imports System.IdentityModel.Tokens.Jwt
+﻿Imports System.Data.Entity.Validation
+Imports System.IdentityModel.Tokens.Jwt
 Imports System.Security.Claims
+Imports System.Security.Cryptography
 Imports System.Web.Helpers
 Imports Microsoft.IdentityModel.Tokens
 Public Class AuthService
     Implements IAuthService
 
     Private ReadOnly _userRepo As IUserRepository
+    Private ReadOnly _refreshTokenRepo As IRefreshTokenRepository
 
-    Public Sub New(
-        userRepo As IUserRepository)
+    Public Sub New(userRepo As IUserRepository, refreshTokenRepo As IRefreshTokenRepository)
 
         _userRepo = userRepo
+        _refreshTokenRepo = refreshTokenRepo
 
     End Sub
 
@@ -34,7 +37,7 @@ Public Class AuthService
 
     End Function
 
-    Public Function Login(req As Login) As String Implements IAuthService.Login
+    Public Function Login(req As Login) As LoginResponse Implements IAuthService.Login
         Try
             If req Is Nothing Then
                 Return Nothing
@@ -48,9 +51,52 @@ Public Class AuthService
             End If
             If Not PasswordHelper.VerifyPassword(req.Password, user.PasswordHash) Then Return Nothing
 
-            user.PasswordHash = Nothing
-            Return GenerateToken(user)
-        Catch ex As Exception
+
+            Dim accessToken = GenerateToken(user)
+
+            Dim refreshToken = GenerateRefreshToken()
+            'Return GenerateToken(user)
+
+            Dim oldToken =
+            _refreshTokenRepo.GetActiveTokenByUserId(user.Id)
+
+            If oldToken IsNot Nothing Then
+
+                oldToken.RevokedAt = DateTime.UtcNow
+
+            End If
+
+            Dim refreshEntity As New RefreshToken With {
+            .Id = Guid.NewGuid(),
+            .UserId = user.Id,
+            .Token = refreshToken,
+            .CreatedAt = DateTime.UtcNow,
+            .ExpiresAt = DateTime.UtcNow.AddDays(30)
+            }
+
+            _refreshTokenRepo.Add(refreshEntity)
+
+            _refreshTokenRepo.Save()
+            Return New LoginResponse With {
+                .AccessToken = accessToken,
+                .RefreshToken = refreshToken
+            }
+        Catch ex As DbEntityValidationException
+
+            For Each eve In ex.EntityValidationErrors
+
+                For Each ve In eve.ValidationErrors
+
+                    Throw New Exception(
+                ve.PropertyName &
+                " : " &
+                ve.ErrorMessage)
+
+                Next
+
+            Next
+
+            Throw
 
         End Try
     End Function
@@ -79,6 +125,18 @@ Public Class AuthService
         Return New JwtSecurityTokenHandler().WriteToken(token)
     End Function
 
+    Private Function GenerateRefreshToken() As String
+
+        Dim bytes(63) As Byte
+
+        Using rng As New RNGCryptoServiceProvider()
+            rng.GetBytes(bytes)
+        End Using
+
+        Return Convert.ToBase64String(bytes)
+
+    End Function
+
     Public Function SearchUsers(keyword As String) As List(Of UserSearchResponse) Implements IAuthService.SearchUsers
 
         If String.IsNullOrWhiteSpace(keyword) Then
@@ -88,4 +146,44 @@ Public Class AuthService
         Return _userRepo.SearchUsers(keyword)
 
     End Function
+    Public Function Refresh(refreshToken As String) As LoginResponse Implements IAuthService.Refresh
+
+        Dim token = _refreshTokenRepo.GetByToken(refreshToken)
+
+        If token Is Nothing Then
+            Throw New Exception("Refresh token không hợp lệ")
+        End If
+
+        If token.RevokedAt.HasValue Then
+            Throw New Exception("Refresh token đã bị thu hồi")
+        End If
+
+        If token.ExpiresAt < DateTime.UtcNow Then
+            Throw New Exception("Refresh token hết hạn")
+        End If
+
+        Dim user = _userRepo.GetById(token.UserId)
+
+        Dim accessToken =
+            GenerateToken(user)
+
+        Return New LoginResponse With {
+            .AccessToken = accessToken
+        }
+
+    End Function
+
+    Public Sub Logout(refreshToken As String) Implements IAuthService.Logout
+
+        Dim token = _refreshTokenRepo.GetByToken(refreshToken)
+
+        If token Is Nothing Then
+            Exit Sub
+        End If
+
+        token.RevokedAt = DateTime.UtcNow
+
+        _refreshTokenRepo.Save()
+
+    End Sub
 End Class

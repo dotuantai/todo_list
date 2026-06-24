@@ -24,3 +24,9 @@ export const deleteTask = (id) => {
 export const assignTask = (data) => {
   return api.post('/tasks/assign', data)
 }
+export const updatePermission  = (data) => {
+  return api.put('/tasks/assign', data)
+}
+export const removeAssignment = (data) => {
+  return api.delete('/tasks/assign', { data })
+}

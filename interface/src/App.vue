@@ -64,10 +64,12 @@
             </router-link>
           </li>
           <li class="nav-item">
-            <button class="btn btn-link nav-link sidebar-link-danger d-flex align-items-center gap-2 px-3 py-2 rounded-3 w-100 text-start text-decoration-none">
-              <i class="bi bi-box-arrow-right fs-6"></i>
-              <span class="small fw-medium">Logout</span>
-            </button>
+            <button
+            @click="handleLogout"
+            class="btn btn-link nav-link sidebar-link-danger d-flex align-items-center gap-2 px-3 py-2 rounded-3 w-100 text-start text-decoration-none">
+            <i class="bi bi-box-arrow-right fs-6"></i>
+            <span class="small fw-medium">Logout</span>
+          </button>
           </li>
         </ul>
       </div>
@@ -118,10 +120,29 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import TaskModal from './components/TaskModal.vue'
-
+import { logout } from './services/authService.js'
+const router = useRouter()
 const createTaskModal = ref(null)
 const openCreateTaskModal = () => { createTaskModal.value?.openModal() }
+const handleLogout = async () => {
+  try {
+
+    await logout()
+
+  } catch (error) {
+
+    console.error(error)
+
+  } finally {
+
+    localStorage.removeItem('token')
+
+    router.push('/')
+
+  }
+}
 </script>
 
 <style scoped>

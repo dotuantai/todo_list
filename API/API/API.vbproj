@@ -307,11 +307,13 @@
     <Compile Include="Controllers\HomeController.vb" />
     <Compile Include="Controllers\TaskController.vb" />
     <Compile Include="Datas\AppDbContext.vb" />
+    <Compile Include="Datas\Configurations\RefreshTokenConfiguration.vb" />
     <Compile Include="Datas\Configurations\TaskAssignmentConfiguration.vb" />
     <Compile Include="Datas\Configurations\TaskConfiguration.vb" />
     <Compile Include="Datas\Configurations\UserConfiguration.vb" />
     <Compile Include="DTOs\AssignTaskRequest.vb" />
     <Compile Include="DTOs\CreateTaskRequest.vb" />
+    <Compile Include="DTOs\LoginResponse.vb" />
     <Compile Include="DTOs\TaskResponse.vb" />
     <Compile Include="DTOs\UpdateTaskRequest.vb" />
     <Compile Include="DTOs\UserSearchResponse.vb" />
@@ -333,8 +335,13 @@
       <DependentUpon>202606230413244_addcolumtask.vb</DependentUpon>
     </Compile>
     <Compile Include="Migrations\202606230413244_addcolumtask.vb" />
+    <Compile Include="Migrations\202606240652367_addtablerefreshtoken.Designer.vb">
+      <DependentUpon>202606240652367_addtablerefreshtoken.vb</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202606240652367_addtablerefreshtoken.vb" />
     <Compile Include="Migrations\Configuration.vb" />
     <Compile Include="Models\Login.vb" />
+    <Compile Include="Models\RefreshToken.vb" />
     <Compile Include="Models\Register.vb" />
     <Compile Include="Models\TodoTask.vb" />
     <Compile Include="Models\TaskAssignment.vb" />
@@ -355,9 +362,11 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="Controllers\ValuesController.vb" />
+    <Compile Include="repositorys\IRefreshTokenRepository.vb" />
     <Compile Include="repositorys\ITaskAssignmentRepository.vb" />
     <Compile Include="repositorys\ITaskRepository.vb" />
     <Compile Include="repositorys\IUserRepository.vb" />
+    <Compile Include="repositorys\RefreshTokenRepository.vb" />
     <Compile Include="repositorys\TaskAssignmentRepository.vb" />
     <Compile Include="repositorys\TaskRepository.vb" />
     <Compile Include="repositorys\UserRepository.vb" />
@@ -375,6 +384,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\202606230413244_addcolumtask.resx">
       <DependentUpon>202606230413244_addcolumtask.vb</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202606240652367_addtablerefreshtoken.resx">
+      <DependentUpon>202606240652367_addtablerefreshtoken.vb</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>

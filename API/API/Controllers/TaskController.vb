@@ -69,5 +69,34 @@ Namespace Controllers
             Return Ok(_taskService.GetMyAssignedTasks(userId))
 
         End Function
+
+        <HttpPut>
+        <Route("assign")>
+        Public Function UpdatePermission(req As AssignTaskRequest) As IHttpActionResult
+
+            Dim userId = Guid.Parse(
+                CType(User.Identity, ClaimsIdentity).
+                FindFirst(ClaimTypes.NameIdentifier).Value)
+
+            Return Ok(
+                _taskService.UpdatePermission(
+                    req,
+                    userId))
+
+        End Function
+        <HttpDelete>
+        <Route("assign")>
+        Public Function RemoveAssignment(<FromBody> req As RemoveAssignmentRequest) As IHttpActionResult
+
+            Dim userId = Guid.Parse(
+                CType(User.Identity, ClaimsIdentity).
+                FindFirst(ClaimTypes.NameIdentifier).Value)
+
+            Return Ok(
+                _taskService.RemoveAssignment(
+                    req,
+                    userId))
+
+        End Function
     End Class
 End Namespace
