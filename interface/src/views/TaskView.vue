@@ -25,7 +25,14 @@
 
     <!-- Kanban board -->
     <div class="kanban-board">
-      <div v-for="col in columns" :key="col.status" class="kanban-col">
+      <div v-for="col in columns"
+          :key="col.status"
+          class="kanban-col"
+          :class="{ 'kanban-col--dragover': dragOverCol === col.status }"
+          @dragover="onDragOver($event, col.status)"
+          @dragleave="onDragLeave"
+          @drop="onDrop($event, col.status)"
+        >
 
         <div class="kanban-col-header d-flex align-items-center gap-2 mb-2">
           <span class="col-dot" :style="{ background: col.color }"></span>
@@ -49,7 +56,11 @@
             v-for="task in getTasksByStatus(col.status)"
             :key="task.Id"
             class="task-tag text-start"
+            :class="{ 'task-tag--dragging': draggingTask?.Id === task.Id }"
             :style="{ '--col-color': col.color }"
+            :draggable="true"
+            @dragstart="onDragStart(task)"
+            @dragend="onDragEnd"
             @click="openModal(task)"
           >
             <span class="task-title d-block mb-2">{{ task.Title }}</span>
@@ -311,7 +322,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { getAssignedTasks, getCreatedTasks, assignTask, updateTask, updatePermission, removeAssignment } from '../Services/taskService.js'
+import { getAssignedTasks, getCreatedTasks, assignTask, updateTask, updatePermission, removeAssignment, updateStatusTask  } from '../Services/taskService.js'
 import { searchUsers } from '../Services/authService.js'
 
 const assignedTasks = ref([])
@@ -328,6 +339,9 @@ const selectedUser  = ref(null)
 const assignPerms = reactive({ canView: true, canEdit: false })
 const editingPermUserId = ref(null)
 const editingPerms = reactive({ canView: false, canEdit: false })
+const draggingTask = ref(null)
+const draggingFromStatus = ref(null)
+const dragOverCol = ref(null)
 
 const columns = [
   { status: 'ToDo',       label: 'To Do',       color: '#64748B', bgLight: '#F8FAFC', bgMid: '#E2E8F0', borderColor: '#CBD5E1' },
@@ -484,6 +498,44 @@ const removeUser = async (user) => {
   } catch (err) { console.error(err) }
 }
 
+const onDragStart = (task) => {
+  draggingTask.value = task
+  draggingFromStatus.value = task.Status
+}
+
+const onDragEnd = () => {
+  draggingTask.value = null
+  draggingFromStatus.value = null
+  dragOverCol.value = null
+}
+
+const onDragOver = (e, status) => {
+  e.preventDefault()
+  dragOverCol.value = status
+}
+
+const onDragLeave = () => {
+  dragOverCol.value = null
+}
+
+const onDrop = async (e, targetStatus) => {
+  e.preventDefault()
+  dragOverCol.value = null
+  const task = draggingTask.value
+  if (!task || task.Status === targetStatus) return
+
+  // Optimistic update
+  const oldStatus = task.Status
+  task.Status = targetStatus
+
+  try {
+    await updateStatusTask({ taskId: task.Id, status: targetStatus })
+  } catch (err) {
+    // Rollback
+    task.Status = oldStatus
+    console.error('Failed to update status, rolled back:', err)
+  }
+}
 
 const formatDate      = (d) => d ? new Date(d).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
 const formatDateShort = (d) => d ? new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
@@ -589,4 +641,15 @@ textarea.form-control { resize: vertical; min-height: 90px; }
 .perm-check { display: flex; align-items: center; gap: 5px; font-size: 0.85rem; font-weight: 500; color: #475569; cursor: pointer; user-select: none; }
 .perm-check input[type="checkbox"] { width: 14px; height: 14px; accent-color: #6366f1; cursor: pointer; }
 .text-danger-action:hover { background: #fee2e2 !important; color: #dc2626 !important; border-color: #fca5a5 !important; } 
+
+/* Drag & drop */
+.task-tag[draggable="true"] { cursor: grab; }
+.task-tag[draggable="true"]:active { cursor: grabbing; }
+.task-tag--dragging { opacity: 0.45; transform: scale(0.97); box-shadow: none !important; }
+
+.kanban-col--dragover { 
+  outline: 2px dashed #6366f1; 
+  outline-offset: -4px;
+  background: #eef0fe;
+}
 </style>

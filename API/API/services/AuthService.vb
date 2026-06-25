@@ -1,9 +1,10 @@
-﻿Imports System.Data.Entity.Validation
+﻿Imports System.Configuration
 Imports System.IdentityModel.Tokens.Jwt
+Imports System.Net
 Imports System.Security.Claims
 Imports System.Security.Cryptography
-Imports System.Web.Helpers
 Imports Microsoft.IdentityModel.Tokens
+
 Public Class AuthService
     Implements IAuthService
 
@@ -11,21 +12,19 @@ Public Class AuthService
     Private ReadOnly _refreshTokenRepo As IRefreshTokenRepository
 
     Public Sub New(userRepo As IUserRepository, refreshTokenRepo As IRefreshTokenRepository)
-
         _userRepo = userRepo
         _refreshTokenRepo = refreshTokenRepo
-
     End Sub
 
-    Public Function Register(req As Register) As String Implements IAuthService.Register
+    Public Sub Register(req As Register) Implements IAuthService.Register
 
-        If _userRepo.Exists(req.Email) Then
-            Return Nothing
+        If _userRepo.GetByEmail(req.Email) IsNot Nothing Then
+            Throw ApiException.Conflict("Email đã được sử dụng.")
         End If
 
         Dim user As New User With {
             .Id = Guid.NewGuid(),
-            .Email = req.Email,
+            .Email = req.Email.Trim().ToLower(),
             .PasswordHash = PasswordHelper.HashPassword(req.Password),
             .IsActive = True,
             .CreatedAt = DateTime.UtcNow
@@ -33,142 +32,84 @@ Public Class AuthService
 
         _userRepo.Create(user)
 
-        Return "Đăng ký thành công"
-
-    End Function
+    End Sub
 
     Public Function Login(req As Login) As LoginResponse Implements IAuthService.Login
-        Try
-            If req Is Nothing Then
-                Return Nothing
-            End If
-            Dim userExit = _userRepo.Exists(req.Email)
-            If Not userExit Then Return Nothing
-            Dim user = _userRepo.GetByEmail(req.Email)
 
-            If user Is Nothing OrElse Not user.IsActive Then
-                Return Nothing
-            End If
-            If Not PasswordHelper.VerifyPassword(req.Password, user.PasswordHash) Then Return Nothing
+        Dim user = _userRepo.GetByEmail(req.Email?.Trim().ToLower())
 
+        If user Is Nothing Then
+            Throw ApiException.Unauthorized("Email hoặc mật khẩu không đúng.")
+        End If
 
-            Dim accessToken = GenerateToken(user)
+        If Not user.IsActive Then
+            Throw ApiException.Forbidden("Tài khoản đã bị vô hiệu hóa.")
+        End If
 
-            Dim refreshToken = GenerateRefreshToken()
-            'Return GenerateToken(user)
+        If Not PasswordHelper.VerifyPassword(req.Password, user.PasswordHash) Then
+            Throw ApiException.Unauthorized("Email hoặc mật khẩu không đúng.")
+        End If
 
-            Dim oldToken =
-            _refreshTokenRepo.GetActiveTokenByUserId(user.Id)
+        Dim oldToken = _refreshTokenRepo.GetActiveTokenByUserId(user.Id)
+        If oldToken IsNot Nothing Then
+            oldToken.RevokedAt = DateTime.UtcNow
+        End If
 
-            If oldToken IsNot Nothing Then
+        Dim accessToken = GenerateAccessToken(user)
+        Dim refreshToken = GenerateRefreshToken()
 
-                oldToken.RevokedAt = DateTime.UtcNow
-
-            End If
-
-            Dim refreshEntity As New RefreshToken With {
+        _refreshTokenRepo.Add(New RefreshToken With {
             .Id = Guid.NewGuid(),
             .UserId = user.Id,
             .Token = refreshToken,
             .CreatedAt = DateTime.UtcNow,
             .ExpiresAt = DateTime.UtcNow.AddDays(30)
-            }
+        })
+        _refreshTokenRepo.Save()
 
-            _refreshTokenRepo.Add(refreshEntity)
-
-            _refreshTokenRepo.Save()
-            Return New LoginResponse With {
-                .AccessToken = accessToken,
-                .RefreshToken = refreshToken
-            }
-        Catch ex As DbEntityValidationException
-
-            For Each eve In ex.EntityValidationErrors
-
-                For Each ve In eve.ValidationErrors
-
-                    Throw New Exception(
-                ve.PropertyName &
-                " : " &
-                ve.ErrorMessage)
-
-                Next
-
-            Next
-
-            Throw
-
-        End Try
-    End Function
-    Private Function GenerateToken(user As User) As String
-        Dim key = New SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(
-                ConfigurationManager.AppSettings("Jwt:Key")))
-
-        Dim claims = New List(Of Claim) From {
-            New Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            New Claim(ClaimTypes.Name, user.Email)
+        Return New LoginResponse With {
+            .AccessToken = accessToken,
+            .RefreshToken = refreshToken
         }
 
-        Dim expire = Integer.Parse(
-            ConfigurationManager.AppSettings("Jwt:ExpireMinutes"))
-
-        Dim token = New JwtSecurityToken(
-            issuer:=ConfigurationManager.AppSettings("Jwt:Issuer"),
-            audience:=ConfigurationManager.AppSettings("Jwt:Audience"),
-            claims:=claims,
-            expires:=DateTime.UtcNow.AddMinutes(expire),
-            signingCredentials:=New SigningCredentials(
-                key, SecurityAlgorithms.HmacSha256)
-        )
-
-        Return New JwtSecurityTokenHandler().WriteToken(token)
     End Function
 
-    Private Function GenerateRefreshToken() As String
-
-        Dim bytes(63) As Byte
-
-        Using rng As New RNGCryptoServiceProvider()
-            rng.GetBytes(bytes)
-        End Using
-
-        Return Base64UrlEncoder.Encode(bytes)
-
-    End Function
-
-    Public Function SearchUsers(keyword As String) As List(Of UserSearchResponse) Implements IAuthService.SearchUsers
+    Public Function SearchUsers(keyword As String) As List(Of UserSearchResponse) _
+        Implements IAuthService.SearchUsers
 
         If String.IsNullOrWhiteSpace(keyword) Then
-            Return New List(Of UserSearchResponse)
+            Return New List(Of UserSearchResponse)()
         End If
 
-        Return _userRepo.SearchUsers(keyword)
+        Return _userRepo.SearchUsers(keyword.Trim())
 
     End Function
-    Public Function Refresh(refreshToken As String) As LoginResponse Implements IAuthService.Refresh
+
+    Public Function Refresh(refreshToken As String) As LoginResponse _
+        Implements IAuthService.Refresh
 
         Dim token = _refreshTokenRepo.GetByToken(refreshToken)
 
         If token Is Nothing Then
-            Throw New Exception("Refresh token không hợp lệ")
+            Throw ApiException.Unauthorized("Refresh token không hợp lệ.")
         End If
 
         If token.RevokedAt.HasValue Then
-            Throw New Exception("Refresh token đã bị thu hồi")
+            Throw ApiException.Unauthorized("Refresh token đã bị thu hồi, vui lòng đăng nhập lại.")
         End If
 
         If token.ExpiresAt < DateTime.UtcNow Then
-            Throw New Exception("Refresh token hết hạn")
+            Throw ApiException.Unauthorized("Refresh token đã hết hạn, vui lòng đăng nhập lại.")
         End If
 
         Dim user = _userRepo.GetById(token.UserId)
 
-        Dim accessToken =
-            GenerateToken(user)
+        If user Is Nothing OrElse Not user.IsActive Then
+            Throw ApiException.Forbidden("Tài khoản không còn hoạt động.")
+        End If
 
         Return New LoginResponse With {
-            .AccessToken = accessToken
+            .AccessToken = GenerateAccessToken(user)
         }
 
     End Function
@@ -176,14 +117,43 @@ Public Class AuthService
     Public Sub Logout(refreshToken As String) Implements IAuthService.Logout
 
         Dim token = _refreshTokenRepo.GetByToken(refreshToken)
-
-        If token Is Nothing Then
-            Exit Sub
-        End If
+        If token Is Nothing Then Exit Sub
 
         token.RevokedAt = DateTime.UtcNow
-
         _refreshTokenRepo.Save()
 
     End Sub
+
+    Private Function GenerateAccessToken(user As User) As String
+
+        Dim key = New SymmetricSecurityKey(
+            Text.Encoding.UTF8.GetBytes(
+                ConfigurationManager.AppSettings("Jwt:Key")))
+
+        Dim expireMinutes = Integer.Parse(
+            ConfigurationManager.AppSettings("Jwt:ExpireMinutes"))
+
+        Dim token = New JwtSecurityToken(
+            issuer:=ConfigurationManager.AppSettings("Jwt:Issuer"),
+            audience:=ConfigurationManager.AppSettings("Jwt:Audience"),
+            claims:=New List(Of Claim) From {
+                New Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                New Claim(ClaimTypes.Email, user.Email)
+            },
+            expires:=DateTime.UtcNow.AddMinutes(expireMinutes),
+            signingCredentials:=New SigningCredentials(key, SecurityAlgorithms.HmacSha256)
+        )
+
+        Return New JwtSecurityTokenHandler().WriteToken(token)
+
+    End Function
+
+    Private Function GenerateRefreshToken() As String
+        Dim bytes(63) As Byte
+        Using rng As New RNGCryptoServiceProvider()
+            rng.GetBytes(bytes)
+        End Using
+        Return Base64UrlEncoder.Encode(bytes)
+    End Function
+
 End Class

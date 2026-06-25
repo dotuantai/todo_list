@@ -1,6 +1,5 @@
 <template>
-  <div class="d-flex vh-100 overflow-hidden">
-
+  <div v-if="!isLoginRoute" class="d-flex vh-100 overflow-hidden">
     <!-- Sidebar -->
     <nav class="sidebar d-flex flex-column flex-shrink-0">
 
@@ -23,7 +22,7 @@
       <div class="flex-grow-1 px-2 overflow-auto">
         <ul class="nav flex-column gap-1">
           <li class="nav-item">
-            <router-link to="/dashboard" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3">
+            <router-link to="/" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3">
               <i class="bi bi-grid-1x2-fill fs-6"></i>
               <span class="small fw-medium">Dashboard</span>
             </router-link>
@@ -65,11 +64,11 @@
           </li>
           <li class="nav-item">
             <button
-            @click="handleLogout"
-            class="btn btn-link nav-link sidebar-link-danger d-flex align-items-center gap-2 px-3 py-2 rounded-3 w-100 text-start text-decoration-none">
-            <i class="bi bi-box-arrow-right fs-6"></i>
-            <span class="small fw-medium">Logout</span>
-          </button>
+              @click="handleLogout"
+              class="btn btn-link nav-link sidebar-link-danger d-flex align-items-center gap-2 px-3 py-2 rounded-3 w-100 text-start text-decoration-none">
+              <i class="bi bi-box-arrow-right fs-6"></i>
+              <span class="small fw-medium">Logout</span>
+            </button>
           </li>
         </ul>
       </div>
@@ -115,32 +114,37 @@
     </div>
 
   </div>
+
+
+  <router-view v-else />
+
   <TaskModal ref="createTaskModal" />
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import TaskModal from './components/TaskModal.vue'
 import { logout } from './services/authService.js'
+
 const router = useRouter()
+const route = useRoute()
 const createTaskModal = ref(null)
-const openCreateTaskModal = () => { createTaskModal.value?.openModal() }
+
+const openCreateTaskModal = () => {
+  createTaskModal.value?.openModal()
+}
+
+const isLoginRoute = computed(() => route.path === '/login')
+
 const handleLogout = async () => {
   try {
-
     await logout()
-
   } catch (error) {
-
     console.error(error)
-
   } finally {
-
     localStorage.removeItem('token')
-
-    router.push('/')
-
+    router.push('/login')      
   }
 }
 </script>
@@ -235,5 +239,4 @@ const handleLogout = async () => {
   object-fit: cover;
   border: 2px solid #e2e8f0;
 }
-
 </style>
