@@ -19,9 +19,7 @@ api.interceptors.request.use(config => {
 
 api.interceptors.response.use(
   response => response,
-
   async error => {
-
     const originalRequest = error.config
 
     if (
@@ -29,29 +27,25 @@ api.interceptors.response.use(
       !originalRequest._retry &&
       !originalRequest.url.includes('/auth/refresh')
     ) {
-
       originalRequest._retry = true
 
       try {
+        const refreshResponse = await api.post('/auth/refresh')
+        
+        const newToken = refreshResponse.data?.AccessToken
+        if (!newToken) {
+          throw new Error('No token in refresh response')
+        }
+        
+        localStorage.setItem('token', newToken)
+        originalRequest.headers.Authorization = `Bearer ${newToken}`
 
-        const refreshResponse =
-          await api.post('/auth/refresh')
+        return api.request(originalRequest)
 
-        localStorage.setItem(
-          'token',
-          refreshResponse.data.accessToken || refreshResponse.data.AccessToken
-        )
-
-        originalRequest.headers.Authorization =
-          `Bearer ${refreshResponse.data.AccessToken}`
-
-        return api(originalRequest)
-
-      } catch {
-
+      } catch (refreshError) {
         localStorage.removeItem('token')
-
         window.location.href = '/'
+        return Promise.reject(refreshError)
       }
     }
 

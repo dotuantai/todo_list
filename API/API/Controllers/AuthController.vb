@@ -71,9 +71,7 @@ Public Class AuthController
 
         HttpContext.Current.Response.Cookies.Add(cookie)
 
-        Return Ok(New With {
-        .AccessToken = result.AccessToken
-    })
+        Return Ok(New With {.AccessToken = result.AccessToken})
 
     End Function
 
@@ -108,7 +106,7 @@ Public Class AuthController
             Return Unauthorized()
         End If
 
-        Return Ok(New With {.accessToken = newAccessToken})
+        Return Ok(New With {.AccessToken = newAccessToken.AccessToken})
     End Function
     <HttpPost>
     <Route("logout")>

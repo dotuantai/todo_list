@@ -133,7 +133,7 @@ Public Class AuthService
             rng.GetBytes(bytes)
         End Using
 
-        Return Convert.ToBase64String(bytes)
+        Return Base64UrlEncoder.Encode(bytes)
 
     End Function
 
