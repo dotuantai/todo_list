@@ -34,7 +34,6 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { loginn } from '../Services/authService.js'
 
@@ -55,9 +54,7 @@ const login = async () => {
       Password: password.value
     })
 
-    console.log(response.data)
-
-    if (response.data.AccessToken) {
+    if (response.data?.AccessToken) {
       localStorage.setItem(
         'token',
         response.data.AccessToken
@@ -69,7 +66,7 @@ const login = async () => {
     console.error(error)
 
     errorMessage.value =
-      error.response?.data?.message ||
+      error.response?.data?.Message ||
       'Login failed'
   } finally {
     loading.value = false

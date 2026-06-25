@@ -18,14 +18,27 @@ api.interceptors.request.use(config => {
 })
 
 api.interceptors.response.use(
-  response => response,
+  response => {
+    const wrapper = response.data
+    if (
+      wrapper &&
+      typeof wrapper === 'object' &&
+      Object.prototype.hasOwnProperty.call(wrapper, 'Success') &&
+      Object.prototype.hasOwnProperty.call(wrapper, 'Data')
+    ) {
+      response.data = wrapper.Data
+    }
+    return response
+  },
   async error => {
     const originalRequest = error.config
 
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url.includes('/auth/refresh')
+      !originalRequest.url.includes('/auth/refresh') &&
+      !originalRequest.url.includes('/auth/login') &&
+      !originalRequest.url.includes('/auth/register')
     ) {
       originalRequest._retry = true
 
@@ -44,7 +57,7 @@ api.interceptors.response.use(
 
       } catch (refreshError) {
         localStorage.removeItem('token')
-        window.location.href = '/'
+        window.location.href = '/login'
         return Promise.reject(refreshError)
       }
     }

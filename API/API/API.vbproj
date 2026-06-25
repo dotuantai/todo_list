@@ -304,6 +304,7 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.vb" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.vb" />
     <Compile Include="Controllers\AuthController.vb" />
+    <Compile Include="Controllers\BaseApiController.vb" />
     <Compile Include="Controllers\HomeController.vb" />
     <Compile Include="Controllers\TaskController.vb" />
     <Compile Include="Datas\AppDbContext.vb" />
@@ -317,9 +318,11 @@
     <Compile Include="DTOs\TaskResponse.vb" />
     <Compile Include="DTOs\UpdateTaskRequest.vb" />
     <Compile Include="DTOs\UserSearchResponse.vb" />
+    <Compile Include="Exceptions\ApiException.vb" />
     <Compile Include="Global.asax.vb">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="helpers\GlobalExceptionHandler.vb" />
     <Compile Include="helpers\LoggingMiddleware.vb" />
     <Compile Include="helpers\LogHelper.vb" />
     <Compile Include="helpers\PasswordHelper.vb" />
@@ -341,6 +344,7 @@
     <Compile Include="Migrations\202606240652367_addtablerefreshtoken.vb" />
     <Compile Include="Migrations\Configuration.vb" />
     <Compile Include="Models\Login.vb" />
+    <Compile Include="DTOs\ChangeTaskStatusRequest.vb" />
     <Compile Include="Models\RefreshToken.vb" />
     <Compile Include="Models\Register.vb" />
     <Compile Include="Models\TodoTask.vb" />

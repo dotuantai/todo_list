@@ -30,3 +30,7 @@ export const updatePermission  = (data) => {
 export const removeAssignment = (data) => {
   return api.delete('/tasks/assign', { data })
 }
+
+export const updateStatusTask = ( data) => {
+  return api.put('/tasks/status', data)
+}
