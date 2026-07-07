@@ -18,16 +18,13 @@
           v-model="password"
           type="password"
           placeholder="Enter password"
+          @keyup.enter="login"
         />
       </div>
 
       <button @click="login" :disabled="loading">
         {{ loading ? 'Loading...' : 'Login' }}
       </button>
-
-      <p v-if="errorMessage" class="error">
-        {{ errorMessage }}
-      </p>
     </div>
   </div>
 </template>
@@ -36,18 +33,17 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { loginn } from '../Services/authService.js'
+import { toastError, extractMessage } from '../utils/swal.js'
 
 const router = useRouter()
 
-const email = ref('')
+const email    = ref('')
 const password = ref('')
-const loading = ref(false)
-const errorMessage = ref('')
+const loading  = ref(false)
 
 const login = async () => {
   try {
     loading.value = true
-    errorMessage.value = ''
 
     const response = await loginn({
       Email: email.value,
@@ -64,10 +60,7 @@ const login = async () => {
     router.push('/tasks')
   } catch (error) {
     console.error(error)
-
-    errorMessage.value =
-      error.response?.data?.Message ||
-      'Login failed'
+    toastError(extractMessage(error, 'Đăng nhập thất bại.'))
   } finally {
     loading.value = false
   }

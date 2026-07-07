@@ -102,7 +102,8 @@
 
 <script setup>
 import { ref, defineExpose } from 'vue'
-import { createTask } from '../Services/taskService.js'  
+import { createTask } from '../Services/taskService.js'
+import { toastSuccess, toastError, toastWarning, extractMessage } from '../utils/swal.js'
 
 const show = ref(false)
 const loading = ref(false)
@@ -132,8 +133,8 @@ const closeModal = () => {
 }
 
 const handleSubmit = async () => {
-  if (!form.value.title) {
-    alert("Please enter task title")
+  if (!form.value.title.trim()) {
+    toastWarning('Vui lòng nhập tiêu đề task!')
     return
   }
 
@@ -144,22 +145,20 @@ const handleSubmit = async () => {
       title: form.value.title,
       description: form.value.description,
       deadline: form.value.deadline || null,
-      Status: form.value.status   // ← Quan trọng: API dùng "Status" (chữ S hoa)
+      Status: form.value.status
     }
 
-    const response = await createTask(payload)
-    
-    console.log('Task created successfully:', response.data)
-    alert('✅ Task created successfully!')
-    
+    await createTask(payload)
+
+    toastSuccess('Tạo task thành công!')
     closeModal()
-    
-    // Tùy chọn: emit event để reload danh sách task ở trang khác
-    // emit('task-created')
+
+    // Thông báo cho TaskView reload danh sách
+    window.dispatchEvent(new CustomEvent('task-created'))
 
   } catch (error) {
     console.error('Create task failed:', error)
-    alert('❌ Failed to create task. Please try again.')
+    toastError(extractMessage(error, 'Tạo task thất bại.'))
   } finally {
     loading.value = false
   }

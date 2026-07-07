@@ -1,4 +1,4 @@
-﻿Public Class TaskService
+Public Class TaskService
     Implements ITaskService
 
     Private ReadOnly _taskRepo As ITaskRepository
@@ -118,7 +118,17 @@
         Implements ITaskService.GetMyAssignedTasks
 
         Return _assignRepo.GetAssignedTasks(userId).
-            Select(Function(a) MapToTaskResponse(a.Task)).
+            Select(Function(a) New TaskResponse With {
+                .Id = a.Task.Id,
+                .Title = a.Task.Title,
+                .Description = a.Task.Description,
+                .CreatedAt = a.Task.CreatedAt,
+                .CreatorId = a.Task.CreatorId,
+                .Deadline = a.Task.Deadline,
+                .Status = a.Task.Status.ToString(),
+                .CanView = a.CanView,
+                .CanEdit = a.CanEdit
+            }).
             ToList()
 
     End Function

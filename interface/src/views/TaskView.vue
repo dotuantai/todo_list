@@ -105,8 +105,8 @@
                   <h5 class="fw-bold mb-0 text-dark">{{ modal.task?.Title }}</h5>
                 </div>
                 <div class="d-flex gap-1">
-                  <!-- Edit toggle — only for created tasks -->
-                  <button v-if="activeTab === 'created'" class="btn-icon-action" :class="editMode && 'btn-icon-action--active'" @click="toggleEdit" title="Edit task">
+                  <!-- Edit toggle — for task creators OR assigned users with CanEdit -->
+                  <button v-if="activeTab === 'created' || (activeTab === 'assigned' && modal.task?.CanEdit)" class="btn-icon-action" :class="editMode && 'btn-icon-action--active'" @click="toggleEdit" title="Edit task">
                     <i class="bi bi-pencil-fill"></i>
                   </button>
                   <button class="btn-icon-close" @click="closeModal">
@@ -324,6 +324,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { getAssignedTasks, getCreatedTasks, assignTask, updateTask, updatePermission, removeAssignment, updateStatusTask  } from '../Services/taskService.js'
 import { searchUsers } from '../Services/authService.js'
+import { toastSuccess, toastError, toastWarning, confirm, extractMessage } from '../utils/swal.js'
 
 const assignedTasks = ref([])
 const createdTasks  = ref([])
@@ -406,21 +407,33 @@ const saveEdit = async () => {
       Deadline:    editForm.deadline ? new Date(editForm.deadline).toISOString() : null,
       Status:      editForm.status,
     }
-    await updateTask( payload)
+    await updateTask(payload)
     await loadData()
-    const updated = createdTasks.value.find(t => t.Id === modal.task.Id)
+    const taskList = activeTab.value === 'created' ? createdTasks.value : assignedTasks.value
+    const updated = taskList.find(t => t.Id === modal.task.Id)
     if (updated) modal.task = updated
     editMode.value = false
+    toastSuccess('Cập nhật task thành công!')
   } catch (err) {
     console.error(err)
+    toastError(extractMessage(err, 'Không thể cập nhật task.'))
   } finally {
     saving.value = false
   }
 }
 
 const onKeydown = (e) => { if (e.key === 'Escape') closeModal() }
-onMounted(() => { window.addEventListener('keydown', onKeydown); loadData() })
-onUnmounted(() => { window.removeEventListener('keydown', onKeydown) })
+const onTaskCreated = () => loadData()
+
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+  window.addEventListener('task-created', onTaskCreated)
+  loadData()
+})
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('task-created', onTaskCreated)
+})
 
 const loadData = async () => {
   loading.value = true
@@ -428,7 +441,10 @@ const loadData = async () => {
     const [createdRes, assignedRes] = await Promise.all([getCreatedTasks(), getAssignedTasks()])
     createdTasks.value  = createdRes.data
     assignedTasks.value = assignedRes.data
-  } catch (e) { console.error(e) }
+  } catch (e) {
+    console.error(e)
+    toastError(extractMessage(e, 'Không thể tải dữ liệu.'))
+  }
   finally { loading.value = false }
 }
 
@@ -461,7 +477,11 @@ const assignUser = async () => {
     await loadData()
     const updated = createdTasks.value.find(t => t.Id === modal.task.Id)
     if (updated) modal.task = updated
-  } catch (err) { console.error(err) }
+    toastSuccess('Giao task thành công!')
+  } catch (err) {
+    console.error(err)
+    toastError(extractMessage(err, 'Không thể giao task.'))
+  }
 }
 
 const startEditPerm = (user) => {
@@ -486,16 +506,30 @@ const savePermission = async (user) => {
     await loadData()
     const updated = createdTasks.value.find(t => t.Id === modal.task.Id)
     if (updated) modal.task = updated
-  } catch (err) { console.error(err) }
+    toastSuccess('Cập nhật quyền thành công!')
+  } catch (err) {
+    console.error(err)
+    toastError(extractMessage(err, 'Không thể cập nhật quyền.'))
+  }
 }
 
 const removeUser = async (user) => {
+  const ok = await confirm(
+    'Huỷ giao việc?',
+    `Bạn có chắc muốn huỷ giao task cho <strong>${user.Email}</strong>?`,
+    'Huỷ giao việc'
+  )
+  if (!ok) return
   try {
     await removeAssignment({ taskId: modal.task.Id, userId: user.UserId })
     await loadData()
     const updated = createdTasks.value.find(t => t.Id === modal.task.Id)
     if (updated) modal.task = updated
-  } catch (err) { console.error(err) }
+    toastSuccess('Đã huỷ giao việc thành công!')
+  } catch (err) {
+    console.error(err)
+    toastError(extractMessage(err, 'Không thể huỷ giao việc.'))
+  }
 }
 
 const onDragStart = (task) => {
@@ -530,10 +564,12 @@ const onDrop = async (e, targetStatus) => {
 
   try {
     await updateStatusTask({ taskId: task.Id, status: targetStatus })
+    toastSuccess('Đã cập nhật trạng thái!')
   } catch (err) {
     // Rollback
     task.Status = oldStatus
     console.error('Failed to update status, rolled back:', err)
+    toastError(extractMessage(err, 'Không thể thay đổi trạng thái.'))
   }
 }
 
