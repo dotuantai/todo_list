@@ -1,4 +1,4 @@
-﻿Public Class TaskResponse
+Public Class TaskResponse
 
     Public Property Id As Integer
 
@@ -12,6 +12,10 @@
     Public Property Status As String
 
     Public Property CreatorId As Guid
+
+    Public Property CanView As Boolean
+
+    Public Property CanEdit As Boolean
 
 End Class
 
