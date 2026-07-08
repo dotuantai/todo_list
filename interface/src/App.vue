@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!isLoginRoute" class="d-flex vh-100 overflow-hidden">
+  <div v-if="showAppShell" class="d-flex vh-100 overflow-hidden">
     <!-- Sidebar -->
     <nav class="sidebar d-flex flex-column flex-shrink-0">
 
@@ -135,7 +135,8 @@ const openCreateTaskModal = () => {
   createTaskModal.value?.openModal()
 }
 
-const isLoginRoute = computed(() => route.path === '/login')
+const authRoutes = ['/login', '/register']
+const showAppShell = computed(() => !authRoutes.includes(route.path))
 
 const handleLogout = async () => {
   try {

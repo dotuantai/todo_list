@@ -1,12 +1,12 @@
 <template>
   <AuthLayout
-    title="Welcome back"
-    subtitle="Sign in to continue managing your tasks with a smoother workflow."
-    switchLabel="New here?"
-    switchText="Create an account"
-    switchTo="/register"
+    title="Create your account"
+    subtitle="Join TaskFlow and start organizing work with clarity."
+    switchLabel="Already have an account?"
+    switchText="Sign in"
+    switchTo="/login"
   >
-    <form class="auth-form" @submit.prevent="login">
+    <form class="auth-form" @submit.prevent="handleRegister">
       <div class="form-group">
         <label>Email</label>
         <div class="input-wrap">
@@ -19,13 +19,21 @@
         <label>Password</label>
         <div class="input-wrap">
           <i class="bi bi-lock"></i>
-          <input v-model="password" type="password" placeholder="Enter your password" @keyup.enter="login" required />
+          <input v-model="password" type="password" placeholder="At least 6 characters" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Confirm password</label>
+        <div class="input-wrap">
+          <i class="bi bi-shield-lock"></i>
+          <input v-model="confirmPassword" type="password" placeholder="Re-enter password" required />
         </div>
       </div>
 
       <button class="submit-btn" type="submit" :disabled="loading">
         <span v-if="loading" class="spinner"></span>
-        {{ loading ? 'Signing in...' : 'Sign in' }}
+        {{ loading ? 'Creating account...' : 'Create account' }}
       </button>
     </form>
   </AuthLayout>
@@ -35,31 +43,38 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AuthLayout from '../components/AuthLayout.vue'
-import { loginn } from '../Services/authService.js'
-import { toastError, extractMessage } from '../utils/swal.js'
+import { register } from '../Services/authService.js'
+import { toastError, toastSuccess, extractMessage } from '../utils/swal.js'
 
 const router = useRouter()
 
 const email = ref('')
 const password = ref('')
+const confirmPassword = ref('')
 const loading = ref(false)
 
-const login = async () => {
+const handleRegister = async () => {
+  if (!email.value.trim() || !password.value || !confirmPassword.value) {
+    toastError('Please complete all fields.')
+    return
+  }
+
+  if (password.value !== confirmPassword.value) {
+    toastError('Passwords do not match.')
+    return
+  }
+
   try {
     loading.value = true
-
-    const response = await loginn({
+    await register({
       Email: email.value,
       Password: password.value
     })
 
-    if (response?.data?.AccessToken) {
-      localStorage.setItem('token', response.data.AccessToken)
-    }
-
-    router.push('/tasks')
+    toastSuccess('Account created successfully.')
+    router.push('/login')
   } catch (error) {
-    toastError(extractMessage(error, 'Đăng nhập thất bại.'))
+    toastError(extractMessage(error, 'Registration failed.'))
   } finally {
     loading.value = false
   }
