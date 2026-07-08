@@ -60,7 +60,7 @@ Public Class AuthController
                 .Secure = True,
                 .Path = "/",
                 .SameSite = SameSiteMode.None,
-                .Expires = DateTime.UtcNow.AddDays(30)
+                .Expires = DateTime.UtcNow.AddDays(7)
             }
             HttpContext.Current.Response.Cookies.Add(cookie)
 
