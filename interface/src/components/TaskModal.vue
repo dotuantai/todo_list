@@ -1,49 +1,56 @@
 <template>
   <Teleport to="body">
+    <!-- Modal Backdrop -->
+    <div v-if="show" class="modal-backdrop show" style="background: rgba(0,0,0,0.5); z-index: 1040;"></div>
+    
+    <!-- Modal Wrapper -->
     <div 
       v-if="show" 
-      class="modal fade show" 
-      style="display: block; background: rgba(0,0,0,0.65);"
+      class="modal fade show d-block" 
+      tabindex="-1" 
+      role="dialog" 
+      aria-modal="true" 
+      style="overflow-y: auto; z-index: 1050;"
     >
       <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content shadow-xl">
+        <div class="modal-content border-0 shadow-lg rounded-3">
 
           <!-- Modal Header -->
-          <div class="modal-header border-0 pb-2">
-            <div>
-              <h1 class="modal-title h4 fw-bold mb-1">Create New Task</h1>
+          <div class="modal-header border-bottom p-4">
+            <div class="text-start">
+              <h1 class="modal-title h4 fw-bold mb-1 text-dark">Create New Task</h1>
               <p class="text-muted small mb-0">Draft a new objective and assign it to your team.</p>
             </div>
-            <button type="button" class="btn-close" @click="closeModal"></button>
+            <button type="button" class="btn-close" @click="closeModal" aria-label="Close"></button>
           </div>
 
-          <div class="modal-body pt-0">
+          <div class="modal-body p-4 text-start">
             <form @submit.prevent="handleSubmit">
 
               <!-- Task Title -->
               <div class="mb-4">
-                <label class="form-label fw-semibold">Task Title <span class="text-danger">*</span></label>
+                <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Task Title <span class="text-danger">*</span></label>
                 <input 
                   v-model="form.title"
                   type="text" 
-                  class="form-control form-control-lg" 
+                  class="form-control" 
                   placeholder="e.g. Design System Implementation"
                   required
                 />
               </div>
 
               <!-- Deadline + Status -->
-              <div class="row g-4 mb-4">
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold">Deadline</label>
+              <div class="row g-3 mb-4">
+                <div class="col-md-6 text-start">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Deadline</label>
                   <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
-                    <input v-model="form.deadline" type="date" class="form-control" />
+                    <span class="input-group-text bg-light text-muted"><i class="bi bi-calendar3"></i></span>
+                    <input v-model="form.deadline" type="date" class="form-control text-dark" />
                   </div>
                 </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold">Status</label>
-                  <select v-model="form.status" class="form-select">
+                <div class="col-md-6 text-start">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Status</label>
+                  <select v-model="form.status" class="form-select text-dark">
                     <option value="ToDo">To Do</option>
                     <option value="InProgress">In Progress</option>
                     <option value="Done">Done</option>
@@ -53,40 +60,40 @@
               </div>
 
               <!-- Description -->
-              <div class="mb-5">
-                <label class="form-label fw-semibold">Description</label>
-                <div class="border rounded-3 overflow-hidden">
+              <div class="mb-4">
+                <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Description</label>
+                <div class="border rounded-3 overflow-hidden bg-white">
                   <div class="bg-light border-bottom p-2 d-flex gap-1">
-                    <button type="button" class="btn btn-sm btn-light"><i class="bi bi-type-bold"></i></button>
-                    <button type="button" class="btn btn-sm btn-light"><i class="bi bi-type-italic"></i></button>
-                    <button type="button" class="btn btn-sm btn-light"><i class="bi bi-list-ul"></i></button>
-                    <button type="button" class="btn btn-sm btn-light"><i class="bi bi-link"></i></button>
+                    <button type="button" class="btn btn-sm btn-light border-0"><i class="bi bi-type-bold"></i></button>
+                    <button type="button" class="btn btn-sm btn-light border-0"><i class="bi bi-type-italic"></i></button>
+                    <button type="button" class="btn btn-sm btn-light border-0"><i class="bi bi-list-ul"></i></button>
+                    <button type="button" class="btn btn-sm btn-light border-0"><i class="bi bi-link"></i></button>
                   </div>
                   <textarea 
                     v-model="form.description"
-                    class="form-control border-0 shadow-none" 
+                    class="form-control border-0 shadow-none rounded-0" 
                     rows="5"
                     placeholder="Describe the task details here..."
                   ></textarea>
                 </div>
               </div>
 
-              
-
               <!-- Footer Actions -->
-              <div class="d-flex justify-content-end gap-3 pt-4 border-top">
+              <div class="d-flex justify-content-end gap-2 pt-4 border-top">
                 <button 
                   type="button" 
-                  class="btn btn-light px-5" 
+                  class="btn btn-outline-secondary px-4 py-2 fw-semibold" 
                   @click="closeModal"
                   :disabled="loading"
+                  style="border-radius: 8px;"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  class="btn btn-primary px-5 fw-semibold"
+                  class="btn btn-primary px-4 py-2 fw-semibold"
                   :disabled="loading"
+                  style="border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"
                 >
                   <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
                   {{ loading ? 'Creating...' : 'Create Task' }}
@@ -102,7 +109,8 @@
 
 <script setup>
 import { ref, defineExpose } from 'vue'
-import { createTask } from '../Services/taskService.js'
+import { createProjectTask } from '../services/projectService.js'
+import { projectStore } from '../utils/projectStore.js'
 import { toastSuccess, toastError, toastWarning, extractMessage } from '../utils/swal.js'
 
 const show = ref(false)
@@ -138,6 +146,11 @@ const handleSubmit = async () => {
     return
   }
 
+  if (!projectStore.currentProjectId) {
+    toastWarning('Vui lòng chọn một dự án trước!')
+    return
+  }
+
   loading.value = true
 
   try {
@@ -148,7 +161,7 @@ const handleSubmit = async () => {
       Status: form.value.status
     }
 
-    await createTask(payload)
+    await createProjectTask(projectStore.currentProjectId, payload)
 
     toastSuccess('Tạo task thành công!')
     closeModal()
@@ -166,18 +179,3 @@ const handleSubmit = async () => {
 
 defineExpose({ openModal })
 </script>
-
-<style scoped>
-.modal-content {
-  border-radius: 16px;
-  border: none;
-}
-.avatar {
-  width: 42px;
-  height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-}
-</style>

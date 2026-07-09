@@ -1,4 +1,4 @@
-﻿Imports Autofac
+Imports Autofac
 Imports Autofac.Integration.WebApi
 Imports System.Reflection
 Imports System.Web.Http
@@ -20,6 +20,9 @@ Public Class AutofacConfig
 
         builder.RegisterType(Of TaskAssignmentRepository)().As(Of ITaskAssignmentRepository)().InstancePerRequest()
         builder.RegisterType(Of RefreshTokenRepository)().As(Of IRefreshTokenRepository)().InstancePerRequest()
+
+        builder.RegisterType(Of ProjectRepository)().As(Of IProjectRepository)().InstancePerRequest()
+        builder.RegisterType(Of ProjectService)().As(Of IProjectService)().InstancePerRequest()
 
         Dim container = builder.Build()
         config.DependencyResolver = New AutofacWebApiDependencyResolver(container)

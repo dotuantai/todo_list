@@ -1,4 +1,4 @@
-﻿Imports System.Data.Entity.ModelConfiguration
+Imports System.Data.Entity.ModelConfiguration
 
 Public Class TaskConfiguration
     Inherits EntityTypeConfiguration(Of TodoTask)
@@ -29,6 +29,15 @@ Public Class TaskConfiguration
             WithMany(Function(x) x.CreatedTasks).
             HasForeignKey(Function(x) x.CreatorId).
             WillCascadeOnDelete(False)
+
+        [Property](Function(x) x.ProjectId).
+            HasColumnName("project_id").
+            IsOptional()
+
+        HasOptional(Function(x) x.Project).
+            WithMany(Function(x) x.Tasks).
+            HasForeignKey(Function(x) x.ProjectId).
+            WillCascadeOnDelete(True)
 
     End Sub
 

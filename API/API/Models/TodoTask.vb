@@ -1,4 +1,4 @@
-﻿Imports System.Threading.Tasks
+Imports System.Threading.Tasks
 
 Public Class TodoTask
 
@@ -18,6 +18,9 @@ Public Class TodoTask
     Public Overridable Property Creator As User
 
     Public Overridable Property Assignments As ICollection(Of TaskAssignment)
+
+    Public Property ProjectId As Guid?
+    Public Overridable Property Project As Project
 
 End Class
 Public Enum TaskStatus

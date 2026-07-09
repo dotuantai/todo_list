@@ -1,4 +1,4 @@
-﻿Imports System.Web.Http
+Imports System.Web.Http
 
 Namespace Controllers
 
@@ -12,16 +12,6 @@ Namespace Controllers
         Public Sub New(taskService As ITaskService)
             _taskService = taskService
         End Sub
-
-        <HttpPost>
-        <Route("")>
-        Public Function Create(<FromBody> req As CreateTaskRequest) As IHttpActionResult
-            If req Is Nothing Then
-                Return Content(Net.HttpStatusCode.BadRequest,
-                    New ApiResponse(Of Object)(False, "Dữ liệu không hợp lệ.", Nothing))
-            End If
-            Return Execute(Function() _taskService.CreateTask(req, CurrentUserId))
-        End Function
 
         <HttpPut>
         <Route("")>
@@ -37,18 +27,6 @@ Namespace Controllers
         <Route("{id:int}")>
         Public Function Delete(id As Integer) As IHttpActionResult
             Return Execute(Function() _taskService.DeleteTask(id, CurrentUserId))
-        End Function
-
-        <HttpGet>
-        <Route("my-created")>
-        Public Function GetMyCreatedTasks() As IHttpActionResult
-            Return Execute(Function() _taskService.GetMyCreatedTasks(CurrentUserId))
-        End Function
-
-        <HttpGet>
-        <Route("my-assigned")>
-        Public Function GetMyAssignedTasks() As IHttpActionResult
-            Return Execute(Function() _taskService.GetMyAssignedTasks(CurrentUserId))
         End Function
 
         <HttpPost>

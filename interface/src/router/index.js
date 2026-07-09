@@ -3,6 +3,8 @@ import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import TaskView from '../views/TaskView.vue'
 import DashboardView from '../views/DashboardView.vue'
+import ProjectsView from '../views/ProjectsView.vue'
+import SettingsView from '../views/SettingsView.vue'
 
 const routes = [
   {
@@ -19,13 +21,23 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/projects',
+    component: ProjectsView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/settings',
+    component: SettingsView,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/',
     component: DashboardView,
     meta: { requiresAuth: true }
   },
   {
     path: '/:pathMatch(.*)*',
-    redirect: '/login'
+    redirect: '/'
   }
 ]
 
@@ -34,21 +46,21 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from) => {
   const token = localStorage.getItem('token')
 
-  if (to.path === '/login') {
+  if (to.path === '/login' || to.path === '/register') {
     if (token) {
-      return next('/tasks')
+      return '/tasks'
     }
-    return next()
+    return true
   }
 
   if (to.meta.requiresAuth && !token) {
-    return next('/login')
+    return '/login'
   }
 
-  return next()
+  return true
 })
 
 export default router

@@ -1,6 +1,7 @@
-﻿Public Interface ITaskRepository
+Public Interface ITaskRepository
     Function GetById(id As Integer) As TodoTask
     Function GetCreatedTasks(userId As Guid) As List(Of TodoTask)
+    Function GetTasksByProjectId(projectId As Guid) As List(Of TodoTask)
 
     Sub Add(task As TodoTask)
 

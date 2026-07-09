@@ -6,25 +6,44 @@
     switchText="Create an account"
     switchTo="/register"
   >
-    <form class="auth-form" @submit.prevent="login">
-      <div class="form-group">
-        <label>Email</label>
-        <div class="input-wrap">
-          <i class="bi bi-envelope"></i>
-          <input v-model="email" type="email" placeholder="you@example.com" required />
+    <form @submit.prevent="login">
+      <div class="mb-3">
+        <label class="form-label fw-semibold text-secondary small">Email</label>
+        <div class="input-group input-group-lg">
+          <span class="input-group-text bg-light border-end-0 text-muted" style="border-radius: 12px 0 0 12px; border-color: #e2e8f0;">
+            <i class="bi bi-envelope"></i>
+          </span>
+          <input 
+            v-model="email" 
+            type="email" 
+            class="form-control bg-light border-start-0 ps-0 text-dark" 
+            placeholder="you@example.com" 
+            style="border-radius: 0 12px 12px 0; font-size: 0.95rem; height: 48px; border-color: #e2e8f0;" 
+            required 
+          />
         </div>
       </div>
 
-      <div class="form-group">
-        <label>Password</label>
-        <div class="input-wrap">
-          <i class="bi bi-lock"></i>
-          <input v-model="password" type="password" placeholder="Enter your password" @keyup.enter="login" required />
+      <div class="mb-4">
+        <label class="form-label fw-semibold text-secondary small">Password</label>
+        <div class="input-group input-group-lg">
+          <span class="input-group-text bg-light border-end-0 text-muted" style="border-radius: 12px 0 0 12px; border-color: #e2e8f0;">
+            <i class="bi bi-lock"></i>
+          </span>
+          <input 
+            v-model="password" 
+            type="password" 
+            class="form-control bg-light border-start-0 ps-0 text-dark" 
+            placeholder="Enter your password" 
+            style="border-radius: 0 12px 12px 0; font-size: 0.95rem; height: 48px; border-color: #e2e8f0;" 
+            @keyup.enter="login" 
+            required 
+          />
         </div>
       </div>
 
-      <button class="submit-btn" type="submit" :disabled="loading">
-        <span v-if="loading" class="spinner"></span>
+      <button class="btn btn-primary w-100 py-2 fs-6 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" type="submit" :disabled="loading" style="border-radius: 12px; height: 48px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">
+        <span v-if="loading" class="spinner-border spinner-border-sm" role="status"></span>
         {{ loading ? 'Signing in...' : 'Sign in' }}
       </button>
     </form>
@@ -65,77 +84,3 @@ const login = async () => {
   }
 }
 </script>
-
-<style scoped>
-.auth-form {
-  display: grid;
-  gap: 14px;
-}
-
-.form-group {
-  display: grid;
-  gap: 8px;
-}
-
-.form-group label {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: #334155;
-}
-
-.input-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  border-radius: 14px;
-  padding: 0 14px;
-  height: 48px;
-}
-
-.input-wrap i {
-  color: #64748b;
-}
-
-.input-wrap input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 0.95rem;
-}
-
-.submit-btn {
-  height: 48px;
-  border: none;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
-  color: white;
-  font-weight: 700;
-  box-shadow: 0 10px 24px rgba(79,70,229,0.23);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.submit-btn:disabled {
-  opacity: 0.75;
-  cursor: not-allowed;
-}
-
-.spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255,255,255,0.4);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-</style>

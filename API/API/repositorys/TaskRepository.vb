@@ -1,4 +1,4 @@
-﻿Imports System.Data.Entity
+Imports System.Data.Entity
 
 Public Class TaskRepository
     Implements ITaskRepository
@@ -21,6 +21,16 @@ Public Class TaskRepository
         Return _db.Tasks.
         Include(Function(x) x.Assignments.Select(Function(a) a.User)).
         Where(Function(x) x.CreatorId = userId).
+        OrderByDescending(Function(x) x.CreatedAt).
+        ToList()
+
+    End Function
+
+    Public Function GetTasksByProjectId(projectId As Guid) As List(Of TodoTask) Implements ITaskRepository.GetTasksByProjectId
+
+        Return _db.Tasks.
+        Include(Function(x) x.Assignments.Select(Function(a) a.User)).
+        Where(Function(x) x.ProjectId = projectId).
         OrderByDescending(Function(x) x.CreatedAt).
         ToList()
 
