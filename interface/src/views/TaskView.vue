@@ -4,345 +4,464 @@
     <!-- Page header -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
       <div>
-        <h2 class="fw-bold mb-0 page-title">Task Board</h2>
-        <p class="text-muted small mb-0 mt-1">Click any task to view details</p>
+        <div class="d-flex align-items-center gap-2 flex-wrap text-start">
+          <h2 class="fw-bold mb-0 page-title">
+            {{ projectStore.currentProject ? projectStore.currentProject.Name : 'TaskFlow Board' }}
+          </h2>
+          <!-- Edit/Delete project actions for Owner -->
+          <div v-if="projectStore.currentProject && projectStore.userRole === 'Owner'" class="d-flex gap-1 align-items-center">
+            <button class="btn btn-sm btn-outline-secondary p-1 border-0" @click="handleEditProject" title="Sửa dự án" style="line-height: 1;">
+              <i class="bi bi-pencil-square fs-5"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger p-1 border-0" @click="handleDeleteProject" title="Xóa dự án" style="line-height: 1;">
+              <i class="bi bi-trash fs-5"></i>
+            </button>
+          </div>
+        </div>
+        <p class="text-muted small mb-0 mt-1 text-start">
+          {{ projectStore.currentProject ? projectStore.currentProject.Description || 'No project description.' : 'Select a project to start.' }}
+        </p>
       </div>
       <div class="d-flex align-items-center gap-2">
-        <div class="tab-toggle d-flex">
-          <button :class="['tab-btn', activeTab === 'created' && 'tab-btn--active']" @click="activeTab = 'created'">
-            My Tasks <span class="tab-count">{{ createdTasks.length }}</span>
+        <!-- Bootstrap Nav Pills for Tab Toggle -->
+        <div class="nav nav-pills bg-white p-1 rounded-3 border" v-if="projectStore.currentProjectId" style="font-size: 0.9rem;">
+          <button class="nav-link px-3 py-1.5 fw-semibold d-flex align-items-center gap-2 border-0" :class="{ active: activeTab === 'board' }" @click="activeTab = 'board'" style="border-radius: 6px;">
+            <i class="bi bi-kanban"></i> Task Board <span class="badge" :class="activeTab === 'board' ? 'bg-white text-primary' : 'bg-secondary bg-opacity-10 text-secondary'">{{ tasks.length }}</span>
           </button>
-          <button :class="['tab-btn', activeTab === 'assigned' && 'tab-btn--active']" @click="activeTab = 'assigned'">
-            Assigned <span class="tab-count">{{ assignedTasks.length }}</span>
+          <button class="nav-link px-3 py-1.5 fw-semibold d-flex align-items-center gap-2 border-0" :class="{ active: activeTab === 'members' }" @click="activeTab = 'members'" style="border-radius: 6px;">
+            <i class="bi bi-people"></i> Members <span class="badge" :class="activeTab === 'members' ? 'bg-white text-primary' : 'bg-secondary bg-opacity-10 text-secondary'">{{ members.length }}</span>
           </button>
         </div>
-        <button class="btn btn-sm btn-outline-secondary ref-btn" @click="loadData" :disabled="loading" title="Refresh">
-          <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-          <span v-else class="tm-spinner"></span>
+        <!-- Refresh Button -->
+        <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center" @click="refreshAll" :disabled="loading || loadingMembers" title="Refresh" style="width: 38px; height: 38px; border-radius: 8px;">
+          <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+          <span v-else class="spinner-border spinner-border-sm text-secondary" role="status"></span>
         </button>
       </div>
     </div>
 
-    <!-- Kanban board -->
-    <div class="kanban-board">
+    <!-- Empty Project Selection State -->
+    <div v-if="!projectStore.currentProjectId" class="text-center py-5 bg-white rounded-4 shadow-sm border border-dashed p-4">
+      <i class="bi bi-folder2-open text-primary" style="font-size: 4rem;"></i>
+      <h3 class="fw-bold text-dark mt-3">Welcome to TaskFlow Pro</h3>
+      <p class="text-muted mx-auto" style="max-width: 480px;">Vui lòng chọn một dự án ở thanh bên hoặc bấm nút tạo dự án mới để bắt đầu quản lý công việc của bạn.</p>
+    </div>
+
+    <!-- Kanban Board Tab -->
+    <div v-else-if="activeTab === 'board'" class="row g-3 text-start align-items-start">
       <div v-for="col in columns"
           :key="col.status"
-          class="kanban-col"
+          class="col-12 col-md-6 col-lg-3"
+        >
+        <div 
+          class="card bg-light border-0 shadow-sm rounded-3 p-3 kanban-col"
           :class="{ 'kanban-col--dragover': dragOverCol === col.status }"
           @dragover="onDragOver($event, col.status)"
           @dragleave="onDragLeave"
           @drop="onDrop($event, col.status)"
         >
+          <!-- Column Header -->
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="col-dot rounded-circle" :style="{ background: col.color, width: '10px', height: '10px', display: 'inline-block' }"></span>
+            <span class="fw-bold text-uppercase text-secondary" style="font-size: 0.8rem; letter-spacing: 0.05em;">{{ col.label }}</span>
+            <span class="badge rounded-pill ms-auto" :style="{ background: col.bgMid, color: col.color }">
+              {{ getTasksByStatus(col.status).length }}
+            </span>
+          </div>
 
-        <div class="kanban-col-header d-flex align-items-center gap-2 mb-2">
-          <span class="col-dot" :style="{ background: col.color }"></span>
-          <span class="col-label">{{ col.label }}</span>
-          <span class="col-badge ms-auto" :style="{ background: col.bgLight, color: col.color }">
-            {{ getTasksByStatus(col.status).length }}
-          </span>
-        </div>
+          <!-- Column Cards List -->
+          <div v-if="loading" class="d-flex flex-column gap-2">
+            <div v-for="n in 3" :key="n" class="skeleton-card bg-white rounded-3 shadow-sm w-100" style="height: 100px;"></div>
+          </div>
 
-        <div v-if="loading" class="d-flex flex-column gap-2">
-          <div v-for="n in 3" :key="n" class="skeleton-card"></div>
-        </div>
+          <div v-else-if="getTasksByStatus(col.status).length === 0" class="text-center py-4 border border-dashed rounded-3 bg-white text-muted">
+            <i class="bi bi-inbox d-block mb-1 fs-4 text-secondary opacity-50"></i>
+            <span class="small" style="font-size: 0.85rem;">No tasks</span>
+          </div>
 
-        <div v-else-if="getTasksByStatus(col.status).length === 0" class="col-empty">
-          <i class="bi bi-inbox text-muted" style="font-size:20px"></i>
-          <div class="text-muted small mt-1">No tasks</div>
-        </div>
-
-        <div v-else class="d-flex flex-column gap-2">
-          <button
-            v-for="task in getTasksByStatus(col.status)"
-            :key="task.Id"
-            class="task-tag text-start"
-            :class="{ 'task-tag--dragging': draggingTask?.Id === task.Id }"
-            :style="{ '--col-color': col.color }"
-            :draggable="true"
-            @dragstart="onDragStart(task)"
-            @dragend="onDragEnd"
-            @click="openModal(task)"
-          >
-            <span class="task-title d-block mb-2">{{ task.Title }}</span>
-            <div class="d-flex flex-column gap-1">
-              <span class="task-meta">
-                <i class="bi bi-calendar3"></i>
-                {{ formatDateShort(task.CreatedAt) }}
-              </span>
-              <span v-if="task.Deadline" class="task-meta" :class="isOverdue(task) && 'task-meta--overdue'">
-                <i :class="isOverdue(task) ? 'bi bi-exclamation-circle-fill' : 'bi bi-clock'"></i>
-                {{ formatDateShort(task.Deadline) }}
-                <span v-if="isOverdue(task)" class="overdue-chip">Overdue</span>
-              </span>
+          <div v-else class="d-flex flex-column gap-2">
+            <div
+              v-for="task in getTasksByStatus(col.status)"
+              :key="task.Id"
+              class="card border-0 border-top border-4 shadow-sm task-tag-card p-3"
+              :class="{ 'task-tag-card--dragging': draggingTask?.Id === task.Id }"
+              :style="{ borderTopColor: col.color, cursor: projectStore.userRole !== 'Viewer' ? 'grab' : 'default' }"
+              :draggable="projectStore.userRole !== 'Viewer'"
+              @dragstart="onDragStart(task)"
+              @dragend="onDragEnd"
+              @click="openModal(task)"
+            >
+              <span class="fw-bold text-dark mb-2 text-start d-block" style="font-size: 0.95rem; line-height: 1.4;">{{ task.Title }}</span>
+              <div class="d-flex flex-column gap-1 align-items-start">
+                <span class="text-muted small d-flex align-items-center gap-1.5" style="font-size: 0.75rem;">
+                  <i class="bi bi-calendar3"></i>
+                  {{ formatDateShort(task.CreatedAt) }}
+                </span>
+                <span v-if="task.Deadline" class="small d-flex align-items-center gap-1.5" :class="isOverdue(task) ? 'text-danger fw-bold' : 'text-muted'" style="font-size: 0.75rem;">
+                  <i :class="isOverdue(task) ? 'bi bi-exclamation-circle-fill' : 'bi bi-clock'"></i>
+                  {{ formatDateShort(task.Deadline) }}
+                  <span v-if="isOverdue(task)" class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-0.5 ms-1" style="font-size: 0.65rem;">Overdue</span>
+                </span>
+              </div>
             </div>
-          </button>
+          </div>
         </div>
-
       </div>
     </div>
 
-    <!-- ── Modal ── -->
-    <Teleport to="body">
-      <Transition name="tm-fade">
-        <div v-if="modal.open" class="modal-overlay d-flex align-items-center justify-content-center p-3" >
-          <Transition name="tm-slide">
-            <div v-if="modal.open" class="task-modal" role="dialog" aria-modal="true">
+    <!-- Members Management Tab -->
+    <div v-else-if="activeTab === 'members'" class="card border-0 shadow-sm p-4 rounded-3 bg-white">
+      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+        <div class="text-start">
+          <h4 class="fw-bold mb-1 text-dark h5">Thành viên dự án</h4>
+          <p class="text-muted small mb-0">Quản lý danh sách thành viên dự án và vai trò tương ứng.</p>
+        </div>
+        
+        <!-- Form thêm thành viên (chỉ hiển thị cho Owner) -->
+        <div v-if="projectStore.userRole === 'Owner'" class="d-flex gap-2 align-items-center flex-wrap">
+          <input 
+            v-model="memberEmail" 
+            type="email" 
+            class="form-control form-control-sm" 
+            placeholder="Nhập email thành viên..."
+            style="width: 250px; border-radius: 8px; height: 38px;"
+          />
+          <select 
+            v-model="memberRole" 
+            class="form-select form-select-sm" 
+            style="width: 120px; border-radius: 8px; height: 38px;"
+          >
+            <option value="Owner">Owner</option>
+            <option value="Editor">Editor</option>
+            <option value="Viewer">Viewer</option>
+          </select>
+          <button 
+            class="btn btn-sm btn-primary fw-semibold d-flex align-items-center justify-content-center" 
+            @click="addProjectMember"
+            :disabled="!memberEmail"
+            style="border-radius: 8px; height: 38px; padding: 0 16px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"
+          >
+            Thêm
+          </button>
+        </div>
+      </div>
 
-              <!-- Modal header -->
-              <div class="task-modal-header" :style="{ background: getColByStatus(modal.task?.Status)?.bgLight, borderBottomColor: getColByStatus(modal.task?.Status)?.borderColor }">
-                <div class="flex-grow-1">
-                  <div class="d-flex gap-2 flex-wrap mb-2">
-                    <span class="modal-badge" :style="{ background: getColByStatus(modal.task?.Status)?.bgMid, color: getColByStatus(modal.task?.Status)?.color }">
-                      {{ getColByStatus(modal.task?.Status)?.label }}
-                    </span>
-                    <span class="modal-badge" :style="{ background: activeTab === 'created' ? '#EEF2FF' : '#ECFDF5', color: activeTab === 'created' ? '#4F46E5' : '#059669' }">
-                      {{ activeTab === 'created' ? 'Creator' : 'Assigned' }}
-                    </span>
-                    <span v-if="modal.task && isOverdue(modal.task)" class="modal-badge" style="background:#FEE2E2;color:#DC2626">
-                      Overdue
-                    </span>
+      <div v-if="loadingMembers" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+      </div>
+
+      <div v-else class="table-responsive">
+        <table class="table table-hover align-middle border-0 mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col" class="border-0 rounded-start text-start" style="padding: 12px 16px;">Thành viên</th>
+              <th scope="col" class="border-0 text-start" style="padding: 12px 16px;">Vai trò</th>
+              <th scope="col" class="border-0 text-start" style="padding: 12px 16px;">Ngày tham gia</th>
+              <th scope="col" class="border-0 rounded-end text-end" style="padding: 12px 16px; width: 120px;" v-if="projectStore.userRole === 'Owner'">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="user in members" :key="user.UserId" class="border-bottom">
+              <td style="padding: 16px;" class="text-start">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="user-avatar bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width:38px; height:38px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
+                    {{ userInitial(user.Email) }}
                   </div>
-                  <h5 class="fw-bold mb-0 text-dark">{{ modal.task?.Title }}</h5>
+                  <div class="text-start">
+                    <div class="fw-semibold text-dark">{{ user.Email }}</div>
+                    <div class="text-muted font-monospace" style="font-size:10px;">ID: {{ user.UserId }}</div>
+                  </div>
                 </div>
-                <div class="d-flex gap-1">
-                  <!-- Edit toggle — for task creators OR assigned users with CanEdit -->
-                  <button v-if="activeTab === 'created' || (activeTab === 'assigned' && modal.task?.CanEdit)" class="btn-icon-action" :class="editMode && 'btn-icon-action--active'" @click="toggleEdit" title="Edit task">
-                    <i class="bi bi-pencil-fill"></i>
-                  </button>
-                  <button class="btn-icon-close" @click="closeModal">
-                    <i class="bi bi-x-lg"></i>
-                  </button>
+              </td>
+              <td style="padding: 16px;" class="text-start">
+                <select 
+                  v-if="projectStore.userRole === 'Owner' && projectStore.currentProject?.OwnerId !== user.UserId"
+                  :value="user.Role"
+                  @change="changeMemberRole(user, $event.target.value)"
+                  class="form-select form-select-sm"
+                  style="width: 110px; border-radius: 8px;"
+                >
+                  <option value="Owner">Owner</option>
+                  <option value="Editor">Editor</option>
+                  <option value="Viewer">Viewer</option>
+                </select>
+                <span v-else class="badge text-uppercase font-monospace" :class="getRoleBadgeClass(user.Role)" style="font-size: 10px; padding: 4px 8px;">
+                  {{ user.Role }}
+                </span>
+              </td>
+              <td class="text-muted small text-start" style="padding: 16px;">
+                {{ formatDate(user.JoinedAt) }}
+              </td>
+              <td class="text-end" style="padding: 16px;" v-if="projectStore.userRole === 'Owner'">
+                <button 
+                  v-if="projectStore.currentProject?.OwnerId !== user.UserId"
+                  class="btn btn-sm btn-outline-danger" 
+                  @click="removeProjectMember(user)"
+                  style="border-radius: 8px; padding: 4px 10px;"
+                >
+                  Xóa
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Task Detail Modal ── -->
+    <Teleport to="body">
+      <div v-if="modal.open" class="modal-backdrop show" style="background: rgba(0,0,0,0.5);"></div>
+      <div v-if="modal.open" class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" style="overflow-y: auto;">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content border-0 shadow-lg rounded-4">
+            
+            <!-- Modal Header -->
+            <div class="modal-header border-bottom p-4" :style="{ background: getColByStatus(modal.task?.Status)?.bgLight }">
+              <div class="text-start flex-grow-1">
+                <div class="d-flex gap-2 flex-wrap mb-2">
+                  <span class="badge text-uppercase font-monospace" :style="{ background: getColByStatus(modal.task?.Status)?.bgMid, color: getColByStatus(modal.task?.Status)?.color }">
+                    {{ getColByStatus(modal.task?.Status)?.label }}
+                  </span>
+                  <span v-if="modal.task && isOverdue(modal.task)" class="badge bg-danger bg-opacity-10 text-danger rounded-pill">
+                    Overdue
+                  </span>
+                </div>
+                <h5 class="modal-title fw-bold text-dark h5 mb-0 text-start">{{ modal.task?.Title }}</h5>
+              </div>
+              <div class="d-flex gap-1 align-items-center">
+                <button v-if="projectStore.userRole !== 'Viewer'" class="btn btn-sm btn-light border p-2" :class="{ 'btn-primary text-white': editMode }" @click="toggleEdit" title="Edit task" style="border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
+                  <i class="bi bi-pencil-fill"></i>
+                </button>
+                <button class="btn-close ms-2" @click="closeModal" aria-label="Close"></button>
+              </div>
+            </div>
+
+            <!-- ── VIEW MODE ── -->
+            <div v-if="!editMode" class="modal-body p-4 text-start">
+              <div class="mb-4">
+                <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Description</label>
+                <div class="text-dark bg-light p-3 rounded-3" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;">
+                  {{ modal.task?.Description || 'No description provided.' }}
                 </div>
               </div>
 
-              <!-- ── VIEW MODE ── -->
-              <div v-if="!editMode" class="task-modal-body">
-
-                <div class="modal-field">
-                  <div class="modal-label">Description</div>
-                  <div class="modal-value">{{ modal.task?.Description || 'No description.' }}</div>
+              <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Created At</label>
+                  <div class="text-dark fw-medium">{{ formatDate(modal.task?.CreatedAt) }}</div>
                 </div>
-
-                <div class="row g-3">
-                  <div class="col-6">
-                    <div class="modal-field">
-                      <div class="modal-label">Created at</div>
-                      <div class="modal-value">{{ formatDate(modal.task?.CreatedAt) }}</div>
-                    </div>
-                  </div>
-                  <div class="col-6">
-                    <div class="modal-field">
-                      <div class="modal-label">Deadline</div>
-                      <div class="modal-value d-flex align-items-center gap-2 flex-wrap" :class="modal.task && isOverdue(modal.task) ? 'text-danger' : ''">
-                        {{ modal.task?.Deadline ? formatDate(modal.task.Deadline) : '—' }}
-                        <span v-if="modal.task && isOverdue(modal.task)" class="overdue-chip">Overdue</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-6">
-                    <div class="modal-field">
-                      <div class="modal-label">Task ID</div>
-                      <div class="modal-value">#{{ modal.task?.Id }}</div>
-                    </div>
-                  </div>
-                  <div class="col-6">
-                    <div class="modal-field">
-                      <div class="modal-label">Status</div>
-                      <div class="modal-value">{{ getColByStatus(modal.task?.Status)?.label }}</div>
-                    </div>
+                <div class="col-6 col-md-3">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Deadline</label>
+                  <div class="text-dark fw-medium" :class="modal.task && isOverdue(modal.task) ? 'text-danger fw-bold' : ''">
+                    {{ modal.task?.Deadline ? formatDate(modal.task.Deadline) : '—' }}
                   </div>
                 </div>
-
-                <div class="modal-field">
-                  <div class="modal-label">Creator ID</div>
-                  <div class="modal-value mono-value">{{ modal.task?.CreatorId }}</div>
+                <div class="col-6 col-md-3">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Task ID</label>
+                  <div class="text-muted font-monospace">#{{ modal.task?.Id }}</div>
                 </div>
-
-                <div v-if="activeTab === 'created' && modal.task?.AssignedUsers" class="modal-field">
-                  <div class="modal-label d-flex align-items-center gap-2">
-                    Assigned Users
-                    <span class="badge bg-light text-muted border">{{ modal.task.AssignedUsers.length }}</span>
+                <div class="col-6 col-md-3">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Status</label>
+                  <div>
+                    <span class="badge" :style="{ background: getColByStatus(modal.task?.Status)?.bgMid, color: getColByStatus(modal.task?.Status)?.color }">
+                      {{ getColByStatus(modal.task?.Status)?.label }}
+                    </span>
                   </div>
-                  <div v-if="modal.task.AssignedUsers.length === 0" class="text-muted small fst-italic mt-1">No users assigned.</div>
-                  <div v-else class="d-flex flex-column gap-2 mt-1">
-                    <div
-                      v-for="user in modal.task.AssignedUsers"
-                      :key="user.UserId"
-                      class="user-row d-flex flex-column gap-2 p-2 rounded-3 border bg-light"
-                    >
-                      <!-- Row trên: avatar + email + action buttons -->
+                </div>
+              </div>
+
+              <!-- Assigned Users list -->
+              <div v-if="modal.task?.AssignedUsers" class="mb-2">
+                <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider d-flex align-items-center gap-2">
+                  Assigned Users
+                  <span class="badge bg-light text-secondary border rounded-pill">{{ modal.task.AssignedUsers.length }}</span>
+                </label>
+                <div v-if="modal.task.AssignedUsers.length === 0" class="text-muted small fst-italic py-2">No users assigned yet.</div>
+                <div v-else class="row g-2 mt-1">
+                  <div
+                    v-for="user in modal.task.AssignedUsers"
+                    :key="user.UserId"
+                    class="col-12 col-md-6"
+                  >
+                    <div class="card bg-light border p-2.5 rounded-3 h-100">
                       <div class="d-flex align-items-center gap-2">
-                        <div class="user-avatar">{{ userInitial(user.Email) }}</div>
-                        <div class="flex-grow-1 min-w-0">
-                          <div class="small fw-semibold text-truncate">{{ user.Email }}</div>
-                          <div class="user-id text-truncate">{{ user.UserId }}</div>
+                        <div class="user-avatar bg-secondary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width:30px; height:30px; font-size:11px;">
+                          {{ userInitial(user.Email) }}
+                        </div>
+                        <div class="flex-grow-1 min-w-0 text-start">
+                          <div class="small fw-semibold text-dark text-truncate" :title="user.Email">{{ user.Email }}</div>
                         </div>
 
-                        <!-- View mode: badges + edit + delete -->
-                        <template v-if="editingPermUserId !== user.UserId">
-                          <span v-if="user.CanView" class="perm-badge perm-badge--view"><i class="bi bi-eye-fill"></i> View</span>
-                          <span v-if="user.CanEdit" class="perm-badge perm-badge--edit"><i class="bi bi-pencil-fill"></i> Edit</span>
-                          <button class="btn-icon-action ms-1" @click="startEditPerm(user)" title="Edit permissions">
-                            <i class="bi bi-pencil-fill" style="font-size:11px"></i>
+                        <!-- Edit permission inline (Only for Owner/Editor) -->
+                        <template v-if="editingPermUserId !== user.UserId && projectStore.userRole !== 'Viewer'">
+                          <span v-if="user.CanView" class="badge bg-info bg-opacity-10 text-info" style="font-size: 0.7rem;"><i class="bi bi-eye-fill"></i> View</span>
+                          <span v-if="user.CanEdit" class="badge bg-success bg-opacity-10 text-success ms-1" style="font-size: 0.7rem;"><i class="bi bi-pencil-fill"></i> Edit</span>
+                          <button class="btn btn-sm btn-light border p-1 ms-1" @click="startEditPerm(user)" title="Edit permissions" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-gear" style="font-size:11px"></i>
                           </button>
-                          <button class="btn-icon-action text-danger-action ms-1" @click="removeUser(user)" title="Remove assignment">
+                          <button class="btn btn-sm btn-outline-danger p-1 ms-1" @click="removeUser(user)" title="Remove assignment" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">
                             <i class="bi bi-trash3-fill" style="font-size:11px"></i>
                           </button>
                         </template>
-
-                        <!-- Edit mode: cancel button -->
-                        <template v-else>
-                          <button class="btn-icon-action ms-auto" @click="cancelEditPerm" title="Cancel">
-                            <i class="bi bi-x-lg" style="font-size:12px"></i>
+                        <template v-else-if="editingPermUserId === user.UserId">
+                          <button class="btn btn-sm btn-light border p-1 ms-auto" @click="cancelEditPerm" title="Cancel" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-x-lg" style="font-size:10px"></i>
                           </button>
+                        </template>
+                        <template v-else>
+                          <span v-if="user.CanView" class="badge bg-info bg-opacity-10 text-info" style="font-size: 0.7rem;"><i class="bi bi-eye-fill"></i> View</span>
+                          <span v-if="user.CanEdit" class="badge bg-success bg-opacity-10 text-success ms-1" style="font-size: 0.7rem;"><i class="bi bi-pencil-fill"></i> Edit</span>
                         </template>
                       </div>
 
-                      <!-- Row dưới: inline edit quyền (chỉ hiện khi đang edit user đó) -->
-                      <div v-if="editingPermUserId === user.UserId" class="d-flex align-items-center gap-3 pt-1 border-top">
-                        <label class="perm-check">
-                          <input type="checkbox" v-model="editingPerms.canView" />
-                          <span>View</span>
-                        </label>
-                        <label class="perm-check">
-                          <input type="checkbox" v-model="editingPerms.canEdit" />
-                          <span>Edit</span>
-                        </label>
+                      <div v-if="editingPermUserId === user.UserId" class="d-flex align-items-center gap-3 pt-2 mt-2 border-top">
+                        <div class="form-check form-check-inline mb-0">
+                          <input type="checkbox" class="form-check-input" :id="'view-chk-' + user.UserId" v-model="editingPerms.canView" />
+                          <label class="form-check-label small" :for="'view-chk-' + user.UserId">View</label>
+                        </div>
+                        <div class="form-check form-check-inline mb-0">
+                          <input type="checkbox" class="form-check-input" :id="'edit-chk-' + user.UserId" v-model="editingPerms.canEdit" />
+                          <label class="form-check-label small" :for="'edit-chk-' + user.UserId">Edit</label>
+                        </div>
                         <button
-                          class="btn btn-sm btn-primary ms-auto px-3"
+                          class="btn btn-sm btn-primary ms-auto px-3 py-1"
+                          style="font-size: 0.75rem;"
                           @click="savePermission(user)"
                           :disabled="!editingPerms.canView && !editingPerms.canEdit"
                         >
-                          <i class="bi bi-check2 me-1"></i> Save
+                          Save
                         </button>
                       </div>
                     </div>
                   </div>
                 </div>
-
               </div>
-
-              <!-- ── EDIT MODE ── -->
-              <div v-else class="task-modal-body">
-
-                <div class="edit-notice d-flex align-items-center gap-2">
-                  <i class="bi bi-info-circle-fill" style="color:#6366f1;font-size:13px"></i>
-                  <span>Editing task <strong>#{{ modal.task?.Id }}</strong></span>
-                </div>
-
-                <div class="modal-field">
-                  <label class="modal-label" for="edit-title">Title</label>
-                  <input id="edit-title" v-model="editForm.title" type="text" class="form-control form-control-sm" placeholder="Task title" />
-                </div>
-
-                <div class="modal-field">
-                  <label class="modal-label" for="edit-desc">Description</label>
-                  <textarea id="edit-desc" v-model="editForm.description" class="form-control form-control-sm" rows="3" placeholder="Task description"></textarea>
-                </div>
-
-                <div class="row g-3">
-                  <div class="col-6">
-                    <div class="modal-field">
-                      <label class="modal-label" for="edit-deadline">Deadline</label>
-                      <input id="edit-deadline" v-model="editForm.deadline" type="datetime-local" class="form-control form-control-sm" />
-                    </div>
-                  </div>
-                  <div class="col-6">
-                    <div class="modal-field">
-                      <label class="modal-label" for="edit-status">Status</label>
-                      <select id="edit-status" v-model="editForm.status" class="form-select form-select-sm">
-                        <option v-for="col in columns" :key="col.status" :value="col.status">{{ col.label }}</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-              
-                <div v-if="!editMode && activeTab === 'created'" class="task-modal-footer d-flex align-items-center gap-2 flex-wrap">
-                  <div class="search-box flex-grow-1 position-relative">
-                    <input
-                      v-model="searchKeyword"
-                      type="text"
-                      class="form-control form-control-sm"
-                      placeholder="Search email to assign..."
-                      @input="handleSearchUser"
-                    />
-                    <div v-if="searchResults.length" class="search-dropdown">
-                      <div v-for="user in searchResults" :key="user.UserId" class="search-item" @click="selectUser(user)">
-                        <i class="bi bi-person text-muted me-2"></i>{{ user.Email }}
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Permission checkboxes — hiện ra khi đã chọn user -->
-                  <div v-if="selectedUser" class="perm-selector d-flex align-items-center gap-3">
-                    <label class="perm-check">
-                      <input type="checkbox" v-model="assignPerms.canView" />
-                      <span>View</span>
-                    </label>
-                    <label class="perm-check">
-                      <input type="checkbox" v-model="assignPerms.canEdit" />
-                      <span>Edit</span>
-                    </label>
-                  </div>
-
-                  <button class="btn btn-sm btn-primary px-3" @click="assignUser" :disabled="!selectedUser || (!assignPerms.canView && !assignPerms.canEdit)">
-                    <i class="bi bi-person-plus-fill me-1"></i> Assign
-                  </button>
-                  <button class="btn btn-sm btn-outline-secondary px-3" @click="closeModal">Close</button>
-                </div>
-
-              <!-- ── FOOTER — View mode, Assigned ── -->
-              <div v-else-if="!editMode && activeTab === 'assigned'" class="task-modal-footer d-flex justify-content-end">
-                <button class="btn btn-sm btn-outline-secondary px-4" @click="closeModal">Close</button>
-              </div>
-
-              <!-- ── FOOTER — Edit mode ── -->
-              <div v-else-if="editMode" class="task-modal-footer d-flex justify-content-end gap-2">
-                <button class="btn btn-sm btn-outline-secondary px-3" @click="cancelEdit">
-                  <i class="bi bi-x me-1"></i> Cancel
-                </button>
-                <button class="btn btn-sm btn-primary px-3" @click="saveEdit" :disabled="saving">
-                  <span v-if="saving" class="tm-spinner me-1"></span>
-                  <i v-else class="bi bi-check2 me-1"></i>
-                  {{ saving ? 'Saving…' : 'Save changes' }}
-                </button>
-              </div>
-
             </div>
-          </Transition>
+
+            <!-- ── EDIT MODE ── -->
+            <div v-else class="modal-body p-4 text-start">
+              <div class="alert alert-primary bg-primary bg-opacity-10 border-0 text-primary d-flex align-items-center gap-2 rounded-3 mb-3">
+                <i class="bi bi-info-circle-fill"></i>
+                <span>Editing task <strong>#{{ modal.task?.Id }}</strong></span>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold text-secondary small text-uppercase">Title</label>
+                <input id="edit-title" v-model="editForm.title" type="text" class="form-control" placeholder="Task title" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold text-secondary small text-uppercase">Description</label>
+                <textarea id="edit-desc" v-model="editForm.description" class="form-control" rows="4" placeholder="Task description"></textarea>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">Deadline</label>
+                  <input id="edit-deadline" v-model="editForm.deadline" type="datetime-local" class="form-control" />
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">Status</label>
+                  <select id="edit-status" v-model="editForm.status" class="form-select">
+                    <option v-for="col in columns" :key="col.status" :value="col.status">{{ col.label }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mt-4 pt-3 border-top text-end">
+                <button class="btn btn-sm btn-outline-danger px-3 py-2 fw-semibold" @click="handleDeleteTask">
+                  <i class="bi bi-trash3 me-1"></i> Delete Task
+                </button>
+              </div>
+            </div>
+
+            <!-- ── FOOTER — View mode, Assign Users (Only for Owner/Editor) ── -->
+            <div v-if="!editMode && projectStore.userRole !== 'Viewer'" class="modal-footer p-4 border-top bg-light d-flex align-items-center gap-3 flex-wrap">
+              <div class="flex-grow-1 text-start" style="min-width: 250px;">
+                <select v-model="selectedAssigneeId" class="form-select form-select-sm" style="border-radius: 8px; height: 38px;">
+                  <option :value="null">-- Select member to assign --</option>
+                  <option v-for="m in projectMembersNotAssigned" :key="m.UserId" :value="m.UserId">
+                    {{ m.Email }} ({{ m.Role }})
+                  </option>
+                </select>
+              </div>
+
+              <div class="d-flex align-items-center gap-3 bg-white border rounded-3 px-3 py-1.5" style="height: 38px;">
+                <div class="form-check form-check-inline mb-0">
+                  <input type="checkbox" class="form-check-input" id="assign-view-chk" v-model="assignPerms.canView" />
+                  <label class="form-check-label small" for="assign-view-chk">View</label>
+                </div>
+                <div class="form-check form-check-inline mb-0">
+                  <input type="checkbox" class="form-check-input" id="assign-edit-chk" v-model="assignPerms.canEdit" />
+                  <label class="form-check-label small" for="assign-edit-chk">Edit</label>
+                </div>
+              </div>
+
+              <div class="ms-auto d-flex gap-2">
+                <button class="btn btn-sm btn-primary fw-semibold" @click="assignUser" :disabled="!selectedAssigneeId || (!assignPerms.canView && !assignPerms.canEdit)" style="height: 38px; border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none; padding: 0 16px;">
+                  <i class="bi bi-person-plus-fill me-1"></i> Assign
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" @click="closeModal" style="height: 38px; border-radius: 8px; padding: 0 16px;">Close</button>
+              </div>
+            </div>
+
+            <!-- ── FOOTER — View mode, Viewer ── -->
+            <div v-else-if="!editMode" class="modal-footer p-4 border-top bg-light text-end">
+              <button class="btn btn-sm btn-outline-secondary px-4 py-2" @click="closeModal" style="border-radius: 8px;">Close</button>
+            </div>
+
+            <!-- ── FOOTER — Edit mode ── -->
+            <div v-else class="modal-footer p-4 border-top bg-light d-flex justify-content-end gap-2">
+              <button class="btn btn-sm btn-outline-secondary px-3 py-2 fw-semibold" @click="cancelEdit" style="border-radius: 8px;">
+                <i class="bi bi-x me-1"></i> Cancel
+              </button>
+              <button class="btn btn-sm btn-primary px-3 py-2 fw-semibold" @click="saveEdit" :disabled="saving" style="border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">
+                <span v-if="saving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                <i v-else class="bi bi-check2 me-1"></i>
+                {{ saving ? 'Saving…' : 'Save changes' }}
+              </button>
+            </div>
+
+          </div>
         </div>
-      </Transition>
+      </div>
     </Teleport>
 
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { getAssignedTasks, getCreatedTasks, assignTask, updateTask, updatePermission, removeAssignment, updateStatusTask  } from '../Services/taskService.js'
-import { searchUsers } from '../Services/authService.js'
-import { toastSuccess, toastError, toastWarning, confirm, extractMessage } from '../utils/swal.js'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { assignTask, updateTask, updatePermission, removeAssignment, updateStatusTask, deleteTask } from '../services/taskService.js'
+import { getMembers, addMember, updateMemberRole, removeMember, getProjectTasks, updateProject, deleteProject } from '../services/projectService.js'
+import { projectStore } from '../utils/projectStore.js'
+import { toastSuccess, toastError, confirm, extractMessage } from '../utils/swal.js'
+import Swal from 'sweetalert2'
 
-const assignedTasks = ref([])
-const createdTasks  = ref([])
+const tasks         = ref([])
 const loading       = ref(false)
 const saving        = ref(false)
-const activeTab     = ref('created')
+const activeTab     = ref('board')
 const modal         = reactive({ open: false, task: null })
 const editMode      = ref(false)
 const editForm      = reactive({ title: '', description: '', deadline: '', status: '' })
-const searchKeyword = ref('')
-const searchResults = ref([])
-const selectedUser  = ref(null)
-const assignPerms = reactive({ canView: true, canEdit: false })
-const editingPermUserId = ref(null)
-const editingPerms = reactive({ canView: false, canEdit: false })
-const draggingTask = ref(null)
+
+// Project members states
+const members        = ref([])
+const loadingMembers = ref(false)
+const memberEmail    = ref('')
+const memberRole     = ref('Editor')
+
+// Assignee selection states
+const selectedAssigneeId = ref(null)
+const assignPerms        = reactive({ canView: true, canEdit: false })
+const editingPermUserId  = ref(null)
+const editingPerms       = reactive({ canView: false, canEdit: false })
+
+// Drag states
+const draggingTask       = ref(null)
 const draggingFromStatus = ref(null)
-const dragOverCol = ref(null)
+const dragOverCol        = ref(null)
 
 const columns = [
   { status: 'ToDo',       label: 'To Do',       color: '#64748B', bgLight: '#F8FAFC', bgMid: '#E2E8F0', borderColor: '#CBD5E1' },
@@ -351,8 +470,7 @@ const columns = [
   { status: 'Closed',     label: 'Closed',       color: '#EA580C', bgLight: '#FFF7ED', bgMid: '#FED7AA', borderColor: '#FDBA74' },
 ]
 
-const currentTasks      = computed(() => activeTab.value === 'created' ? createdTasks.value : assignedTasks.value)
-const getTasksByStatus   = (status) => currentTasks.value.filter(t => t.Status === status)
+const getTasksByStatus   = (status) => tasks.value.filter(t => t.Status === status)
 const getColByStatus     = (status) => columns.find(c => c.status === status)
 
 const isOverdue = (task) => {
@@ -371,14 +489,12 @@ const closeModal = () => {
   modal.open = false
   editMode.value = false
   document.body.style.overflow = ''
-  searchKeyword.value = ''
-  searchResults.value = []
-  selectedUser.value = null
+  selectedAssigneeId.value = null
   assignPerms.canView = true
   assignPerms.canEdit = false
+  editingPermUserId.value = null
 }
 
-// Convert ISO string → datetime-local format (YYYY-MM-DDTHH:mm)
 const toDatetimeLocal = (iso) => {
   if (!iso) return ''
   return iso.slice(0, 16)
@@ -386,7 +502,6 @@ const toDatetimeLocal = (iso) => {
 
 const toggleEdit = () => {
   if (!editMode.value) {
-    // populate form from current task
     editForm.title       = modal.task?.Title || ''
     editForm.description = modal.task?.Description || ''
     editForm.deadline    = toDatetimeLocal(modal.task?.Deadline)
@@ -409,8 +524,7 @@ const saveEdit = async () => {
     }
     await updateTask(payload)
     await loadData()
-    const taskList = activeTab.value === 'created' ? createdTasks.value : assignedTasks.value
-    const updated = taskList.find(t => t.Id === modal.task.Id)
+    const updated = tasks.value.find(t => t.Id === modal.task.Id)
     if (updated) modal.task = updated
     editMode.value = false
     toastSuccess('Cập nhật task thành công!')
@@ -422,60 +536,191 @@ const saveEdit = async () => {
   }
 }
 
-const onKeydown = (e) => { if (e.key === 'Escape') closeModal() }
-const onTaskCreated = () => loadData()
+const handleDeleteTask = async () => {
+  const ok = await confirm(
+    'Xóa task?',
+    `Bạn có chắc chắn muốn xóa task này? Hành động này không thể hoàn tác.`,
+    'Xóa Task'
+  )
+  if (!ok) return
+  
+  saving.value = true
+  try {
+    await deleteTask(modal.task.Id)
+    toastSuccess('Xóa task thành công!')
+    closeModal()
+    await loadData()
+  } catch (err) {
+    console.error(err)
+    toastError(extractMessage(err, 'Không thể xóa task.'))
+  } finally {
+    saving.value = false
+  }
+}
 
-onMounted(() => {
-  window.addEventListener('keydown', onKeydown)
-  window.addEventListener('task-created', onTaskCreated)
-  loadData()
-})
-onUnmounted(() => {
-  window.removeEventListener('keydown', onKeydown)
-  window.removeEventListener('task-created', onTaskCreated)
+// Members computed list (members not assigned to the active task)
+const projectMembersNotAssigned = computed(() => {
+  if (!members.value || !modal.task) return []
+  const assignedIds = modal.task.AssignedUsers?.map(au => au.UserId) || []
+  return members.value.filter(m => !assignedIds.includes(m.UserId))
 })
 
 const loadData = async () => {
+  if (!projectStore.currentProjectId) {
+    tasks.value = []
+    return
+  }
   loading.value = true
   try {
-    const [createdRes, assignedRes] = await Promise.all([getCreatedTasks(), getAssignedTasks()])
-    createdTasks.value  = createdRes.data
-    assignedTasks.value = assignedRes.data
+    const res = await getProjectTasks(projectStore.currentProjectId)
+    tasks.value = res?.data || []
   } catch (e) {
     console.error(e)
-    toastError(extractMessage(e, 'Không thể tải dữ liệu.'))
+    toastError(extractMessage(e, 'Không thể tải danh sách task.'))
+  } finally {
+    loading.value = false
   }
-  finally { loading.value = false }
 }
 
-const handleSearchUser = async () => {
-  selectedUser.value = null
-  if (searchKeyword.value.length < 2) { searchResults.value = []; return }
-  try { const res = await searchUsers(searchKeyword.value); searchResults.value = res.data }
-  catch (err) { console.error(err) }
+const loadMembers = async () => {
+  if (!projectStore.currentProjectId) {
+    members.value = []
+    return
+  }
+  loadingMembers.value = true
+  try {
+    const res = await getMembers(projectStore.currentProjectId)
+    members.value = res?.data || []
+  } catch (err) {
+    console.error(err)
+  } finally {
+    loadingMembers.value = false
+  }
 }
 
-const selectUser = (user) => {
-  selectedUser.value  = user
-  searchKeyword.value = user.Email
-  searchResults.value = []
-  assignPerms.canView = true   
-  assignPerms.canEdit = false
+const refreshAll = async () => {
+  await Promise.all([loadData(), loadMembers()])
 }
 
+// Membership Actions
+const addProjectMember = async () => {
+  if (!memberEmail.value || !memberEmail.value.trim()) return
+  try {
+    await addMember(projectStore.currentProjectId, memberEmail.value.trim(), memberRole.value)
+    toastSuccess('Đã thêm thành viên!')
+    memberEmail.value = ''
+    await loadMembers()
+  } catch (err) {
+    toastError(extractMessage(err, 'Không thể thêm thành viên.'))
+  }
+}
+
+const changeMemberRole = async (user, newRole) => {
+  try {
+    await updateMemberRole(projectStore.currentProjectId, user.UserId, newRole)
+    toastSuccess('Đã cập nhật vai trò thành viên!')
+    await loadMembers()
+  } catch (err) {
+    toastError(extractMessage(err, 'Không thể cập nhật vai trò.'))
+  }
+}
+
+const removeProjectMember = async (user) => {
+  const ok = await confirm(
+    'Xóa thành viên?',
+    `Bạn có chắc muốn xóa <strong>${user.Email}</strong> khỏi dự án?`,
+    'Xóa'
+  )
+  if (!ok) return
+  try {
+    await removeMember(projectStore.currentProjectId, user.UserId)
+    toastSuccess('Đã xóa thành viên khỏi dự án!')
+    await loadMembers()
+  } catch (err) {
+    toastError(extractMessage(err, 'Không thể xóa thành viên.'))
+  }
+}
+
+// Project Actions (Edit / Delete)
+const handleEditProject = async () => {
+  if (!projectStore.currentProject) return
+  const currentProj = projectStore.currentProject
+
+  const { value: formValues } = await Swal.fire({
+    title: 'Sửa dự án',
+    html:
+      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Tên dự án</label></div>' +
+      `<input id="swal-proj-name" class="form-control mb-3" placeholder="Nhập tên dự án" value="${currentProj.Name || ''}" style="border-radius:10px; height:42px;">` +
+      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Mô tả (tùy chọn)</label></div>' +
+      `<textarea id="swal-proj-desc" class="form-control" placeholder="Nhập mô tả" rows="3" style="border-radius:10px;">${currentProj.Description || ''}</textarea>`,
+    focusConfirm: false,
+    showCancelButton: true,
+    confirmButtonText: 'Lưu thay đổi',
+    cancelButtonText: 'Hủy',
+    customClass: {
+      popup: 'swal-popup',
+      confirmButton: 'swal-btn swal-btn--confirm',
+      cancelButton: 'swal-btn swal-btn--cancel'
+    },
+    buttonsStyling: false,
+    preConfirm: () => {
+      const name = document.getElementById('swal-proj-name').value
+      const description = document.getElementById('swal-proj-desc').value
+      if (!name || !name.trim()) {
+        Swal.showValidationMessage('Tên dự án không được để trống')
+      }
+      return { name, description }
+    }
+  })
+
+  if (formValues) {
+    try {
+      await updateProject(currentProj.Id, formValues)
+      toastSuccess('Cập nhật dự án thành công!')
+      window.dispatchEvent(new Event('projects-changed'))
+    } catch (err) {
+      toastError(extractMessage(err, 'Không thể cập nhật dự án.'))
+    }
+  }
+}
+
+const handleDeleteProject = async () => {
+  if (!projectStore.currentProject) return
+  const currentProj = projectStore.currentProject
+
+  const ok = await confirm(
+    'Xóa dự án?',
+    `Bạn có chắc chắn muốn xóa dự án <strong>${currentProj.Name}</strong>? Hành động này sẽ xóa tất cả công việc và thành viên thuộc dự án này và không thể hoàn tác.`,
+    'Xóa Dự Án'
+  )
+  if (!ok) return
+
+  try {
+    await deleteProject(currentProj.Id)
+    toastSuccess('Xóa dự án thành công!')
+    projectStore.setCurrentProjectId(null)
+    window.dispatchEvent(new Event('projects-changed'))
+  } catch (err) {
+    console.error(err)
+    toastError(extractMessage(err, 'Không thể xóa dự án.'))
+  }
+}
+
+// Task assignment Actions
 const assignUser = async () => {
-  if (!selectedUser.value) return
+  if (!selectedAssigneeId.value) return
   try {
     await assignTask({
       taskId:  modal.task.Id,
-      userId:  selectedUser.value.UserId,
+      userId:  selectedAssigneeId.value,
       canView: assignPerms.canView,
       canEdit: assignPerms.canEdit,
     })
-    searchKeyword.value = ''; searchResults.value = []; selectedUser.value = null
-    assignPerms.canView = true; assignPerms.canEdit = false
+    selectedAssigneeId.value = null
+    assignPerms.canView = true
+    assignPerms.canEdit = false
     await loadData()
-    const updated = createdTasks.value.find(t => t.Id === modal.task.Id)
+    const updated = tasks.value.find(t => t.Id === modal.task.Id)
     if (updated) modal.task = updated
     toastSuccess('Giao task thành công!')
   } catch (err) {
@@ -504,7 +749,7 @@ const savePermission = async (user) => {
     })
     editingPermUserId.value = null
     await loadData()
-    const updated = createdTasks.value.find(t => t.Id === modal.task.Id)
+    const updated = tasks.value.find(t => t.Id === modal.task.Id)
     if (updated) modal.task = updated
     toastSuccess('Cập nhật quyền thành công!')
   } catch (err) {
@@ -523,7 +768,7 @@ const removeUser = async (user) => {
   try {
     await removeAssignment({ taskId: modal.task.Id, userId: user.UserId })
     await loadData()
-    const updated = createdTasks.value.find(t => t.Id === modal.task.Id)
+    const updated = tasks.value.find(t => t.Id === modal.task.Id)
     if (updated) modal.task = updated
     toastSuccess('Đã huỷ giao việc thành công!')
   } catch (err) {
@@ -532,7 +777,9 @@ const removeUser = async (user) => {
   }
 }
 
+// Drag & drop (disabled for Viewers)
 const onDragStart = (task) => {
+  if (projectStore.userRole === 'Viewer') return
   draggingTask.value = task
   draggingFromStatus.value = task.Status
 }
@@ -544,6 +791,7 @@ const onDragEnd = () => {
 }
 
 const onDragOver = (e, status) => {
+  if (projectStore.userRole === 'Viewer') return
   e.preventDefault()
   dragOverCol.value = status
 }
@@ -553,6 +801,7 @@ const onDragLeave = () => {
 }
 
 const onDrop = async (e, targetStatus) => {
+  if (projectStore.userRole === 'Viewer') return
   e.preventDefault()
   dragOverCol.value = null
   const task = draggingTask.value
@@ -566,12 +815,43 @@ const onDrop = async (e, targetStatus) => {
     await updateStatusTask({ taskId: task.Id, status: targetStatus })
     toastSuccess('Đã cập nhật trạng thái!')
   } catch (err) {
-    // Rollback
     task.Status = oldStatus
     console.error('Failed to update status, rolled back:', err)
     toastError(extractMessage(err, 'Không thể thay đổi trạng thái.'))
   }
 }
+
+// Watch active project changes
+watch(() => projectStore.currentProjectId, () => {
+  activeTab.value = 'board'
+  refreshAll()
+})
+
+const getRoleBadgeClass = (role) => {
+  switch (role?.toLowerCase()) {
+    case 'owner':
+      return 'bg-danger-subtle text-danger border border-danger-subtle'
+    case 'editor':
+      return 'bg-primary-subtle text-primary border border-primary-subtle'
+    case 'viewer':
+    default:
+      return 'bg-secondary-subtle text-secondary border border-secondary-subtle'
+  }
+}
+
+const onKeydown = (e) => { if (e.key === 'Escape') closeModal() }
+const onTaskCreated = () => loadData()
+
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+  window.addEventListener('task-created', onTaskCreated)
+  refreshAll()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('task-created', onTaskCreated)
+})
 
 const formatDate      = (d) => d ? new Date(d).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
 const formatDateShort = (d) => d ? new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
@@ -579,113 +859,46 @@ const userInitial     = (email) => email ? email[0].toUpperCase() : '?'
 </script>
 
 <style scoped>
-.page-title { font-size: 1.68rem; letter-spacing: -0.02em; color: #0f172a; }
-
-/* Tab toggle */
-.tab-toggle { background: #f1f5f9; border-radius: 12px; padding: 4px; border: 1px solid #e2e8f0; }
-.tab-btn { padding: 7px 20px; border: none; background: transparent; color: #64748b; font-size: 0.9rem; font-weight: 500; cursor: pointer; border-radius: 9px; display: flex; align-items: center; gap: 7px; transition: background 0.15s, color 0.15s; white-space: nowrap; }
-.tab-btn--active { background: #fff; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
-.tab-count { font-size: 0.75rem; font-weight: 600; padding: 1px 6px; border-radius: 999px; background: #e2e8f0; color: #64748b; }
-.tab-btn--active .tab-count { background: #6366f1; color: #fff; }
-
-/* Refresh */
-.ref-btn { width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 10px; border-color: #e2e8f0; color: #64748b; }
-.ref-btn:hover:not(:disabled) { background: #f1f5f9; color: #4f46e5; border-color: #c7d2fe; }
-.tm-spinner { width: 16px; height: 16px; border: 2.5px solid #cbd5e1; border-top-color: #6366f1; border-radius: 50%; animation: spin 0.7s linear infinite; }
-
-/* Board */
-.kanban-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: start; }
-@media (max-width: 900px) { .kanban-board { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 560px)  { .kanban-board { grid-template-columns: 1fr; } }
-
-/* Column */
-.kanban-col { background: #eef2f7; border-radius: 16px; padding: 14px; }
-.kanban-col-header { padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; }
-.col-dot  { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
-.col-label { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #475569; }
-.col-badge { font-size: 0.78rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; }
-
-/* Skeleton */
-.skeleton-card { height: 98px; border-radius: 10px; background: linear-gradient(90deg, #e2e8f0 25%, #cbd5e1 50%, #e2e8f0 75%); background-size: 200% 100%; animation: shimmer 1.3s infinite; }
-
-/* Empty */
-.col-empty { padding: 40px 16px; text-align: center; background: #fff; border-radius: 10px; border: 1.5px dashed #cbd5e1; }
-
-/* Task tag */
-.task-tag { width: 100%; background: #fff; border: 1px solid #e2e8f0; border-top: 4px solid var(--col-color); border-radius: 10px; padding: 14px 15px; cursor: pointer; transition: box-shadow 0.12s, transform 0.1s; }
-.task-tag:hover { box-shadow: 0 6px 20px rgba(0,0,0,.1); transform: translateY(-2px); }
-.task-title { font-size: 1.05rem; font-weight: 600; color: #1e293b; line-height: 1.35; }
-.task-meta { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #94a3b8; }
-.task-meta i { font-size: 13px; flex-shrink: 0; }
-.task-meta--overdue { color: #ef4444; font-weight: 600; }
-.overdue-chip { font-size: 0.7rem; font-weight: 700; background: #fee2e2; color: #dc2626; padding: 2px 7px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.04em; }
-
-/* Modal */
-.modal-overlay { position: fixed; inset: 0; z-index: 1050; background: rgba(15,23,42,.5); backdrop-filter: blur(3px); }
-
-.task-modal { background: #fff; border-radius: 18px; width: 100%; max-width: 680px; box-shadow: 0 25px 70px rgba(0,0,0,.2); overflow: hidden; display: flex; flex-direction: column; max-height: 92vh; }
-
-.task-modal-header { display: flex; align-items: flex-start; gap: 14px; padding: 24px 28px 22px; border-bottom: 1px solid; }
-.modal-badge { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; padding: 3px 11px; border-radius: 999px; }
-
-/* Header buttons */
-.btn-icon-close,
-.btn-icon-action { background: transparent; border: none; font-size: 16px; padding: 7px 9px; border-radius: 8px; cursor: pointer; line-height: 1; }
-.btn-icon-close { color: #94a3b8; }
-.btn-icon-close:hover { background: #f1f5f9; color: #0f172a; }
-.btn-icon-action { color: #94a3b8; border: 1px solid transparent; }
-.btn-icon-action:hover, .btn-icon-action--active { background: #eef2ff; color: #6366f1; border-color: #c7d2fe; }
-
-/* Modal body */
-.task-modal-body { padding: 24px 28px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; }
-.modal-field { display: flex; flex-direction: column; gap: 4px; }
-.modal-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #94a3b8; margin-bottom: 3px; }
-.modal-value { font-size: 1.05rem; color: #1e293b; line-height: 1.5; }
-.mono-value { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; color: #64748b; background: #f8fafc; padding: 8px 14px; border-radius: 7px; border: 1px solid #e2e8f0; word-break: break-all; }
-
-/* Edit notice */
-.edit-notice { background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 10px; padding: 11px 16px; font-size: 0.9rem; color: #4338ca; }
-
-/* Form */
-.form-control, .form-select { font-size: 1.0rem; border-color: #e2e8f0; border-radius: 8px; color: #1e293b; padding: 10px 14px; }
-.form-control:focus, .form-select:focus { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,.12); }
-textarea.form-control { resize: vertical; min-height: 90px; }
-
-/* Users */
-.user-avatar { width: 38px; height: 38px; border-radius: 50%; font-size: 0.9rem; }
-.user-id { font-size: 0.75rem; }
-.perm-badge { font-size: 0.72rem; padding: 3px 8px; gap: 4px; }
-
-/* Footer */
-.task-modal-footer { padding: 16px 28px; border-top: 1px solid #f1f5f9; }
-
-/* Search */
-.search-dropdown { max-height: 240px; }
-.search-item { padding: 11px 16px; font-size: 1.0rem; }
-
-/* Btn */
-.btn-primary { padding: 10px 20px; font-size: 0.95rem; }
-
-/* Transitions giữ nguyên */
-.tm-fade-enter-active, .tm-fade-leave-active { transition: opacity 0.2s ease; }
-.tm-fade-enter-from, .tm-fade-leave-to { opacity: 0; }
-.tm-slide-enter-active { transition: opacity 0.2s ease, transform 0.22s cubic-bezier(.25,.8,.25,1); }
-.tm-slide-leave-active { transition: opacity 0.15s ease, transform 0.15s ease; }
-.tm-slide-enter-from { opacity: 0; transform: translateY(14px) scale(0.98); }
-.tm-slide-leave-to { opacity: 0; transform: translateY(6px) scale(0.99); }
-.perm-selector { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 12px; }
-.perm-check { display: flex; align-items: center; gap: 5px; font-size: 0.85rem; font-weight: 500; color: #475569; cursor: pointer; user-select: none; }
-.perm-check input[type="checkbox"] { width: 14px; height: 14px; accent-color: #6366f1; cursor: pointer; }
-.text-danger-action:hover { background: #fee2e2 !important; color: #dc2626 !important; border-color: #fca5a5 !important; } 
-
-/* Drag & drop */
-.task-tag[draggable="true"] { cursor: grab; }
-.task-tag[draggable="true"]:active { cursor: grabbing; }
-.task-tag--dragging { opacity: 0.45; transform: scale(0.97); box-shadow: none !important; }
-
+.page-title {
+  font-size: 1.68rem;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+}
+.task-tag-card {
+  transition: transform 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+  border-top-width: 4px !important;
+}
+.task-tag-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15,23,42,0.08) !important;
+}
+.task-tag-card--dragging {
+  opacity: 0.45;
+  transform: scale(0.97);
+}
+.kanban-col {
+  min-height: 550px;
+  transition: background-color 0.2s;
+}
 .kanban-col--dragover { 
   outline: 2px dashed #6366f1; 
   outline-offset: -4px;
-  background: #eef0fe;
+  background: #eef0fe !important;
+}
+.skeleton-card {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.modal-backdrop {
+  z-index: 1040;
+}
+.modal {
+  z-index: 1050;
 }
 </style>

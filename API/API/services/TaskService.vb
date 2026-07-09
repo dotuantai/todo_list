@@ -3,14 +3,25 @@ Public Class TaskService
 
     Private ReadOnly _taskRepo As ITaskRepository
     Private ReadOnly _assignRepo As ITaskAssignmentRepository
+    Private ReadOnly _projectRepo As IProjectRepository
 
-    Public Sub New(taskRepo As ITaskRepository, assignRepo As ITaskAssignmentRepository)
+    Public Sub New(taskRepo As ITaskRepository, assignRepo As ITaskAssignmentRepository, projectRepo As IProjectRepository)
         _taskRepo = taskRepo
         _assignRepo = assignRepo
+        _projectRepo = projectRepo
     End Sub
 
-    Public Function CreateTask(req As CreateTaskRequest, creatorId As Guid) As String _
+    Public Function CreateTask(req As CreateTaskRequest, creatorId As Guid, projectId As Guid) As String _
         Implements ITaskService.CreateTask
+
+        ' Check project membership & role (Owner or Editor)
+        Dim member = _projectRepo.GetMember(projectId, creatorId)
+        If member Is Nothing Then
+            Throw ApiException.Forbidden("Bạn không phải thành viên của project này.")
+        End If
+        If Not member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso Not member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase) Then
+            Throw ApiException.Forbidden("Chỉ có Owner hoặc Editor mới được tạo task.")
+        End If
 
         If String.IsNullOrWhiteSpace(req.Title) Then
             Throw ApiException.BadRequest("Tiêu đề task không được để trống.")
@@ -24,7 +35,8 @@ Public Class TaskService
             .CreatedAt = DateTime.UtcNow,
             .CreatorId = creatorId,
             .Deadline = req.Deadline,
-            .Status = status
+            .Status = status,
+            .ProjectId = projectId
         })
         _taskRepo.Save()
 
@@ -37,10 +49,17 @@ Public Class TaskService
 
         Dim task = GetTaskOrThrow(req.TaskId)
 
-        If task.CreatorId <> currentUserId Then
-            Dim assignment = _assignRepo.GetAssignment(req.TaskId, currentUserId)
-            If assignment Is Nothing OrElse Not assignment.CanEdit Then
-                Throw ApiException.Forbidden("Bạn không có quyền chỉnh sửa task này.")
+        If task.ProjectId.HasValue Then
+            Dim member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId)
+            If member Is Nothing OrElse (Not member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso Not member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)) Then
+                Throw ApiException.Forbidden("Bạn không có quyền chỉnh sửa task trong project này.")
+            End If
+        Else
+            If task.CreatorId <> currentUserId Then
+                Dim assignment = _assignRepo.GetAssignment(req.TaskId, currentUserId)
+                If assignment Is Nothing OrElse Not assignment.CanEdit Then
+                    Throw ApiException.Forbidden("Bạn không có quyền chỉnh sửa task này.")
+                End If
             End If
         End If
 
@@ -64,8 +83,15 @@ Public Class TaskService
 
         Dim task = GetTaskOrThrow(taskId)
 
-        If task.CreatorId <> currentUserId Then
-            Throw ApiException.Forbidden("Chỉ người tạo task mới có quyền xóa.")
+        If task.ProjectId.HasValue Then
+            Dim member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId)
+            If member Is Nothing OrElse (Not member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso Not member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)) Then
+                Throw ApiException.Forbidden("Bạn không có quyền xóa task trong project này.")
+            End If
+        Else
+            If task.CreatorId <> currentUserId Then
+                Throw ApiException.Forbidden("Chỉ người tạo task mới có quyền xóa.")
+            End If
         End If
 
         _taskRepo.Delete(task)
@@ -80,8 +106,20 @@ Public Class TaskService
 
         Dim task = GetTaskOrThrow(req.TaskId)
 
-        If task.CreatorId <> currentUserId Then
-            Throw ApiException.Forbidden("Chỉ người tạo task mới có quyền giao task.")
+        If task.ProjectId.HasValue Then
+            Dim member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId)
+            If member Is Nothing OrElse (Not member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso Not member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)) Then
+                Throw ApiException.Forbidden("Bạn không có quyền giao task trong project này.")
+            End If
+            
+            Dim targetMember = _projectRepo.GetMember(task.ProjectId.Value, req.UserId)
+            If targetMember Is Nothing Then
+                Throw ApiException.BadRequest("Người dùng được giao phải là thành viên dự án.")
+            End If
+        Else
+            If task.CreatorId <> currentUserId Then
+                Throw ApiException.Forbidden("Chỉ người tạo task mới có quyền giao task.")
+            End If
         End If
 
         If req.UserId = currentUserId Then
@@ -105,30 +143,17 @@ Public Class TaskService
 
     End Function
 
-    Public Function GetMyCreatedTasks(userId As Guid) As List(Of TaskDetailResponse) _
-        Implements ITaskService.GetMyCreatedTasks
+    Public Function GetProjectTasks(projectId As Guid, userId As Guid) As List(Of TaskDetailResponse) _
+        Implements ITaskService.GetProjectTasks
 
-        Return _taskRepo.GetCreatedTasks(userId).
+        ' Check project membership
+        Dim member = _projectRepo.GetMember(projectId, userId)
+        If member Is Nothing Then
+            Throw ApiException.Forbidden("Bạn không phải thành viên của project này.")
+        End If
+
+        Return _taskRepo.GetTasksByProjectId(projectId).
             Select(AddressOf MapToTaskDetailResponse).
-            ToList()
-
-    End Function
-
-    Public Function GetMyAssignedTasks(userId As Guid) As List(Of TaskResponse) _
-        Implements ITaskService.GetMyAssignedTasks
-
-        Return _assignRepo.GetAssignedTasks(userId).
-            Select(Function(a) New TaskResponse With {
-                .Id = a.Task.Id,
-                .Title = a.Task.Title,
-                .Description = a.Task.Description,
-                .CreatedAt = a.Task.CreatedAt,
-                .CreatorId = a.Task.CreatorId,
-                .Deadline = a.Task.Deadline,
-                .Status = a.Task.Status.ToString(),
-                .CanView = a.CanView,
-                .CanEdit = a.CanEdit
-            }).
             ToList()
 
     End Function
@@ -138,8 +163,15 @@ Public Class TaskService
 
         Dim task = GetTaskOrThrow(req.TaskId)
 
-        If task.CreatorId <> currentUserId Then
-            Throw ApiException.Forbidden("Chỉ người tạo task mới có quyền cập nhật phân quyền.")
+        If task.ProjectId.HasValue Then
+            Dim member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId)
+            If member Is Nothing OrElse (Not member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso Not member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)) Then
+                Throw ApiException.Forbidden("Bạn không có quyền cập nhật phân quyền task trong project này.")
+            End If
+        Else
+            If task.CreatorId <> currentUserId Then
+                Throw ApiException.Forbidden("Chỉ người tạo task mới có quyền cập nhật phân quyền.")
+            End If
         End If
 
         Dim assignment = _assignRepo.GetAssignment(req.TaskId, req.UserId)
@@ -160,8 +192,15 @@ Public Class TaskService
 
         Dim task = GetTaskOrThrow(req.TaskId)
 
-        If task.CreatorId <> currentUserId Then
-            Throw ApiException.Forbidden("Chỉ người tạo task mới có quyền thu hồi giao việc.")
+        If task.ProjectId.HasValue Then
+            Dim member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId)
+            If member Is Nothing OrElse (Not member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso Not member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)) Then
+                Throw ApiException.Forbidden("Bạn không có quyền thu hồi giao việc trong project này.")
+            End If
+        Else
+            If task.CreatorId <> currentUserId Then
+                Throw ApiException.Forbidden("Chỉ người tạo task mới có quyền thu hồi giao việc.")
+            End If
         End If
 
         Dim assignment = _assignRepo.GetAssignment(req.TaskId, req.UserId)
@@ -181,13 +220,20 @@ Public Class TaskService
 
         Dim task = GetTaskOrThrow(req.TaskId)
 
-        If task.CreatorId <> currentUserId Then
-            Dim assignment = _assignRepo.GetAssignment(req.TaskId, currentUserId)
-            If assignment Is Nothing Then
-                Throw ApiException.Forbidden("Bạn không được giao task này.")
+        If task.ProjectId.HasValue Then
+            Dim member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId)
+            If member Is Nothing OrElse (Not member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso Not member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)) Then
+                Throw ApiException.Forbidden("Bạn không có quyền thay đổi trạng thái task trong project này.")
             End If
-            If Not assignment.CanEdit Then
-                Throw ApiException.Forbidden("Bạn không có quyền thay đổi trạng thái task này.")
+        Else
+            If task.CreatorId <> currentUserId Then
+                Dim assignment = _assignRepo.GetAssignment(req.TaskId, currentUserId)
+                If assignment Is Nothing Then
+                    Throw ApiException.Forbidden("Bạn không được giao task này.")
+                End If
+                If Not assignment.CanEdit Then
+                    Throw ApiException.Forbidden("Bạn không có quyền thay đổi trạng thái task này.")
+                End If
             End If
         End If
 

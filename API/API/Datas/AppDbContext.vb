@@ -1,4 +1,4 @@
-﻿Imports System.Data.Entity
+Imports System.Data.Entity
 
 Public Class AppDbContext
     Inherits DbContext
@@ -11,6 +11,8 @@ Public Class AppDbContext
     Public Property Tasks As DbSet(Of TodoTask)
     Public Property TaskAssignments As DbSet(Of TaskAssignment)
     Public Property RefreshTokens As DbSet(Of RefreshToken)
+    Public Property Projects As DbSet(Of Project)
+    Public Property ProjectMembers As DbSet(Of ProjectMember)
     Protected Overrides Sub OnModelCreating(
     modelBuilder As DbModelBuilder)
 
@@ -18,6 +20,8 @@ Public Class AppDbContext
         modelBuilder.Configurations.Add(New TaskConfiguration())
         modelBuilder.Configurations.Add(New TaskAssignmentConfiguration())
         modelBuilder.Configurations.Add(New RefreshTokenConfiguration())
+        modelBuilder.Configurations.Add(New ProjectConfiguration())
+        modelBuilder.Configurations.Add(New ProjectMemberConfiguration())
 
         MyBase.OnModelCreating(modelBuilder)
 

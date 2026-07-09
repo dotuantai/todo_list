@@ -1,10 +1,12 @@
-﻿Imports System.Web.Http
+Imports System.Web.Http
 Imports System.Web.Optimization
 
 Public Class WebApiApplication
     Inherits System.Web.HttpApplication
 
     Sub Application_Start()
+        System.Data.Entity.Database.SetInitializer(New System.Data.Entity.MigrateDatabaseToLatestVersion(Of AppDbContext, Migrations.Configuration)())
+
         AreaRegistration.RegisterAllAreas()
         GlobalConfiguration.Configure(AddressOf WebApiConfig.Register)
         FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters)
