@@ -70,7 +70,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AuthLayout from '../components/AuthLayout.vue'
-import { register } from '../Services/authService.js'
+import { register } from '../services/authService.js'
 import { toastError, toastSuccess, extractMessage } from '../utils/swal.js'
 
 const router = useRouter()

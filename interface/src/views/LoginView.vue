@@ -54,7 +54,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AuthLayout from '../components/AuthLayout.vue'
-import { loginn } from '../Services/authService.js'
+import { loginn } from '../services/authService.js'
 import { toastError, extractMessage } from '../utils/swal.js'
 
 const router = useRouter()
