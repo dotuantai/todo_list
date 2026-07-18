@@ -45,7 +45,7 @@ namespace API_v2.Services
                 Description = req.Description?.Trim(),
                 CreatedAt = DateTime.UtcNow,
                 CreatorId = creatorId,
-                Deadline = req.Deadline,
+                Deadline = NormalizeToUtc(req.Deadline),
                 Status = status,
                 ProjectId = projectId
             });
@@ -87,7 +87,7 @@ namespace API_v2.Services
 
             task.Title = req.Title.Trim();
             task.Description = req.Description?.Trim();
-            task.Deadline = req.Deadline;
+            task.Deadline = NormalizeToUtc(req.Deadline);
             task.Status = ParseTaskStatus(req.Status, task.Status);
             _taskRepo.Save();
 
@@ -294,6 +294,21 @@ namespace API_v2.Services
                 throw ApiException.NotFound($"Task #{taskId} does not exist.");
             }
             return task;
+        }
+
+        private static DateTime? NormalizeToUtc(DateTime? value)
+        {
+            if (!value.HasValue)
+            {
+                return null;
+            }
+
+            return value.Value.Kind switch
+            {
+                DateTimeKind.Unspecified => DateTime.SpecifyKind(value.Value, DateTimeKind.Utc),
+                DateTimeKind.Local => value.Value.ToUniversalTime(),
+                _ => value.Value
+            };
         }
 
         private TaskStatusModel ParseTaskStatus(string? status, TaskStatusModel defaultValue)

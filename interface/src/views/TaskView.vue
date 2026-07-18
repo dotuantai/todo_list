@@ -3,41 +3,13 @@
 
     <!-- Page header -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-      <div>
-        <div class="d-flex align-items-center gap-2 flex-wrap text-start">
-          <h2 class="fw-bold mb-0 page-title">
-            {{ projectStore.currentProject ? projectStore.currentProject.Name : 'TaskFlow Board' }}
-          </h2>
-          <!-- Edit/Delete project actions for Owner -->
-          <div v-if="projectStore.currentProject && projectStore.userRole === 'Owner'" class="d-flex gap-1 align-items-center">
-            <button class="btn btn-sm btn-outline-secondary p-1 border-0" @click="handleEditProject" title="Edit project" style="line-height: 1;">
-              <i class="bi bi-pencil-square fs-5"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-danger p-1 border-0" @click="handleDeleteProject" title="Delete project" style="line-height: 1;">
-              <i class="bi bi-trash fs-5"></i>
-            </button>
-          </div>
-        </div>
-        <p class="text-muted small mb-0 mt-1 text-start">
-          {{ projectStore.currentProject ? projectStore.currentProject.Description || 'No project description.' : 'Select a project to start.' }}
-        </p>
-      </div>
-      <div class="d-flex align-items-center gap-2">
-        <!-- Bootstrap Nav Pills for Tab Toggle -->
-        <div class="nav nav-pills bg-body-secondary p-1 rounded-3 border" v-if="projectStore.currentProjectId" style="font-size: 0.9rem;">
-          <button class="nav-link px-3 py-1.5 fw-semibold d-flex align-items-center gap-2 border-0" :class="{ active: activeTab === 'board' }" @click="activeTab = 'board'" style="border-radius: 6px;">
-            <i class="bi bi-kanban"></i> Task Board <span class="badge" :class="activeTab === 'board' ? 'bg-white text-primary' : 'bg-secondary bg-opacity-10 text-secondary'">{{ tasks.length }}</span>
-          </button>
-          <button class="nav-link px-3 py-1.5 fw-semibold d-flex align-items-center gap-2 border-0" :class="{ active: activeTab === 'members' }" @click="activeTab = 'members'" style="border-radius: 6px;">
-            <i class="bi bi-people"></i> Members <span class="badge" :class="activeTab === 'members' ? 'bg-white text-primary' : 'bg-secondary bg-opacity-10 text-secondary'">{{ members.length }}</span>
-          </button>
-        </div>
-        <!-- Refresh Button -->
-        <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center" @click="refreshAll" :disabled="loading || loadingMembers" title="Refresh" style="width: 38px; height: 38px; border-radius: 8px;">
+     
+      <!-- <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center" @click="refreshAll" :disabled="loading" title="Refresh" style="width: 38px; height: 38px; border-radius: 8px;">
           <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
           <span v-else class="spinner-border spinner-border-sm text-secondary" role="status"></span>
         </button>
-      </div>
+      </div> -->
     </div>
 
     <!-- Empty Project Selection State -->
@@ -47,8 +19,8 @@
       <p class="text-muted mx-auto" style="max-width: 480px;">Please select a project from the sidebar or create a new one to start managing your tasks.</p>
     </div>
 
-    <!-- Kanban Board Tab -->
-    <div v-else-if="activeTab === 'board'" class="row g-3 text-start align-items-start">
+    <!-- Kanban Board -->
+    <div v-else class="row g-3 text-start align-items-start">
       <div v-for="col in columns"
           :key="col.status"
           class="col-12 col-md-6 col-lg-3"
@@ -109,104 +81,7 @@
       </div>
     </div>
 
-    <!-- Members Management Tab -->
-    <div v-else-if="activeTab === 'members'" class="card border-0 shadow-sm p-4 rounded-3 bg-body">
-      <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
-        <div class="text-start">
-          <h4 class="fw-bold mb-1 text-body h5">Project Members</h4>
-          <p class="text-muted small mb-0">Manage the project member list and their corresponding roles.</p>
-        </div>
-        
-        <!-- Add member form (only visible to Owner) -->
-        <div v-if="projectStore.userRole === 'Owner'" class="d-flex gap-2 align-items-center flex-wrap">
-          <input 
-            v-model="memberEmail" 
-            type="email" 
-            class="form-control form-control-sm" 
-            placeholder="Enter member email..."
-            style="width: 250px; border-radius: 8px; height: 38px;"
-          />
-          <select 
-            v-model="memberRole" 
-            class="form-select form-select-sm" 
-            style="width: 120px; border-radius: 8px; height: 38px;"
-          >
-            <option value="Owner">Owner</option>
-            <option value="Editor">Editor</option>
-            <option value="Viewer">Viewer</option>
-          </select>
-          <button 
-            class="btn btn-sm btn-primary fw-semibold d-flex align-items-center justify-content-center" 
-            @click="addProjectMember"
-            :disabled="!memberEmail"
-            style="border-radius: 8px; height: 38px; padding: 0 16px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"
-          >
-            Add
-          </button>
-        </div>
-      </div>
 
-      <div v-if="loadingMembers" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status"></div>
-      </div>
-
-      <div v-else class="table-responsive">
-        <table class="table table-hover align-middle border-0 mb-0">
-          <thead class="table-light">
-            <tr>
-              <th scope="col" class="border-0 rounded-start text-start" style="padding: 12px 16px;">Member</th>
-              <th scope="col" class="border-0 text-start" style="padding: 12px 16px;">Role</th>
-              <th scope="col" class="border-0 text-start" style="padding: 12px 16px;">Joined</th>
-              <th scope="col" class="border-0 rounded-end text-end" style="padding: 12px 16px; width: 120px;" v-if="projectStore.userRole === 'Owner'">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="user in members" :key="user.UserId" class="border-bottom">
-              <td style="padding: 16px;" class="text-start">
-                <div class="d-flex align-items-center gap-3">
-                  <div class="user-avatar bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width:38px; height:38px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
-                    {{ userInitial(user.Email) }}
-                  </div>
-                  <div class="text-start">
-                    <div class="fw-semibold text-body">{{ user.Email }}</div>
-                    <div class="text-muted font-monospace" style="font-size:10px;">ID: {{ user.UserId }}</div>
-                  </div>
-                </div>
-              </td>
-              <td style="padding: 16px;" class="text-start">
-                <select 
-                  v-if="projectStore.userRole === 'Owner' && projectStore.currentProject?.OwnerId !== user.UserId"
-                  :value="user.Role"
-                  @change="changeMemberRole(user, $event.target.value)"
-                  class="form-select form-select-sm"
-                  style="width: 110px; border-radius: 8px;"
-                >
-                  <option value="Owner">Owner</option>
-                  <option value="Editor">Editor</option>
-                  <option value="Viewer">Viewer</option>
-                </select>
-                <span v-else class="badge text-uppercase font-monospace" :class="getRoleBadgeClass(user.Role)" style="font-size: 10px; padding: 4px 8px;">
-                  {{ user.Role }}
-                </span>
-              </td>
-              <td class="text-muted small text-start" style="padding: 16px;">
-                {{ formatDate(user.JoinedAt) }}
-              </td>
-              <td class="text-end" style="padding: 16px;" v-if="projectStore.userRole === 'Owner'">
-                <button 
-                  v-if="projectStore.currentProject?.OwnerId !== user.UserId"
-                  class="btn btn-sm btn-outline-danger" 
-                  @click="removeProjectMember(user)"
-                  style="border-radius: 8px; padding: 4px 10px;"
-                >
-                  Remove
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
 
     <!-- ── Task Detail Modal ── -->
     <Teleport to="body">
@@ -434,14 +309,14 @@
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { assignTask, updateTask, updatePermission, removeAssignment, updateStatusTask, deleteTask } from '../services/taskService.js'
 import { getMembers, addMember, updateMemberRole, removeMember, getProjectTasks, updateProject, deleteProject } from '../services/projectService.js'
-import { projectStore } from '../utils/projectStore.js'
+import { useProjectStore } from '../stores/projectStore.js'
+const projectStore = useProjectStore()
 import { toastSuccess, toastError, confirm, extractMessage } from '../utils/swal.js'
 import Swal from 'sweetalert2'
 
 const tasks         = ref([])
 const loading       = ref(false)
 const saving        = ref(false)
-const activeTab     = ref('board')
 const modal         = reactive({ open: false, task: null })
 const editMode      = ref(false)
 const editForm      = reactive({ title: '', description: '', deadline: '', status: '' })
@@ -449,8 +324,6 @@ const editForm      = reactive({ title: '', description: '', deadline: '', statu
 // Project members states
 const members        = ref([])
 const loadingMembers = ref(false)
-const memberEmail    = ref('')
-const memberRole     = ref('Editor')
 
 // Assignee selection states
 const selectedAssigneeId = ref(null)
@@ -602,109 +475,7 @@ const refreshAll = async () => {
   await Promise.all([loadData(), loadMembers()])
 }
 
-// Membership Actions
-const addProjectMember = async () => {
-  if (!memberEmail.value || !memberEmail.value.trim()) return
-  try {
-    await addMember(projectStore.currentProjectId, memberEmail.value.trim(), memberRole.value)
-    toastSuccess('Member added!')
-    memberEmail.value = ''
-    await loadMembers()
-  } catch (err) {
-    toastError(extractMessage(err, 'Failed to add member.'))
-  }
-}
-
-const changeMemberRole = async (user, newRole) => {
-  try {
-    await updateMemberRole(projectStore.currentProjectId, user.UserId, newRole)
-    toastSuccess('Member role updated!')
-    await loadMembers()
-  } catch (err) {
-    toastError(extractMessage(err, 'Failed to update role.'))
-  }
-}
-
-const removeProjectMember = async (user) => {
-  const ok = await confirm(
-    'Remove member?',
-    `Are you sure you want to remove <strong>${user.Email}</strong> from the project?`,
-    'Remove'
-  )
-  if (!ok) return
-  try {
-    await removeMember(projectStore.currentProjectId, user.UserId)
-    toastSuccess('Member removed from project!')
-    await loadMembers()
-  } catch (err) {
-    toastError(extractMessage(err, 'Failed to remove member.'))
-  }
-}
-
-// Project Actions (Edit / Delete)
-const handleEditProject = async () => {
-  if (!projectStore.currentProject) return
-  const currentProj = projectStore.currentProject
-
-  const { value: formValues } = await Swal.fire({
-    title: 'Edit Project',
-    html:
-      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Project Name</label></div>' +
-      `<input id="swal-proj-name" class="form-control mb-3" placeholder="Enter project name" value="${currentProj.Name || ''}" style="border-radius:10px; height:42px;">` +
-      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Description (optional)</label></div>' +
-      `<textarea id="swal-proj-desc" class="form-control" placeholder="Enter description" rows="3" style="border-radius:10px;">${currentProj.Description || ''}</textarea>`,
-    focusConfirm: false,
-    showCancelButton: true,
-    confirmButtonText: 'Save Changes',
-    cancelButtonText: 'Cancel',
-    customClass: {
-      popup: 'swal-popup',
-      confirmButton: 'swal-btn swal-btn--confirm',
-      cancelButton: 'swal-btn swal-btn--cancel'
-    },
-    buttonsStyling: false,
-    preConfirm: () => {
-      const name = document.getElementById('swal-proj-name').value
-      const description = document.getElementById('swal-proj-desc').value
-      if (!name || !name.trim()) {
-        Swal.showValidationMessage('Project name is required')
-      }
-      return { name, description }
-    }
-  })
-
-  if (formValues) {
-    try {
-      await updateProject(currentProj.Id, formValues)
-      toastSuccess('Project updated successfully!')
-      window.dispatchEvent(new Event('projects-changed'))
-    } catch (err) {
-      toastError(extractMessage(err, 'Failed to update project.'))
-    }
-  }
-}
-
-const handleDeleteProject = async () => {
-  if (!projectStore.currentProject) return
-  const currentProj = projectStore.currentProject
-
-  const ok = await confirm(
-    'Delete project?',
-    `Are you sure you want to delete project <strong>${currentProj.Name}</strong>? This will remove all tasks and members from this project and cannot be undone.`,
-    'Delete Project'
-  )
-  if (!ok) return
-
-  try {
-    await deleteProject(currentProj.Id)
-    toastSuccess('Project deleted successfully!')
-    projectStore.setCurrentProjectId(null)
-    window.dispatchEvent(new Event('projects-changed'))
-  } catch (err) {
-    console.error(err)
-    toastError(extractMessage(err, 'Failed to delete project.'))
-  }
-}
+// Note: Project actions & member management are handled in SettingsView and MembersView respectively.
 
 // Task assignment Actions
 const assignUser = async () => {
@@ -823,7 +594,6 @@ const onDrop = async (e, targetStatus) => {
 
 // Watch active project changes
 watch(() => projectStore.currentProjectId, () => {
-  activeTab.value = 'board'
   refreshAll()
 })
 
