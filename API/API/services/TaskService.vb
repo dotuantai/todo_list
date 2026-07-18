@@ -17,14 +17,14 @@ Public Class TaskService
         ' Check project membership & role (Owner or Editor)
         Dim member = _projectRepo.GetMember(projectId, creatorId)
         If member Is Nothing Then
-            Throw ApiException.Forbidden("Bạn không phải thành viên của project này.")
+            Throw ApiException.Forbidden("You are not a member of this project.")
         End If
         If Not member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso Not member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase) Then
-            Throw ApiException.Forbidden("Chỉ có Owner hoặc Editor mới được tạo task.")
+            Throw ApiException.Forbidden("Only Owners or Editors can create tasks.")
         End If
 
         If String.IsNullOrWhiteSpace(req.Title) Then
-            Throw ApiException.BadRequest("Tiêu đề task không được để trống.")
+            Throw ApiException.BadRequest("Task title cannot be empty.")
         End If
 
         Dim status = ParseTaskStatus(req.Status, TaskStatus.ToDo)
@@ -40,7 +40,7 @@ Public Class TaskService
         })
         _taskRepo.Save()
 
-        Return "Tạo task thành công."
+        Return "Task created successfully."
 
     End Function
 
@@ -52,19 +52,19 @@ Public Class TaskService
         If task.ProjectId.HasValue Then
             Dim member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId)
             If member Is Nothing OrElse (Not member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso Not member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)) Then
-                Throw ApiException.Forbidden("Bạn không có quyền chỉnh sửa task trong project này.")
+                Throw ApiException.Forbidden("You do not have permission to edit tasks in this project.")
             End If
         Else
             If task.CreatorId <> currentUserId Then
                 Dim assignment = _assignRepo.GetAssignment(req.TaskId, currentUserId)
                 If assignment Is Nothing OrElse Not assignment.CanEdit Then
-                    Throw ApiException.Forbidden("Bạn không có quyền chỉnh sửa task này.")
+                    Throw ApiException.Forbidden("You do not have permission to edit this task.")
                 End If
             End If
         End If
 
         If String.IsNullOrWhiteSpace(req.Title) Then
-            Throw ApiException.BadRequest("Tiêu đề task không được để trống.")
+            Throw ApiException.BadRequest("Task title cannot be empty.")
         End If
 
         task.Title = req.Title.Trim()
@@ -74,7 +74,7 @@ Public Class TaskService
 
         _taskRepo.Save()
 
-        Return "Cập nhật task thành công."
+        Return "Task updated successfully."
 
     End Function
 
@@ -86,18 +86,18 @@ Public Class TaskService
         If task.ProjectId.HasValue Then
             Dim member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId)
             If member Is Nothing OrElse (Not member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso Not member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)) Then
-                Throw ApiException.Forbidden("Bạn không có quyền xóa task trong project này.")
+                Throw ApiException.Forbidden("You do not have permission to delete tasks in this project.")
             End If
         Else
             If task.CreatorId <> currentUserId Then
-                Throw ApiException.Forbidden("Chỉ người tạo task mới có quyền xóa.")
+                Throw ApiException.Forbidden("Only the task creator can delete this task.")
             End If
         End If
 
         _taskRepo.Delete(task)
         _taskRepo.Save()
 
-        Return "Xóa task thành công."
+        Return "Task deleted successfully."
 
     End Function
 
@@ -109,25 +109,25 @@ Public Class TaskService
         If task.ProjectId.HasValue Then
             Dim member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId)
             If member Is Nothing OrElse (Not member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso Not member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)) Then
-                Throw ApiException.Forbidden("Bạn không có quyền giao task trong project này.")
+                Throw ApiException.Forbidden("You do not have permission to assign tasks in this project.")
             End If
             
             Dim targetMember = _projectRepo.GetMember(task.ProjectId.Value, req.UserId)
             If targetMember Is Nothing Then
-                Throw ApiException.BadRequest("Người dùng được giao phải là thành viên dự án.")
+                Throw ApiException.BadRequest("The assignee must be a project member.")
             End If
         Else
             If task.CreatorId <> currentUserId Then
-                Throw ApiException.Forbidden("Chỉ người tạo task mới có quyền giao task.")
+                Throw ApiException.Forbidden("Only the task creator can assign tasks.")
             End If
         End If
 
         If req.UserId = currentUserId Then
-            Throw ApiException.BadRequest("Không thể giao task cho chính mình.")
+            Throw ApiException.BadRequest("Cannot assign a task to yourself.")
         End If
 
         If _assignRepo.Exists(req.TaskId, req.UserId) Then
-            Throw ApiException.Conflict("User này đã được giao task rồi.")
+            Throw ApiException.Conflict("This user has already been assigned to this task.")
         End If
 
         _assignRepo.Add(New TaskAssignment With {
@@ -139,7 +139,7 @@ Public Class TaskService
         })
         _assignRepo.Save()
 
-        Return "Giao task thành công."
+        Return "Task assigned successfully."
 
     End Function
 
@@ -149,7 +149,7 @@ Public Class TaskService
         ' Check project membership
         Dim member = _projectRepo.GetMember(projectId, userId)
         If member Is Nothing Then
-            Throw ApiException.Forbidden("Bạn không phải thành viên của project này.")
+            Throw ApiException.Forbidden("You are not a member of this project.")
         End If
 
         Return _taskRepo.GetTasksByProjectId(projectId).
@@ -166,24 +166,24 @@ Public Class TaskService
         If task.ProjectId.HasValue Then
             Dim member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId)
             If member Is Nothing OrElse (Not member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso Not member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)) Then
-                Throw ApiException.Forbidden("Bạn không có quyền cập nhật phân quyền task trong project này.")
+                Throw ApiException.Forbidden("You do not have permission to update task permissions in this project.")
             End If
         Else
             If task.CreatorId <> currentUserId Then
-                Throw ApiException.Forbidden("Chỉ người tạo task mới có quyền cập nhật phân quyền.")
+                Throw ApiException.Forbidden("Only the task creator can update permissions.")
             End If
         End If
 
         Dim assignment = _assignRepo.GetAssignment(req.TaskId, req.UserId)
         If assignment Is Nothing Then
-            Throw ApiException.NotFound("User này chưa được giao task.")
+            Throw ApiException.NotFound("This user has not been assigned to this task.")
         End If
 
         assignment.CanView = req.CanView
         assignment.CanEdit = req.CanEdit
         _assignRepo.Save()
 
-        Return "Cập nhật quyền thành công."
+        Return "Permissions updated successfully."
 
     End Function
 
@@ -195,23 +195,23 @@ Public Class TaskService
         If task.ProjectId.HasValue Then
             Dim member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId)
             If member Is Nothing OrElse (Not member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso Not member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)) Then
-                Throw ApiException.Forbidden("Bạn không có quyền thu hồi giao việc trong project này.")
+                Throw ApiException.Forbidden("You do not have permission to revoke assignments in this project.")
             End If
         Else
             If task.CreatorId <> currentUserId Then
-                Throw ApiException.Forbidden("Chỉ người tạo task mới có quyền thu hồi giao việc.")
+                Throw ApiException.Forbidden("Only the task creator can revoke assignments.")
             End If
         End If
 
         Dim assignment = _assignRepo.GetAssignment(req.TaskId, req.UserId)
         If assignment Is Nothing Then
-            Throw ApiException.NotFound("User này chưa được giao task.")
+            Throw ApiException.NotFound("This user has not been assigned to this task.")
         End If
 
         _assignRepo.Remove(assignment)
         _assignRepo.Save()
 
-        Return "Thu hồi giao việc thành công."
+        Return "Assignment revoked successfully."
 
     End Function
 
@@ -223,16 +223,16 @@ Public Class TaskService
         If task.ProjectId.HasValue Then
             Dim member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId)
             If member Is Nothing OrElse (Not member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso Not member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)) Then
-                Throw ApiException.Forbidden("Bạn không có quyền thay đổi trạng thái task trong project này.")
+                Throw ApiException.Forbidden("You do not have permission to change task status in this project.")
             End If
         Else
             If task.CreatorId <> currentUserId Then
                 Dim assignment = _assignRepo.GetAssignment(req.TaskId, currentUserId)
                 If assignment Is Nothing Then
-                    Throw ApiException.Forbidden("Bạn không được giao task này.")
+                    Throw ApiException.Forbidden("You are not assigned to this task.")
                 End If
                 If Not assignment.CanEdit Then
-                    Throw ApiException.Forbidden("Bạn không có quyền thay đổi trạng thái task này.")
+                    Throw ApiException.Forbidden("You do not have permission to change the status of this task.")
                 End If
             End If
         End If
@@ -245,7 +245,7 @@ Public Class TaskService
     Private Function GetTaskOrThrow(taskId As Integer) As TodoTask
         Dim task = _taskRepo.GetById(taskId)
         If task Is Nothing Then
-            Throw ApiException.NotFound($"Task #{taskId} không tồn tại.")
+            Throw ApiException.NotFound($"Task #{taskId} does not exist.")
         End If
         Return task
     End Function
@@ -257,7 +257,7 @@ Public Class TaskService
         If Not [Enum].TryParse(Of TaskStatus)(status, True, parsed) Then
             Dim validValues = String.Join(", ", [Enum].GetNames(GetType(TaskStatus)))
             Throw ApiException.BadRequest(
-                $"Trạng thái '{status}' không hợp lệ. Các giá trị hợp lệ: {validValues}.")
+                $"Status '{status}' is invalid. Valid values: {validValues}.")
         End If
         Return parsed
     End Function

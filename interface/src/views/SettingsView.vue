@@ -3,8 +3,8 @@
     
     <!-- Page Header -->
     <div class="mb-4">
-      <h2 class="fw-bold mb-0 page-title text-body">Cài đặt</h2>
-      <p class="text-muted small mb-0 mt-1">Quản lý giao diện, tài khoản cá nhân và thông báo hệ thống.</p>
+      <h2 class="fw-bold mb-0 page-title text-body">Settings</h2>
+      <p class="text-muted small mb-0 mt-1">Manage appearance, personal account, and system notifications.</p>
     </div>
 
     <div class="row g-4">
@@ -18,8 +18,8 @@
               <i class="bi bi-palette-fill fs-5"></i>
             </div>
             <div>
-              <h4 class="fw-bold text-body h5 mb-0">Giao diện ứng dụng</h4>
-              <p class="text-muted small mb-0">Tùy chỉnh chủ đề sáng tối phù hợp với môi trường làm việc.</p>
+              <h4 class="fw-bold text-body h5 mb-0">Application Theme</h4>
+              <p class="text-muted small mb-0">Customize light/dark theme to suit your working environment.</p>
             </div>
           </div>
           
@@ -27,8 +27,8 @@
 
           <div class="d-flex align-items-center justify-content-between py-2">
             <div>
-              <div class="fw-semibold text-body">Chế độ tối (Dark Mode)</div>
-              <p class="text-muted small mb-0">Chuyển đổi toàn bộ hệ thống sang giao diện tối để bảo vệ mắt.</p>
+              <div class="fw-semibold text-body">Dark Mode</div>
+              <p class="text-muted small mb-0">Switch the entire system to dark theme to protect your eyes.</p>
             </div>
             <div class="form-check form-switch fs-4">
               <input 
@@ -51,8 +51,8 @@
               <i class="bi bi-bell-fill fs-5"></i>
             </div>
             <div>
-              <h4 class="fw-bold text-body h5 mb-0">Thông báo cấu hình</h4>
-              <p class="text-muted small mb-0">Cài đặt cách bạn nhận thông báo từ hệ thống.</p>
+              <h4 class="fw-bold text-body h5 mb-0">Notification Settings</h4>
+              <p class="text-muted small mb-0">Configure how you receive notifications from the system.</p>
             </div>
           </div>
           
@@ -60,8 +60,8 @@
 
           <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
             <div>
-              <div class="fw-semibold text-body">Thông báo qua Email</div>
-              <p class="text-muted small mb-0">Gửi mail tóm tắt khi có công việc mới được giao.</p>
+              <div class="fw-semibold text-body">Email Notifications</div>
+              <p class="text-muted small mb-0">Send summary emails when new tasks are assigned.</p>
             </div>
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" role="switch" checked disabled />
@@ -70,8 +70,8 @@
 
           <div class="d-flex align-items-center justify-content-between py-2">
             <div>
-              <div class="fw-semibold text-body">Thông báo đẩy trên trình duyệt</div>
-              <p class="text-muted small mb-0">Hiện thông báo nhỏ ở góc màn hình khi có cập nhật tức thời.</p>
+              <div class="fw-semibold text-body">Browser Push Notifications</div>
+              <p class="text-muted small mb-0">Show small notifications on the screen corner for real-time updates.</p>
             </div>
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" role="switch" />
@@ -89,23 +89,23 @@
           </div>
           <h4 class="fw-bold text-body mb-1">{{ userEmail }}</h4>
           <span class="badge text-uppercase font-monospace bg-light text-secondary border rounded-pill px-3 py-1.5" style="font-size: 10px;">
-            Hệ thống quản lý
+            Management System
           </span>
 
           <hr class="my-4" />
 
           <div class="text-start">
             <div class="mb-3">
-              <span class="text-secondary small d-block">Tên tài khoản:</span>
+              <span class="text-secondary small d-block">Account name:</span>
               <span class="text-body fw-medium">{{ userEmail.split('@')[0] }}</span>
             </div>
             <div class="mb-3">
-              <span class="text-secondary small d-block">Môi trường:</span>
+              <span class="text-secondary small d-block">Environment:</span>
               <span class="text-body fw-medium">SaaS Cloud Production</span>
             </div>
             <div>
-              <span class="text-secondary small d-block">Trạng thái kết nối:</span>
-              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Đang hoạt động</span>
+              <span class="text-secondary small d-block">Connection status:</span>
+              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Active</span>
             </div>
           </div>
         </div>
@@ -131,7 +131,7 @@ const handleThemeToggle = () => {
   document.documentElement.setAttribute('data-bs-theme', theme)
   localStorage.setItem('theme', theme)
   window.dispatchEvent(new CustomEvent('theme-changed', { detail: theme }))
-  toastSuccess(`Đã chuyển sang chế độ ${isDarkMode.value ? 'Tối' : 'Sáng'}!`)
+  toastSuccess(`Switched to ${isDarkMode.value ? 'Dark' : 'Light'} mode!`)
 }
 
 onMounted(() => {

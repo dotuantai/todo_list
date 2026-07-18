@@ -3,14 +3,85 @@
 :root {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   font-size: 16px;
+
+  /* Theme-aware primary colors mapping */
+  --bs-body-bg: #f8fafc;
+  --bs-body-color: #1e293b;
+  --bs-border-color: #e2e8f0;
+
+  /* Custom scrollbar colors */
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+
+  /* Status Colors for columns & badges (Light mode) */
+  --status-todo-color: #64748B;
+  --status-todo-bg-light: #f8fafc;
+  --status-todo-bg-mid: #e2e8f0;
+
+  --status-inprogress-color: #2563EB;
+  --status-inprogress-bg-light: #eff6ff;
+  --status-inprogress-bg-mid: #dbeafe;
+
+  --status-done-color: #059669;
+  --status-done-bg-light: #ecfdf5;
+  --status-done-bg-mid: #d1fae5;
+
+  --status-closed-color: #ea580c;
+  --status-closed-bg-light: #fff7ed;
+  --status-closed-bg-mid: #fed7aa;
+}
+
+[data-bs-theme="dark"] {
+  /* Premium Slate-Navy Color Palette variables */
+  --bs-body-bg: #0b0f19;
+  --bs-body-bg-rgb: 11, 15, 25;
+  --bs-body-color: #cbd5e1;
+  --bs-body-color-rgb: 203, 213, 225;
+  
+  --bs-heading-color: #f8fafc;
+  
+  --bs-secondary-bg: #111827;
+  --bs-secondary-bg-rgb: 17, 24, 39;
+  --bs-tertiary-bg: #1f2937;
+  --bs-tertiary-bg-rgb: 31, 41, 55;
+
+  --bs-card-bg: #111827;
+  --bs-card-color: #cbd5e1;
+
+  --bs-border-color: #1e293b;
+  --bs-border-color-translucent: rgba(255, 255, 255, 0.08);
+
+  --bs-link-color: #818cf8;
+  --bs-link-hover-color: #a5b4fc;
+  
+  /* Scrollbars in Dark Mode */
+  --scrollbar-thumb: #334155;
+  --scrollbar-thumb-hover: #475569;
+
+  /* Kanban column background light and mid-tones (Dark mode) */
+  --status-todo-color: #94a3b8;
+  --status-todo-bg-light: #1e293b;
+  --status-todo-bg-mid: #334155;
+
+  --status-inprogress-color: #60a5fa;
+  --status-inprogress-bg-light: #1c2d5a;
+  --status-inprogress-bg-mid: #1e3a8a;
+
+  --status-done-color: #34d399;
+  --status-done-bg-light: #064e3b;
+  --status-done-bg-mid: #065f46;
+
+  --status-closed-color: #fb923c;
+  --status-closed-bg-light: #7c2d12;
+  --status-closed-bg-mid: #9a3412;
 }
 
 body {
   margin: 0;
   padding: 0;
   font-family: 'Inter', sans-serif;
-  background-color: #f8fafc;
-  color: #1e293b;
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
 }
 
 /* Custom Scrollbars */
@@ -22,10 +93,16 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--scrollbar-thumb);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--scrollbar-thumb-hover);
 }
 
+/* Bootstrap Table Light overrides in Dark Mode */
+[data-bs-theme="dark"] .table-light {
+  --bs-table-bg: #1f2937;
+  --bs-table-color: #f8fafc;
+  --bs-table-border-color: #1e293b;
+}

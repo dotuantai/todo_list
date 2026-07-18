@@ -18,7 +18,7 @@ Namespace Controllers
         Public Function Update(<FromBody> req As UpdateTaskRequest) As IHttpActionResult
             If req Is Nothing Then
                 Return Content(Net.HttpStatusCode.BadRequest,
-                    New ApiResponse(Of Object)(False, "Dữ liệu không hợp lệ.", Nothing))
+                    New ApiResponse(Of Object)(False, "Invalid data.", Nothing))
             End If
             Return Execute(Function() _taskService.UpdateTask(req, CurrentUserId))
         End Function
@@ -34,7 +34,7 @@ Namespace Controllers
         Public Function Assign(<FromBody> req As AssignTaskRequest) As IHttpActionResult
             If req Is Nothing Then
                 Return Content(Net.HttpStatusCode.BadRequest,
-                    New ApiResponse(Of Object)(False, "Dữ liệu không hợp lệ.", Nothing))
+                    New ApiResponse(Of Object)(False, "Invalid data.", Nothing))
             End If
             Return Execute(Function() _taskService.AssignTask(req, CurrentUserId))
         End Function
@@ -44,7 +44,7 @@ Namespace Controllers
         Public Function UpdatePermission(<FromBody> req As AssignTaskRequest) As IHttpActionResult
             If req Is Nothing Then
                 Return Content(Net.HttpStatusCode.BadRequest,
-                    New ApiResponse(Of Object)(False, "Dữ liệu không hợp lệ.", Nothing))
+                    New ApiResponse(Of Object)(False, "Invalid data.", Nothing))
             End If
             Return Execute(Function() _taskService.UpdatePermission(req, CurrentUserId))
         End Function
@@ -54,7 +54,7 @@ Namespace Controllers
         Public Function RemoveAssignment(<FromBody> req As RemoveAssignmentRequest) As IHttpActionResult
             If req Is Nothing Then
                 Return Content(Net.HttpStatusCode.BadRequest,
-                    New ApiResponse(Of Object)(False, "Dữ liệu không hợp lệ.", Nothing))
+                    New ApiResponse(Of Object)(False, "Invalid data.", Nothing))
             End If
             Return Execute(Function() _taskService.RemoveAssignment(req, CurrentUserId))
         End Function
@@ -64,7 +64,7 @@ Namespace Controllers
         Public Function ChangeStatus(<FromBody> req As ChangeTaskStatusRequest) As IHttpActionResult
             If req Is Nothing Then
                 Return Content(Net.HttpStatusCode.BadRequest,
-                    New ApiResponse(Of Object)(False, "Dữ liệu không hợp lệ.", Nothing))
+                    New ApiResponse(Of Object)(False, "Invalid data.", Nothing))
             End If
             Return Execute(Sub() _taskService.ChangeStatus(req, CurrentUserId))
         End Function

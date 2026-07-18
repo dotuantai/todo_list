@@ -12,7 +12,7 @@ Public MustInherit Class BaseApiController
             Dim claim = identity?.FindFirst(ClaimTypes.NameIdentifier)
 
             If claim Is Nothing Then
-                Throw ApiException.Unauthorized("Không xác định được người dùng từ token.")
+                Throw ApiException.Unauthorized("Unable to identify user from token.")
             End If
 
             Return Guid.Parse(claim.Value)
@@ -22,7 +22,7 @@ Public MustInherit Class BaseApiController
     Protected Function Execute(action As Action) As IHttpActionResult
         Try
             action()
-            Return Ok(New ApiResponse(Of Object)(True, "Thành công", Nothing))
+            Return Ok(New ApiResponse(Of Object)(True, "Success", Nothing))
         Catch ex As ApiException
             Return BuildError(ex)
         End Try
@@ -31,7 +31,7 @@ Public MustInherit Class BaseApiController
     Protected Function Execute(Of T)(action As Func(Of T)) As IHttpActionResult
         Try
             Dim result = action()
-            Return Ok(New ApiResponse(Of T)(True, "Thành công", result))
+            Return Ok(New ApiResponse(Of T)(True, "Success", result))
         Catch ex As ApiException
             Return BuildError(ex)
         End Try

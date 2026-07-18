@@ -20,7 +20,7 @@ Public Class GlobalExceptionHandler
         Else
             LogHelper.Error("Unhandled exception", ex)
             statusCode = HttpStatusCode.InternalServerError
-            message = "Đã xảy ra lỗi hệ thống, vui lòng thử lại sau."
+            message = "A system error occurred. Please try again later."
         End If
 
         Dim body = JsonConvert.SerializeObject(New With {

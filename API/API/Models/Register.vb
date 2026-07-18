@@ -1,10 +1,10 @@
-﻿Imports System.ComponentModel.DataAnnotations
+Imports System.ComponentModel.DataAnnotations
 
 Public Class Register
-    <Required(ErrorMessage:="Email khong duoc de trong")>
-    <EmailAddress(ErrorMessage:="Email khong hop le")>
+    <Required(ErrorMessage:="Email is required")>
+    <EmailAddress(ErrorMessage:="Invalid email address")>
     Public Property Email As String
-    <Required(ErrorMessage:="Mat khau khong duoc de trong")>
-    <MinLength(6, ErrorMessage:="Mat khau phai co it nhat 6 ky tu")>
+    <Required(ErrorMessage:="Password is required")>
+    <MinLength(6, ErrorMessage:="Password must be at least 6 characters")>
     Public Property Password As String
 End Class

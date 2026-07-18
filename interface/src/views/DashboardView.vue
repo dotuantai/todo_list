@@ -5,7 +5,7 @@
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
       <div>
         <h2 class="fw-bold mb-0 page-title text-body">Dashboard</h2>
-        <p class="text-muted small mb-0 mt-1">Tổng quan thông tin công việc, thành viên và tiến độ dự án của bạn.</p>
+        <p class="text-muted small mb-0 mt-1">Overview of your tasks, members, and project progress.</p>
       </div>
       <button 
         class="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
@@ -22,14 +22,14 @@
     <!-- Loading State -->
     <div v-if="loading && allTasks.length === 0" class="text-center py-5 my-5">
       <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
-      <p class="text-muted mt-3">Đang tải dữ liệu dashboard...</p>
+      <p class="text-muted mt-3">Loading dashboard data...</p>
     </div>
 
     <!-- Empty State -->
     <div v-else-if="projectStore.projects.length === 0" class="text-center py-5 bg-body rounded-4 shadow-sm border border-dashed p-4">
       <i class="bi bi-folder2-open text-primary" style="font-size: 4rem;"></i>
       <h3 class="fw-bold text-body mt-3">Welcome to TaskFlow Pro</h3>
-      <p class="text-muted mx-auto" style="max-width: 480px;">Bạn chưa tham gia dự án nào. Hãy bấm nút tạo dự án mới ở thanh bên để bắt tác quản lý công việc của bạn.</p>
+      <p class="text-muted mx-auto" style="max-width: 480px;">You haven't joined any projects yet. Click the create project button in the sidebar to start managing your work.</p>
     </div>
 
     <!-- Dashboard Content -->
@@ -41,7 +41,7 @@
           <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-muted small fw-bold text-uppercase tracking-wider">Dự án tham gia</span>
+                <span class="text-muted small fw-bold text-uppercase tracking-wider">Projects Joined</span>
                 <h3 class="fw-bold text-body mt-2 mb-0">{{ stats.totalProjects }}</h3>
               </div>
               <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-2.5 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
@@ -56,7 +56,7 @@
           <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-muted small fw-bold text-uppercase tracking-wider">Tổng số công việc</span>
+                <span class="text-muted small fw-bold text-uppercase tracking-wider">Total Tasks</span>
                 <h3 class="fw-bold text-body mt-2 mb-0">{{ stats.totalTasks }}</h3>
               </div>
               <div class="bg-indigo-light text-indigo rounded-3 p-2.5 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
@@ -71,7 +71,7 @@
           <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-muted small fw-bold text-uppercase tracking-wider">Đang xử lý</span>
+                <span class="text-muted small fw-bold text-uppercase tracking-wider">In Progress</span>
                 <h3 class="fw-bold text-body mt-2 mb-0">{{ stats.inProgressTasks }}</h3>
               </div>
               <div class="bg-warning bg-opacity-10 text-warning rounded-3 p-2.5 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
@@ -86,7 +86,7 @@
           <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-muted small fw-bold text-uppercase tracking-wider">Đã hoàn thành</span>
+                <span class="text-muted small fw-bold text-uppercase tracking-wider">Completed</span>
                 <h3 class="fw-bold text-body mt-2 mb-0">{{ stats.completedTasks }}</h3>
               </div>
               <div class="bg-success bg-opacity-10 text-success rounded-3 p-2.5 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
@@ -103,23 +103,23 @@
         <div class="col-12 col-lg-8">
           <div class="card border-0 shadow-sm p-4 rounded-3 h-100">
             <div class="d-flex align-items-center justify-content-between mb-3">
-              <h4 class="fw-bold text-body h5 mb-0">Công việc mới nhất</h4>
-              <router-link to="/tasks" class="btn btn-sm btn-link text-primary fw-semibold text-decoration-none p-0">Xem tất cả</router-link>
+              <h4 class="fw-bold text-body h5 mb-0">Recent Tasks</h4>
+              <router-link to="/tasks" class="btn btn-sm btn-link text-primary fw-semibold text-decoration-none p-0">View all</router-link>
             </div>
             
             <div v-if="allTasks.length === 0" class="text-center py-5 border border-dashed rounded-3 text-muted">
               <i class="bi bi-clipboard-x fs-2 opacity-50"></i>
-              <p class="small mt-2 mb-0">Chưa có công việc nào được tạo.</p>
+              <p class="small mt-2 mb-0">No tasks have been created yet.</p>
             </div>
 
             <div v-else class="table-responsive">
               <table class="table table-hover align-middle border-0 mb-0">
                 <thead class="table-light">
                   <tr>
-                    <th scope="col" class="border-0 rounded-start">Tiêu đề</th>
-                    <th scope="col" class="border-0">Dự án</th>
-                    <th scope="col" class="border-0">Hạn chót</th>
-                    <th scope="col" class="border-0 rounded-end">Trạng thái</th>
+                    <th scope="col" class="border-0 rounded-start">Title</th>
+                    <th scope="col" class="border-0">Project</th>
+                    <th scope="col" class="border-0">Deadline</th>
+                    <th scope="col" class="border-0 rounded-end">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -150,10 +150,10 @@
         <!-- Projects Progress List (Col-lg-4) -->
         <div class="col-12 col-lg-4">
           <div class="card border-0 shadow-sm p-4 rounded-3 h-100">
-            <h4 class="fw-bold text-body h5 mb-3">Tiến độ dự án</h4>
+            <h4 class="fw-bold text-body h5 mb-3">Project Progress</h4>
 
             <div v-if="projectProgressList.length === 0" class="text-center py-5 text-muted">
-              <p class="small mb-0">Chưa có dự án nào có tiến độ.</p>
+              <p class="small mb-0">No projects have progress data yet.</p>
             </div>
 
             <div v-else class="d-flex flex-column gap-3">
@@ -167,7 +167,7 @@
                   <span class="badge text-uppercase font-monospace" :class="getRoleBadgeClass(proj.role)" style="font-size: 8px; padding: 2px 4px;">{{ proj.role }}</span>
                 </div>
                 <div class="text-muted small text-truncate mb-3" style="font-size: 11px;">
-                  {{ proj.projDesc || 'Không có mô tả.' }}
+                  {{ proj.projDesc || 'No description.' }}
                 </div>
                 <div class="d-flex align-items-center gap-2">
                   <div class="progress flex-grow-1" style="height: 6px;">
@@ -255,7 +255,7 @@ const loadDashboardData = async () => {
     allTasks.value = tempTasks
   } catch (error) {
     console.error('Error loading dashboard data', error)
-    toastError('Không thể tải dữ liệu dashboard.')
+    toastError('Failed to load dashboard data.')
   } finally {
     loading.value = false
   }
@@ -290,7 +290,7 @@ const getStatusBadgeClass = (status) => {
     case 'Closed':
       return 'bg-warning-subtle text-warning border border-warning-subtle'
     default:
-      return 'bg-light text-dark'
+      return 'bg-body-secondary text-body border'
   }
 }
 
@@ -316,7 +316,7 @@ const getRoleBadgeClass = (role) => {
   }
 }
 
-const formatDateShort = (d) => d ? new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
+const formatDateShort = (d) => d ? new Date(d).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
 
 onMounted(() => {
   loadDashboardData()

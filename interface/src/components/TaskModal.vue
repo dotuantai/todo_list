@@ -142,12 +142,12 @@ const closeModal = () => {
 
 const handleSubmit = async () => {
   if (!form.value.title.trim()) {
-    toastWarning('Vui lòng nhập tiêu đề task!')
+    toastWarning('Please enter a task title!')
     return
   }
 
   if (!projectStore.currentProjectId) {
-    toastWarning('Vui lòng chọn một dự án trước!')
+    toastWarning('Please select a project first!')
     return
   }
 
@@ -163,15 +163,15 @@ const handleSubmit = async () => {
 
     await createProjectTask(projectStore.currentProjectId, payload)
 
-    toastSuccess('Tạo task thành công!')
+    toastSuccess('Task created successfully!')
     closeModal()
 
-    // Thông báo cho TaskView reload danh sách
+    // Notify TaskView to reload the list
     window.dispatchEvent(new CustomEvent('task-created'))
 
   } catch (error) {
     console.error('Create task failed:', error)
-    toastError(extractMessage(error, 'Tạo task thất bại.'))
+    toastError(extractMessage(error, 'Failed to create task.'))
   } finally {
     loading.value = false
   }

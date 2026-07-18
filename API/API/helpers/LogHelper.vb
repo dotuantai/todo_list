@@ -1,4 +1,4 @@
-﻿Imports System.IO
+Imports System.IO
 Imports System.Configuration
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
@@ -17,11 +17,11 @@ Public Class LogHelper
         [Enum].Parse(GetType(LogLevel),
             If(ConfigurationManager.AppSettings("LogLevel"), "Info"))
 
-    ' Tên file theo từng mức — tương đương winston transports
+    ' File names per level — equivalent to winston transports
     Private Shared ReadOnly _fileError As String = "error.log"
     Private Shared ReadOnly _fileCombined As String = "combined.log"
 
-    ' ─── Public API — tương đương logger.info / logger.warn / logger.error ───
+    ' ─── Public API — equivalent to logger.info / logger.warn / logger.error ───
 
     Public Shared Sub Info(message As String,
                            Optional data As Object = Nothing)
@@ -39,7 +39,7 @@ Public Class LogHelper
         WriteLog(LogLevel.Error, message, data, ex)
     End Sub
 
-    ' ─── Mask field nhạy cảm ─────────────────────────────────────
+    ' ─── Mask sensitive fields ─────────────────────────────────────
 
     Public Shared Function MaskSensitiveFields(body As String) As Object
         If String.IsNullOrEmpty(body) Then Return Nothing
@@ -102,7 +102,7 @@ Public Class LogHelper
             End SyncLock
 
         Catch
-            ' Không throw — tránh vòng lặp vô tận
+            ' Do not throw — avoid infinite loop
         End Try
     End Sub
 End Class
