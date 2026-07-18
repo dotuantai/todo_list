@@ -73,7 +73,7 @@ namespace API_v2.Helpers
 
             var json = JsonSerializer.Serialize(response, new JsonSerializerOptions
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                PropertyNamingPolicy = null
             });
 
             return context.Response.WriteAsync(json);

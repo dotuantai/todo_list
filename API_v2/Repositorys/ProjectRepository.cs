@@ -33,10 +33,9 @@ namespace API_v2.Repositorys
 
         public List<Project> GetProjectsByUserId(Guid userId)
         {
-            return _dbContext.ProjectMembers
-                .Where(pm => pm.UserId == userId)
-                .Select(pm => pm.Project)
+            return _dbContext.Projects
                 .Include(p => p.Owner)
+                .Where(p => p.ProjectMembers.Any(pm => pm.UserId == userId))
                 .ToList();
         }
 
