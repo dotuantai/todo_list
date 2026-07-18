@@ -55,7 +55,7 @@ namespace API_v2.Controllers
             };
             Response.Cookies.Append("refreshToken", result.RefreshToken ?? string.Empty, cookieOptions);
 
-            return Ok(new ApiResponse<LoginResponse>(true, "Sign-in successful.", result));
+            return Ok(new ApiResponse<object>(true, "Sign-in successful.", new { AccessToken = result.AccessToken }));
         }
 
         [HttpGet("search")]
@@ -76,7 +76,7 @@ namespace API_v2.Controllers
             }
 
             var result = _authService.Refresh(refreshToken);
-            return Ok(new ApiResponse<LoginResponse>(true, "Token refreshed successfully.", result));
+            return Ok(new ApiResponse<object>(true, "Token refreshed successfully.", new { AccessToken = result.AccessToken }));
         }
 
         [HttpPost("logout")]
