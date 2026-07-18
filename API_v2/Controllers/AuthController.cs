@@ -48,9 +48,9 @@ namespace API_v2.Controllers
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false,
+                Secure = true,
                 Path = "/",
-                SameSite = SameSiteMode.Lax,
+                SameSite = SameSiteMode.None,
                 Expires = DateTimeOffset.UtcNow.AddDays(7)
             };
             Response.Cookies.Append("refreshToken", result.RefreshToken ?? string.Empty, cookieOptions);
@@ -92,9 +92,9 @@ namespace API_v2.Controllers
             Response.Cookies.Delete("refreshToken", new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false,
+                Secure = true,
                 Path = "/",
-                SameSite = SameSiteMode.Lax
+                SameSite = SameSiteMode.None
             });
 
             return Ok(new ApiResponse<object>(true, "Signed out successfully.", null));

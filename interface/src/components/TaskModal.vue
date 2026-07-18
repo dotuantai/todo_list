@@ -110,7 +110,8 @@
 <script setup>
 import { ref, defineExpose } from 'vue'
 import { createProjectTask } from '../services/projectService.js'
-import { projectStore } from '../utils/projectStore.js'
+import { useProjectStore } from '../stores/projectStore.js'
+const projectStore = useProjectStore()
 import { toastSuccess, toastError, toastWarning, extractMessage } from '../utils/swal.js'
 
 const show = ref(false)

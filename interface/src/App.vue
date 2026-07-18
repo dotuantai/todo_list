@@ -10,15 +10,17 @@
     >
       <!-- Sidebar Header -->
       <div class="px-4 py-3 border-bottom d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center gap-3">
-          <div class="logo-box bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-5 rounded-3" style="width: 38px; height: 38px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
-            TF
+        <router-link to="/projects" class="d-flex align-items-center gap-3 text-decoration-none" style="cursor: pointer;">
+          <div class="logo-box text-white d-flex align-items-center justify-content-center fw-bold fs-5 rounded-3" :style="{ background: getProjectColor(projectStore.currentProject?.Name) }" style="width: 38px; height: 38px; min-width: 38px;">
+            {{ projectStore.currentProject ? projectStore.currentProject.Name[0].toUpperCase() : 'P' }}
           </div>
-          <div class="text-start">
-            <h1 class="mb-0 fs-6 fw-bold text-body lh-1" id="sidebarMenuLabel">TaskFlow Pro</h1>
-            <p class="small text-muted mb-0 mt-1" style="font-size: 10px;">Enterprise Plan</p>
+          <div class="text-start min-w-0">
+            <h1 class="mb-0 fs-6 fw-bold text-body lh-1 text-truncate" style="max-width: 140px;" id="sidebarMenuLabel">
+              {{ projectStore.currentProject?.Name || 'Project' }}
+            </h1>
+            <p class="small text-muted mb-0 mt-1" style="font-size: 10px;">Switch Workspace</p>
           </div>
-        </div>
+        </router-link>
         <!-- Close button visible only on mobile/tablet -->
         <button type="button" class="btn-close d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu" aria-label="Close"></button>
       </div>
@@ -32,38 +34,36 @@
 
       <!-- Sidebar Navigation Menu -->
       <div class="flex-grow-1 px-2 overflow-auto py-2">
-        <ul class="nav flex-column gap-1">
+        <ul class="nav flex-column gap-1 mb-4">
           <!-- Dashboard link -->
           <li class="nav-item">
-            <router-link to="/" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
+            <router-link :to="`/projects/${projectStore.currentProjectId}/dashboard`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
               <i class="bi bi-grid-1x2-fill fs-6"></i>
               <span class="small fw-medium">Dashboard</span>
             </router-link>
           </li>
           <!-- Task Board link -->
           <li class="nav-item">
-            <router-link to="/tasks" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
+            <router-link :to="`/projects/${projectStore.currentProjectId}/tasks`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
               <i class="bi bi-kanban fs-6"></i>
               <span class="small fw-medium">Task Board</span>
             </router-link>
           </li>
-          <!-- Projects List link -->
+          <!-- Members link -->
           <li class="nav-item">
-            <router-link to="/projects" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
-              <i class="bi bi-folder2-open fs-6"></i>
-              <span class="small fw-medium">Projects</span>
+            <router-link :to="`/projects/${projectStore.currentProjectId}/members`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
+              <i class="bi bi-people-fill fs-6"></i>
+              <span class="small fw-medium">Members</span>
             </router-link>
           </li>
           <!-- Settings link -->
           <li class="nav-item">
-            <router-link to="/settings" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
+            <router-link :to="`/projects/${projectStore.currentProjectId}/settings`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
               <i class="bi bi-gear-fill fs-6"></i>
               <span class="small fw-medium">Settings</span>
             </router-link>
           </li>
         </ul>
-        
-        
       </div>
 
       <!-- Sidebar Footer -->
@@ -99,10 +99,10 @@
             <i class="bi bi-list fs-4"></i>
           </button>
           <div class="d-lg-none d-flex align-items-center gap-2">
-            <div class="bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-2" style="width: 28px; height: 28px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important; font-size: 12px;">
-              TF
+            <div class="bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-2" :style="{ background: getProjectColor(projectStore.currentProject?.Name) }" style="width: 28px; height: 28px; font-size: 12px;">
+              {{ projectStore.currentProject ? projectStore.currentProject.Name[0].toUpperCase() : 'P' }}
             </div>
-            <span class="fw-bold text-body mb-0 fs-6">TaskFlow</span>
+            <span class="fw-bold text-body mb-0 fs-6">{{ projectStore.currentProject?.Name || 'Project' }}</span>
           </div>
         </div>
 
@@ -119,17 +119,14 @@
           <!-- User info details -->
           <div class="d-flex align-items-center gap-2">
             <div class="user-avatar-small bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width: 36px; height: 36px; font-size: 14px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
-              {{ currentInitial }}
+              {{ projectStore.currentInitial }}
             </div>
             
             <div class="d-none d-md-block text-start" style="line-height: 1.2;">
-              <div class="fw-semibold small text-body text-truncate" style="max-width: 150px;" :title="currentUserName">{{ currentUserName }}</div>
+              <div class="fw-semibold small text-body text-truncate" style="max-width: 150px;" :title="projectStore.currentUserEmail">{{ projectStore.currentUserEmail }}</div>
               <div class="text-muted" style="font-size:10px; margin-top:2px" v-if="projectStore.currentProject">
                 <span class="badge text-uppercase font-monospace" :class="getRoleBadgeClass(projectStore.userRole)" style="font-size: 8px; padding: 2px 4px;">{{ projectStore.userRole }}</span>
               </div>
-              <span class="badge bg-secondary-subtle text-secondary" style="font-size:8px; padding: 2px 4px;" v-else>
-                System
-              </span>
             </div>
           </div>
         </div>
@@ -148,47 +145,25 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import TaskModal from './components/TaskModal.vue'
 import { logout } from './services/authService.js'
-import { projectStore } from './utils/projectStore.js'
-import { getProjects, createProject } from './services/projectService.js'
-import { toastSuccess, toastError, extractMessage } from './utils/swal.js'
-import Swal from 'sweetalert2'
+import { useProjectStore } from './stores/projectStore.js'
+import { getMembers } from './services/projectService.js'
 
 const router = useRouter()
 const route = router.currentRoute
 const createTaskModal = ref(null)
+const projectStore = useProjectStore()
+const sidebarMembers = ref([])
 
 const openCreateTaskModal = () => {
   createTaskModal.value?.openModal()
 }
 
-const authRoutes = ['/login', '/register']
-const showAppShell = computed(() => !authRoutes.includes(route.value.path))
-
-const currentUserName = computed(() => {
-  const token = localStorage.getItem('token')
-  if (!token) return 'Guest'
-  try {
-    const base64Url = token.split('.')[1]
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
-    const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''))
-    const payload = JSON.parse(jsonPayload)
-    // Save to localStorage for quick settings use
-    if (payload.email) localStorage.setItem('userEmail', payload.email)
-    return payload.email || payload.unique_name || payload.sub || 'User'
-  } catch (e) {
-    console.error('Error decoding token', e)
-    return 'User'
-  }
-})
-
-const currentInitial = computed(() => {
-  return currentUserName.value ? currentUserName.value[0].toUpperCase() : '?'
+const showAppShell = computed(() => {
+  return projectStore.isAuthenticated && !!route.value.params.projectId
 })
 
 const getRoleBadgeClass = (role) => {
@@ -203,81 +178,47 @@ const getRoleBadgeClass = (role) => {
   }
 }
 
-const loadProjects = async () => {
-  if (!showAppShell.value) return
-  const token = localStorage.getItem('token')
-  if (!token || token === 'null' || token === 'undefined' || token.split('.').length !== 3) {
-    localStorage.removeItem('token')
-    if (route.value.path !== '/login' && route.value.path !== '/register') {
-      router.push('/login')
-    }
+const getProjectColor = (name) => {
+  if (!name) return 'linear-gradient(135deg, #4f46e5, #6366f1)'
+  const colors = [
+    'linear-gradient(135deg, #4f46e5, #6366f1)',
+    'linear-gradient(135deg, #10b981, #059669)',
+    'linear-gradient(135deg, #f59e0b, #d97706)',
+    'linear-gradient(135deg, #ef4444, #dc2626)',
+    'linear-gradient(135deg, #ec4899, #db2777)',
+    'linear-gradient(135deg, #06b6d4, #0891b2)',
+    'linear-gradient(135deg, #8b5cf6, #7c3aed)'
+  ]
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
+}
+
+const getUserColor = (email) => {
+  if (!email) return '#4f46e5'
+  const colors = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#8b5cf6']
+  let hash = 0
+  for (let i = 0; i < email.length; i++) {
+    hash = email.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
+}
+
+const loadSidebarMembers = async () => {
+  if (!route.value.params.projectId) {
+    sidebarMembers.value = []
     return
   }
-  projectStore.loading = true
   try {
-    const res = await getProjects()
-    projectStore.setProjects(res?.data || [])
-  } catch (err) {
-    console.error(err)
-    if (err.response?.status === 401 || err.response?.status === 400) {
-      localStorage.removeItem('token')
-      projectStore.setCurrentProjectId(null)
-      projectStore.setProjects([])
-      if (route.value.path !== '/login' && route.value.path !== '/register') {
-        router.push('/login')
-      }
-    } else {
-      toastError(extractMessage(err, 'Failed to load project list.'))
-    }
-  } finally {
-    projectStore.loading = false
+    const res = await getMembers(route.value.params.projectId)
+    sidebarMembers.value = res?.data || []
+  } catch (e) {
+    console.error('Failed to load sidebar members:', e)
   }
-}
-
-const handleCreateProject = async () => {
-  const { value: formValues } = await Swal.fire({
-    title: 'Create New Project',
-    html:
-      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Project Name</label></div>' +
-      '<input id="swal-proj-name" class="form-control mb-3" placeholder="Enter project name" style="border-radius:10px; height:42px;">' +
-      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Description (optional)</label></div>' +
-      '<textarea id="swal-proj-desc" class="form-control" placeholder="Enter description" rows="3" style="border-radius:10px;"></textarea>',
-    focusConfirm: false,
-    showCancelButton: true,
-    confirmButtonText: 'Create Project',
-    cancelButtonText: 'Cancel',
-    customClass: {
-      popup: 'swal-popup',
-      confirmButton: 'swal-btn swal-btn--confirm',
-      cancelButton: 'swal-btn swal-btn--cancel'
-    },
-    buttonsStyling: false,
-    preConfirm: () => {
-      const name = document.getElementById('swal-proj-name').value
-      const description = document.getElementById('swal-proj-desc').value
-      if (!name || !name.trim()) {
-        Swal.showValidationMessage('Project name is required')
-      }
-      return { name, description }
-    }
-  })
-
-  if (formValues) {
-    try {
-      const res = await createProject(formValues)
-      toastSuccess('Project created successfully!')
-      await loadProjects()
-      if (res?.data?.Id) {
-        projectStore.setCurrentProjectId(res.data.Id)
-      }
-    } catch (err) {
-      toastError(extractMessage(err, 'Failed to create project.'))
-    }
-  }
-}
-
-const onProjectsChanged = () => {
-  loadProjects()
 }
 
 const getPreferredTheme = () => {
@@ -287,23 +228,26 @@ const getPreferredTheme = () => {
   return prefersDark ? 'dark' : 'light'
 }
 
+watch(() => route.value.params.projectId, (newId) => {
+  if (newId) {
+    loadSidebarMembers()
+  } else {
+    sidebarMembers.value = []
+  }
+})
+
 onMounted(() => {
-  // Sync Dark/Light theme configuration
   const currentTheme = getPreferredTheme()
   document.documentElement.setAttribute('data-bs-theme', currentTheme)
-
-  loadProjects()
-  window.addEventListener('projects-changed', onProjectsChanged)
+  projectStore.decodeToken()
+  window.addEventListener('project-members-changed', loadSidebarMembers)
+  if (route.value.params.projectId) {
+    loadSidebarMembers()
+  }
 })
 
 onUnmounted(() => {
-  window.removeEventListener('projects-changed', onProjectsChanged)
-})
-
-watch(showAppShell, (newVal) => {
-  if (newVal) {
-    loadProjects()
-  }
+  window.removeEventListener('project-members-changed', loadSidebarMembers)
 })
 
 const handleLogout = async () => {
@@ -313,9 +257,7 @@ const handleLogout = async () => {
     console.error(error)
   } finally {
     localStorage.removeItem('token')
-    localStorage.removeItem('userEmail')
-    projectStore.setCurrentProjectId(null)
-    projectStore.setProjects([])
+    projectStore.clearStore()
     router.push('/login')      
   }
 }

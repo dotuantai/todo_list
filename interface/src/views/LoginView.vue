@@ -76,7 +76,7 @@ const login = async () => {
       localStorage.setItem('token', response.data.AccessToken)
     }
 
-    router.push('/tasks')
+    router.push('/projects')
   } catch (error) {
     toastError(extractMessage(error, 'Login failed.'))
   } finally {

@@ -3,11 +3,8 @@
 
     <!-- Header Section -->
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
-      <div>
-        <h2 class="fw-bold mb-0 page-title text-body">Dashboard</h2>
-        <p class="text-muted small mb-0 mt-1">Overview of your tasks, members, and project progress.</p>
-      </div>
-      <button 
+     
+      <!-- <button 
         class="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
         @click="loadDashboardData" 
         :disabled="loading" 
@@ -16,44 +13,22 @@
       >
         <span v-if="loading" class="spinner-border spinner-border-sm text-secondary" role="status"></span>
         <i v-else class="bi bi-arrow-clockwise fs-5"></i>
-      </button>
+      </button> -->
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading && allTasks.length === 0" class="text-center py-5 my-5">
+    <div v-if="loading && projectTasks.length === 0" class="text-center py-5 my-5">
       <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
-      <p class="text-muted mt-3">Loading dashboard data...</p>
-    </div>
-
-    <!-- Empty State -->
-    <div v-else-if="projectStore.projects.length === 0" class="text-center py-5 bg-body rounded-4 shadow-sm border border-dashed p-4">
-      <i class="bi bi-folder2-open text-primary" style="font-size: 4rem;"></i>
-      <h3 class="fw-bold text-body mt-3">Welcome to TaskFlow Pro</h3>
-      <p class="text-muted mx-auto" style="max-width: 480px;">You haven't joined any projects yet. Click the create project button in the sidebar to start managing your work.</p>
+      <p class="text-muted mt-3">Loading workspace data...</p>
     </div>
 
     <!-- Dashboard Content -->
     <div v-else>
       <!-- Stats Cards Grid -->
       <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3 mb-4">
-        <!-- Total Projects -->
-        <div class="col">
-          <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
-            <div class="d-flex align-items-center justify-content-between">
-              <div>
-                <span class="text-muted small fw-bold text-uppercase tracking-wider">Projects Joined</span>
-                <h3 class="fw-bold text-body mt-2 mb-0">{{ stats.totalProjects }}</h3>
-              </div>
-              <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-2.5 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
-                <i class="bi bi-folder-fill fs-4"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- Total Tasks -->
         <div class="col">
-          <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
+          <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-body">
             <div class="d-flex align-items-center justify-content-between">
               <div>
                 <span class="text-muted small fw-bold text-uppercase tracking-wider">Total Tasks</span>
@@ -68,7 +43,7 @@
 
         <!-- Tasks in Progress -->
         <div class="col">
-          <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
+          <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-body">
             <div class="d-flex align-items-center justify-content-between">
               <div>
                 <span class="text-muted small fw-bold text-uppercase tracking-wider">In Progress</span>
@@ -83,7 +58,7 @@
 
         <!-- Completed Tasks -->
         <div class="col">
-          <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
+          <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-body">
             <div class="d-flex align-items-center justify-content-between">
               <div>
                 <span class="text-muted small fw-bold text-uppercase tracking-wider">Completed</span>
@@ -95,19 +70,34 @@
             </div>
           </div>
         </div>
+
+        <!-- Team Members Count -->
+        <div class="col">
+          <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-body">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <span class="text-muted small fw-bold text-uppercase tracking-wider">Team Members</span>
+                <h3 class="fw-bold text-body mt-2 mb-0">{{ stats.memberCount }}</h3>
+              </div>
+              <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-2.5 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                <i class="bi bi-people-fill fs-4"></i>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Main Layout Rows -->
       <div class="row g-4">
         <!-- Recent Tasks Table (Col-lg-8) -->
         <div class="col-12 col-lg-8">
-          <div class="card border-0 shadow-sm p-4 rounded-3 h-100">
+          <div class="card border-0 shadow-sm p-4 rounded-3 h-100 bg-body">
             <div class="d-flex align-items-center justify-content-between mb-3">
               <h4 class="fw-bold text-body h5 mb-0">Recent Tasks</h4>
-              <router-link to="/tasks" class="btn btn-sm btn-link text-primary fw-semibold text-decoration-none p-0">View all</router-link>
+              <router-link :to="`/projects/${projectId}/tasks`" class="btn btn-sm btn-link text-primary fw-semibold text-decoration-none p-0">View all</router-link>
             </div>
             
-            <div v-if="allTasks.length === 0" class="text-center py-5 border border-dashed rounded-3 text-muted">
+            <div v-if="projectTasks.length === 0" class="text-center py-5 border border-dashed rounded-3 text-muted">
               <i class="bi bi-clipboard-x fs-2 opacity-50"></i>
               <p class="small mt-2 mb-0">No tasks have been created yet.</p>
             </div>
@@ -117,7 +107,6 @@
                 <thead class="table-light">
                   <tr>
                     <th scope="col" class="border-0 rounded-start">Title</th>
-                    <th scope="col" class="border-0">Project</th>
                     <th scope="col" class="border-0">Deadline</th>
                     <th scope="col" class="border-0 rounded-end">Status</th>
                   </tr>
@@ -125,10 +114,7 @@
                 <tbody>
                   <tr v-for="task in recentTasks" :key="task.Id" class="border-bottom">
                     <td>
-                      <div class="fw-semibold text-body text-truncate" style="max-width: 250px;">{{ task.Title }}</div>
-                    </td>
-                    <td>
-                      <span class="small text-muted">{{ task.projectName }}</span>
+                      <div class="fw-semibold text-body text-truncate" style="max-width: 350px;">{{ task.Title }}</div>
                     </td>
                     <td>
                       <span class="small" :class="isOverdue(task) ? 'text-danger fw-bold' : 'text-muted'">
@@ -147,44 +133,52 @@
           </div>
         </div>
 
-        <!-- Projects Progress List (Col-lg-4) -->
-        <div class="col-12 col-lg-4">
-          <div class="card border-0 shadow-sm p-4 rounded-3 h-100">
-            <h4 class="fw-bold text-body h5 mb-3">Project Progress</h4>
-
-            <div v-if="projectProgressList.length === 0" class="text-center py-5 text-muted">
-              <p class="small mb-0">No projects have progress data yet.</p>
-            </div>
-
-            <div v-else class="d-flex flex-column gap-3">
-              <div 
-                v-for="proj in projectProgressList" 
-                :key="proj.projId" 
-                class="border rounded-3 p-3"
-              >
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                  <div class="fw-semibold text-body text-truncate" style="max-width: 180px;">{{ proj.projName }}</div>
-                  <span class="badge text-uppercase font-monospace" :class="getRoleBadgeClass(proj.role)" style="font-size: 8px; padding: 2px 4px;">{{ proj.role }}</span>
-                </div>
-                <div class="text-muted small text-truncate mb-3" style="font-size: 11px;">
-                  {{ proj.projDesc || 'No description.' }}
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                  <div class="progress flex-grow-1" style="height: 6px;">
-                    <div 
-                      class="progress-bar bg-primary" 
-                      role="progressbar" 
-                      :style="{ width: proj.percent + '%' }" 
-                      :aria-valuenow="proj.percent" 
-                      aria-valuemin="0" 
-                      aria-valuemax="100"
-                    ></div>
+        <!-- Task Breakdown and Members (Col-lg-4) -->
+        <div class="col-12 col-lg-4 d-flex flex-column gap-4">
+          <!-- Tasks Breakdown Card -->
+          <div class="card border-0 shadow-sm p-4 rounded-3 bg-body">
+            <h4 class="fw-bold text-body h5 mb-3">Tasks Breakdown</h4>
+            <div class="d-flex flex-column gap-3">
+              <div v-for="col in statusCounts" :key="col.status" class="border rounded-3 p-2.5">
+                <div class="d-flex align-items-center justify-content-between mb-1.5">
+                  <div class="small fw-semibold text-body d-flex align-items-center gap-2">
+                    <span class="rounded-circle" :style="{ background: col.color, width: '8px', height: '8px', display: 'inline-block' }"></span>
+                    {{ col.label }}
                   </div>
-                  <span class="fw-bold text-body small" style="font-size: 11px; min-width: 30px;">{{ proj.percent }}%</span>
+                  <span class="fw-bold text-body small">{{ col.count }} tasks ({{ col.percent }}%)</span>
                 </div>
-                <div class="d-flex align-items-center justify-content-between mt-2" style="font-size: 10px; color: #94a3b8;">
-                  <span>{{ proj.total }} Tasks</span>
+                <div class="progress" style="height: 5px;">
+                  <div 
+                    class="progress-bar" 
+                    role="progressbar" 
+                    :style="{ width: col.percent + '%', backgroundColor: col.color }" 
+                    :aria-valuenow="col.percent" 
+                    aria-valuemin="0" 
+                    aria-valuemax="100"
+                  ></div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Members Quick List Card -->
+          <div class="card border-0 shadow-sm p-4 rounded-3 bg-body">
+            <h4 class="fw-bold text-body h5 mb-3">Team Members</h4>
+            <div class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
+              <div 
+                v-for="member in projectMembers" 
+                :key="member.UserId" 
+                class="d-flex align-items-center justify-content-between py-2 border-bottom last-border-0"
+              >
+                <div class="d-flex align-items-center gap-2 min-w-0">
+                  <div class="user-avatar bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width:30px; height:30px; font-size: 11px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
+                    {{ userInitial(member.Email) }}
+                  </div>
+                  <div class="text-start text-truncate" style="max-width: 140px;" :title="member.Email">
+                    <span class="small fw-semibold text-body d-block text-truncate">{{ member.Email }}</span>
+                  </div>
+                </div>
+                <span class="badge text-uppercase font-monospace" :class="getRoleBadgeClass(member.Role)" style="font-size: 8px; padding: 2px 4px;">{{ member.Role }}</span>
               </div>
             </div>
           </div>
@@ -195,64 +189,30 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { getProjects, getProjectTasks } from '../services/projectService.js'
-import { projectStore } from '../utils/projectStore.js'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { getProjectTasks, getMembers } from '../services/projectService.js'
+import { useProjectStore } from '../stores/projectStore.js'
 import { toastError } from '../utils/swal.js'
 
+const route = useRoute()
+const projectStore = useProjectStore()
 const loading = ref(false)
-const allTasks = ref([])
-const projectProgressList = ref([])
+const projectTasks = ref([])
+const projectMembers = ref([])
+
+const projectId = computed(() => route.params.projectId)
 
 const loadDashboardData = async () => {
+  if (!projectId.value) return
   loading.value = true
   try {
-    // 1. Load projects list
-    let list = projectStore.projects
-    if (list.length === 0) {
-      const res = await getProjects()
-      list = res?.data || []
-      projectStore.setProjects(list)
-    }
-
-    // 2. Fetch tasks for each project
-    const tasksPromise = list.map(async (proj) => {
-      try {
-        const res = await getProjectTasks(proj.Id)
-        const projectTasks = res?.data || []
-        const completedTasks = projectTasks.filter(t => t.Status === 'Done' || t.Status === 'Closed').length
-        const total = projectTasks.length
-        const percent = total > 0 ? Math.round((completedTasks / total) * 100) : 0
-        return {
-          projId: proj.Id,
-          projName: proj.Name,
-          projDesc: proj.Description,
-          role: proj.UserRole,
-          total,
-          percent,
-          tasks: projectTasks
-        }
-      } catch (err) {
-        console.error('Error fetching tasks for project ' + proj.Id, err)
-        return null
-      }
-    })
-
-    const results = await Promise.all(tasksPromise)
-    const filteredResults = results.filter(r => r !== null)
-    projectProgressList.value = filteredResults
-
-    // 3. Compile all tasks
-    const tempTasks = []
-    filteredResults.forEach(r => {
-      r.tasks.forEach(t => {
-        tempTasks.push({
-          ...t,
-          projectName: r.projName
-        })
-      })
-    })
-    allTasks.value = tempTasks
+    const [tasksRes, membersRes] = await Promise.all([
+      getProjectTasks(projectId.value),
+      getMembers(projectId.value)
+    ])
+    projectTasks.value = tasksRes?.data || []
+    projectMembers.value = membersRes?.data || []
   } catch (error) {
     console.error('Error loading dashboard data', error)
     toastError('Failed to load dashboard data.')
@@ -262,16 +222,32 @@ const loadDashboardData = async () => {
 }
 
 const stats = reactive({
-  totalProjects: computed(() => projectStore.projects.length),
-  totalTasks: computed(() => allTasks.value.length),
-  inProgressTasks: computed(() => allTasks.value.filter(t => t.Status === 'InProgress').length),
-  completedTasks: computed(() => allTasks.value.filter(t => t.Status === 'Done' || t.Status === 'Closed').length)
+  totalTasks: computed(() => projectTasks.value.length),
+  inProgressTasks: computed(() => projectTasks.value.filter(t => t.Status === 'InProgress').length),
+  completedTasks: computed(() => projectTasks.value.filter(t => t.Status === 'Done' || t.Status === 'Closed').length),
+  memberCount: computed(() => projectMembers.value.length)
 })
 
 const recentTasks = computed(() => {
-  return [...allTasks.value]
+  return [...projectTasks.value]
     .sort((a, b) => new Date(b.CreatedAt) - new Date(a.CreatedAt))
     .slice(0, 5)
+})
+
+const statusCounts = computed(() => {
+  const counts = { ToDo: 0, InProgress: 0, Done: 0, Closed: 0 }
+  projectTasks.value.forEach(t => {
+    if (counts[t.Status] !== undefined) {
+      counts[t.Status]++
+    }
+  })
+  const total = projectTasks.value.length || 1
+  return [
+    { label: 'To Do', status: 'ToDo', count: counts.ToDo, percent: Math.round((counts.ToDo / total) * 100), color: '#64748b' },
+    { label: 'In Progress', status: 'InProgress', count: counts.InProgress, percent: Math.round((counts.InProgress / total) * 100), color: '#6366f1' },
+    { label: 'Done', status: 'Done', count: counts.Done, percent: Math.round((counts.Done / total) * 100), color: '#10b981' },
+    { label: 'Closed', status: 'Closed', count: counts.Closed, percent: Math.round((counts.Closed / total) * 100), color: '#f59e0b' }
+  ]
 })
 
 const isOverdue = (task) => {
@@ -304,6 +280,8 @@ const getStatusLabel = (status) => {
   }
 }
 
+const userInitial = (email) => email ? email[0].toUpperCase() : '?'
+
 const getRoleBadgeClass = (role) => {
   switch (role?.toLowerCase()) {
     case 'owner':
@@ -317,6 +295,10 @@ const getRoleBadgeClass = (role) => {
 }
 
 const formatDateShort = (d) => d ? new Date(d).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
+
+watch(projectId, () => {
+  loadDashboardData()
+})
 
 onMounted(() => {
   loadDashboardData()
@@ -336,5 +318,8 @@ onMounted(() => {
 }
 .border-dashed {
   border-style: dashed !important;
+}
+.last-border-0:last-child {
+  border-bottom: 0 !important;
 }
 </style>
