@@ -30,8 +30,9 @@ Dự án áp dụng mô hình client-server tách biệt giữa Frontend và Bac
 - **Build Tool**: Vite ([vite.config.js](file:///d:/WebApp/todo_list/interface/vite.config.js)).
 - **Routing**: Vue Router 4 ([index.js](file:///d:/WebApp/todo_list/interface/src/router/index.js)).
 - **UI Framework**: Bootstrap 5 + Bootstrap Icons.
+- **Tùy biến giao diện (Style Customization)**: Sử dụng CSS variables toàn cục thông qua [style.css](file:///d:/WebApp/todo_list/interface/src/style.css) để cấu hình chế độ tối tùy chỉnh (Slate-Navy palette), thanh cuộn và các hiệu ứng chuyển đổi giao diện mượt mà.
 - **HTTP Client**: Axios ([axios.js](file:///d:/WebApp/todo_list/interface/src/api/axios.js)) với cơ chế tự động refresh token qua Interceptor.
-- **Notification & Alerts**: SweetAlert2 ([swal.js](file:///d:/WebApp/todo_list/interface/src/utils/swal.js)).
+- **Notification & Alerts**: SweetAlert2 ([swal.js](file:///d:/WebApp/todo_list/interface/src/utils/swal.js)) được tinh chỉnh CSS variables để tự động đổi màu theo thuộc tính của thẻ `html`.
 - **State Management**: Reactive state object ([projectStore.js](file:///d:/WebApp/todo_list/interface/src/utils/projectStore.js)) theo dõi dự án đang chọn và vai trò của người dùng hiện tại.
 
 ---
@@ -160,7 +161,25 @@ Lớp lọc tùy chỉnh [ProjectAuthorizeAttribute.vb](file:///d:/WebApp/todo_l
 
 ---
 
-## 6. Danh sách API Endpoints chính
+## 6. Giao diện sáng/tối & Đa ngôn ngữ (UI Theme & Internationalization)
+
+### Chế độ Tối (Dark Mode)
+Ứng dụng tích hợp chế độ tối cao cấp (Premium Slate-Navy Theme) đồng bộ toàn diện trên tất cả các màn hình, thẻ công việc, bảng Kanban, danh sách thành viên và các hộp thoại pop-up:
+- **Nền ứng dụng chính**: `#0b0f19` (Deep Slate-Navy).
+- **Thẻ (Cards), Sidebar & Header**: `#111827` (Sleek Dark Slate).
+- **Viền phân cách (Borders)**: `#1e293b` (Slate-Blue).
+- **Văn bản & Tiêu đề**: Màu trắng sữa (`#f8fafc`) và xám sáng (`#cbd5e1`) đảm bảo độ tương phản cao chống mỏi mắt.
+- **Đồng bộ hệ điều hành**: Tự động phát hiện tùy chọn giao diện của hệ thống (OS preferences) qua `prefers-color-scheme` khi người dùng chưa thiết lập thủ công.
+- **Hộp thoại SweetAlert2**: Được ghi đè hoàn toàn bằng CSS variables tương ứng để thay đổi nền, tiêu đề và nút bấm theo giao diện hiện tại.
+
+### Ngôn ngữ (Language)
+Toàn bộ dự án đã được chuyển đổi từ tiếng Việt sang tiếng Anh (`en-US`):
+- **API Backend**: Toàn bộ chuỗi thông báo lỗi (Exceptions) và thông báo thành công từ Controller/Service được cấu hình bằng tiếng Anh. Các thông báo ràng buộc hợp lệ dữ liệu (như `Register.vb` validation constraints) được dịch hoàn chỉnh.
+- **Giao diện Client**: Tiêu đề trang, nút bấm, hướng dẫn biểu mẫu, ngày tháng hiển thị theo định dạng `en-US` và các dòng cảnh báo đều được Việt hóa chuyển sang Tiếng Anh hoàn toàn.
+
+---
+
+## 7. Danh sách API Endpoints chính
 
 ### Xác thực & Người dùng (`/api/auth`)
 - `POST /api/auth/register` (AllowAnonymous): Đăng ký tài khoản mới.
@@ -194,7 +213,7 @@ Lớp lọc tùy chỉnh [ProjectAuthorizeAttribute.vb](file:///d:/WebApp/todo_l
 
 ---
 
-## 7. Các luồng xử lý chính (Key Flows)
+## 8. Các luồng xử lý chính (Key Flows)
 
 ```mermaid
 sequenceDiagram
@@ -216,7 +235,7 @@ sequenceDiagram
 
 ---
 
-## 8. Hướng dẫn thiết lập & Khởi chạy dự án (Setup Guide)
+## 9. Hướng dẫn thiết lập & Khởi chạy dự án (Setup Guide)
 
 ### Yêu cầu tiên quyết (Prerequisites)
 - **Hệ điều hành**: Windows (để chạy tốt nhất với .NET Framework 4.8).
