@@ -20,7 +20,7 @@ Public Class ProjectAuthorizeAttribute
         If principal Is Nothing OrElse Not principal.Identity.IsAuthenticated Then
             actionContext.Response = actionContext.Request.CreateResponse(
                 HttpStatusCode.Unauthorized,
-                New ApiResponse(Of Object)(False, "Yêu cầu xác thực tài khoản.", Nothing))
+                New ApiResponse(Of Object)(False, "Authentication required.", Nothing))
             Return
         End If
 
@@ -29,7 +29,7 @@ Public Class ProjectAuthorizeAttribute
         If claim Is Nothing Then
             actionContext.Response = actionContext.Request.CreateResponse(
                 HttpStatusCode.Unauthorized,
-                New ApiResponse(Of Object)(False, "Không xác định được người dùng từ token.", Nothing))
+                New ApiResponse(Of Object)(False, "Unable to identify user from token.", Nothing))
             Return
         End If
 
@@ -59,7 +59,7 @@ Public Class ProjectAuthorizeAttribute
         If String.IsNullOrEmpty(projectIdStr) Then
             actionContext.Response = actionContext.Request.CreateResponse(
                 HttpStatusCode.BadRequest,
-                New ApiResponse(Of Object)(False, "Không tìm thấy tham số projectId.", Nothing))
+                New ApiResponse(Of Object)(False, "Parameter projectId not found.", Nothing))
             Return
         End If
 
@@ -67,7 +67,7 @@ Public Class ProjectAuthorizeAttribute
         If Not Guid.TryParse(projectIdStr, projectId) Then
             actionContext.Response = actionContext.Request.CreateResponse(
                 HttpStatusCode.BadRequest,
-                New ApiResponse(Of Object)(False, "Tham số projectId không hợp lệ.", Nothing))
+                New ApiResponse(Of Object)(False, "Invalid projectId parameter.", Nothing))
             Return
         End If
 
@@ -76,7 +76,7 @@ Public Class ProjectAuthorizeAttribute
         If dbContext Is Nothing Then
             actionContext.Response = actionContext.Request.CreateResponse(
                 HttpStatusCode.InternalServerError,
-                New ApiResponse(Of Object)(False, "Lỗi kết nối cơ sở dữ liệu.", Nothing))
+                New ApiResponse(Of Object)(False, "Database connection error.", Nothing))
             Return
         End If
 
@@ -86,7 +86,7 @@ Public Class ProjectAuthorizeAttribute
         If member Is Nothing Then
             actionContext.Response = actionContext.Request.CreateResponse(
                 HttpStatusCode.Forbidden,
-                New ApiResponse(Of Object)(False, "Bạn không phải là thành viên của dự án này.", Nothing))
+                New ApiResponse(Of Object)(False, "You are not a member of this project.", Nothing))
             Return
         End If
 
@@ -103,7 +103,7 @@ Public Class ProjectAuthorizeAttribute
             If Not hasRole Then
                 actionContext.Response = actionContext.Request.CreateResponse(
                     HttpStatusCode.Forbidden,
-                    New ApiResponse(Of Object)(False, "Bạn không có quyền thực hiện hành động này.", Nothing))
+                    New ApiResponse(Of Object)(False, "You do not have permission to perform this action.", Nothing))
                 Return
             End If
         End If

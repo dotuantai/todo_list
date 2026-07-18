@@ -27,7 +27,7 @@ Namespace Controllers
         <Route("")>
         Public Function Create(<FromBody> req As CreateProjectRequest) As IHttpActionResult
             If req Is Nothing Then
-                Return Content(HttpStatusCode.BadRequest, New ApiResponse(Of Object)(False, "Dữ liệu không hợp lệ.", Nothing))
+                Return Content(HttpStatusCode.BadRequest, New ApiResponse(Of Object)(False, "Invalid data.", Nothing))
             End If
             Return Execute(Function() _projectService.CreateProject(req, CurrentUserId))
         End Function
@@ -44,7 +44,7 @@ Namespace Controllers
         <ProjectAuthorize("Owner")>
         Public Function UpdateProject(projectId As Guid, <FromBody> req As UpdateProjectRequest) As IHttpActionResult
             If req Is Nothing Then
-                Return Content(HttpStatusCode.BadRequest, New ApiResponse(Of Object)(False, "Dữ liệu không hợp lệ.", Nothing))
+                Return Content(HttpStatusCode.BadRequest, New ApiResponse(Of Object)(False, "Invalid data.", Nothing))
             End If
             Return Execute(Function() _projectService.UpdateProject(projectId, req, CurrentUserId))
         End Function
@@ -70,7 +70,7 @@ Namespace Controllers
         <ProjectAuthorize("Owner")>
         Public Function AddMember(projectId As Guid, <FromBody> req As AddMemberRequest) As IHttpActionResult
             If req Is Nothing Then
-                Return Content(HttpStatusCode.BadRequest, New ApiResponse(Of Object)(False, "Dữ liệu không hợp lệ.", Nothing))
+                Return Content(HttpStatusCode.BadRequest, New ApiResponse(Of Object)(False, "Invalid data.", Nothing))
             End If
             Return Execute(Function() _projectService.AddMember(projectId, req, CurrentUserId))
         End Function
@@ -80,7 +80,7 @@ Namespace Controllers
         <ProjectAuthorize("Owner")>
         Public Function UpdateMemberRole(projectId As Guid, userId As Guid, <FromBody> req As UpdateMemberRequest) As IHttpActionResult
             If req Is Nothing Then
-                Return Content(HttpStatusCode.BadRequest, New ApiResponse(Of Object)(False, "Dữ liệu không hợp lệ.", Nothing))
+                Return Content(HttpStatusCode.BadRequest, New ApiResponse(Of Object)(False, "Invalid data.", Nothing))
             End If
             Return Execute(Function() _projectService.UpdateMemberRole(projectId, userId, req, CurrentUserId))
         End Function
@@ -106,7 +106,7 @@ Namespace Controllers
         <ProjectAuthorize("Owner", "Editor")>
         Public Function CreateTask(projectId As Guid, <FromBody> req As CreateTaskRequest) As IHttpActionResult
             If req Is Nothing Then
-                Return Content(HttpStatusCode.BadRequest, New ApiResponse(Of Object)(False, "Dữ liệu không hợp lệ.", Nothing))
+                Return Content(HttpStatusCode.BadRequest, New ApiResponse(Of Object)(False, "Invalid data.", Nothing))
             End If
             Return Execute(Function() _taskService.CreateTask(req, CurrentUserId, projectId))
         End Function

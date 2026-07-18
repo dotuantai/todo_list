@@ -1,4 +1,4 @@
-﻿Imports System.Net
+Imports System.Net
 Imports System.Net.Http
 Imports System.Net.Http.Headers
 Imports System.Web.Http
@@ -20,7 +20,7 @@ Public Class AuthController
 
         If req Is Nothing Then
             Return Content(HttpStatusCode.BadRequest,
-                New ApiResponse(Of Object)(False, "Dữ liệu không hợp lệ.", Nothing))
+                New ApiResponse(Of Object)(False, "Invalid data.", Nothing))
         End If
 
         If Not ModelState.IsValid Then
@@ -34,7 +34,7 @@ Public Class AuthController
 
         Return Execute(Function()
                            _authService.Register(req)
-                           Return "Đăng ký thành công."
+                           Return "Registration successful."
                        End Function)
 
     End Function
@@ -49,7 +49,7 @@ Public Class AuthController
            String.IsNullOrWhiteSpace(req.Password) Then
 
             Return Content(HttpStatusCode.BadRequest,
-                New ApiResponse(Of Object)(False, "Email và Password không được để trống.", Nothing))
+                New ApiResponse(Of Object)(False, "Email and password are required.", Nothing))
         End If
 
         Try
@@ -64,7 +64,7 @@ Public Class AuthController
             }
             HttpContext.Current.Response.Cookies.Add(cookie)
 
-            Return Ok(New ApiResponse(Of Object)(True, "Đăng nhập thành công.",
+            Return Ok(New ApiResponse(Of Object)(True, "Sign-in successful.",
                 New With {.AccessToken = result.AccessToken}))
 
         Catch ex As ApiException
@@ -90,12 +90,12 @@ Public Class AuthController
 
         If String.IsNullOrEmpty(refreshToken) Then
             Return Content(HttpStatusCode.BadRequest,
-                New ApiResponse(Of Object)(False, "Không tìm thấy refresh token.", Nothing))
+                New ApiResponse(Of Object)(False, "Refresh token not found.", Nothing))
         End If
 
         Try
             Dim result = _authService.Refresh(refreshToken)
-            Return Ok(New ApiResponse(Of Object)(True, "Làm mới token thành công.",
+            Return Ok(New ApiResponse(Of Object)(True, "Token refreshed successfully.",
                 New With {.AccessToken = result.AccessToken}))
 
         Catch ex As ApiException
@@ -117,7 +117,7 @@ Public Class AuthController
         End If
 
         Dim response = Request.CreateResponse(HttpStatusCode.OK,
-            New ApiResponse(Of Object)(True, "Đăng xuất thành công.", Nothing))
+            New ApiResponse(Of Object)(True, "Signed out successfully.", Nothing))
 
         Dim expiredCookie As New CookieHeaderValue("refreshToken", "") With {
             .HttpOnly = True,

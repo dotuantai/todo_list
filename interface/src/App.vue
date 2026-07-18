@@ -51,14 +51,14 @@
           <li class="nav-item">
             <router-link to="/projects" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
               <i class="bi bi-folder2-open fs-6"></i>
-              <span class="small fw-medium">Danh sách dự án</span>
+              <span class="small fw-medium">Projects</span>
             </router-link>
           </li>
           <!-- Settings link -->
           <li class="nav-item">
             <router-link to="/settings" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
               <i class="bi bi-gear-fill fs-6"></i>
-              <span class="small fw-medium">Cài đặt</span>
+              <span class="small fw-medium">Settings</span>
             </router-link>
           </li>
         </ul>
@@ -74,7 +74,7 @@
               @click="handleLogout"
               class="btn btn-link nav-link sidebar-link-danger d-flex align-items-center gap-2 px-3 py-2 rounded-3 w-100 text-start text-decoration-none border-0 bg-transparent">
               <i class="bi bi-box-arrow-right fs-6"></i>
-              <span class="small fw-medium">Đăng xuất</span>
+              <span class="small fw-medium">Sign out</span>
             </button>
           </li>
         </ul>
@@ -128,7 +128,7 @@
                 <span class="badge text-uppercase font-monospace" :class="getRoleBadgeClass(projectStore.userRole)" style="font-size: 8px; padding: 2px 4px;">{{ projectStore.userRole }}</span>
               </div>
               <span class="badge bg-secondary-subtle text-secondary" style="font-size:8px; padding: 2px 4px;" v-else>
-                Hệ thống
+                System
               </span>
             </div>
           </div>
@@ -227,7 +227,7 @@ const loadProjects = async () => {
         router.push('/login')
       }
     } else {
-      toastError(extractMessage(err, 'Không thể tải danh sách dự án.'))
+      toastError(extractMessage(err, 'Failed to load project list.'))
     }
   } finally {
     projectStore.loading = false
@@ -265,13 +265,13 @@ const handleCreateProject = async () => {
   if (formValues) {
     try {
       const res = await createProject(formValues)
-      toastSuccess('Tạo dự án thành công!')
+      toastSuccess('Project created successfully!')
       await loadProjects()
       if (res?.data?.Id) {
         projectStore.setCurrentProjectId(res.data.Id)
       }
     } catch (err) {
-      toastError(extractMessage(err, 'Không thể tạo dự án.'))
+      toastError(extractMessage(err, 'Failed to create project.'))
     }
   }
 }
@@ -280,9 +280,16 @@ const onProjectsChanged = () => {
   loadProjects()
 }
 
+const getPreferredTheme = () => {
+  const saved = localStorage.getItem('theme')
+  if (saved) return saved
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  return prefersDark ? 'dark' : 'light'
+}
+
 onMounted(() => {
   // Sync Dark/Light theme configuration
-  const currentTheme = localStorage.getItem('theme') || 'light'
+  const currentTheme = getPreferredTheme()
   document.documentElement.setAttribute('data-bs-theme', currentTheme)
 
   loadProjects()
@@ -317,11 +324,11 @@ const handleLogout = async () => {
 <style scoped>
 .sidebar-link {
   transition: background 0.15s, color 0.15s;
-  color: #64748b !important;
+  color: var(--bs-secondary-color) !important;
 }
 .sidebar-link:hover {
-  background: #f1f5f9 !important;
-  color: #0f172a !important;
+  background: var(--bs-secondary-bg) !important;
+  color: var(--bs-heading-color) !important;
 }
 .active-project {
   background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
@@ -332,10 +339,10 @@ const handleLogout = async () => {
   color: #fff !important;
 }
 .sidebar-link-danger {
-  color: #ef4444 !important;
+  color: var(--bs-danger) !important;
 }
 .sidebar-link-danger:hover {
-  background: #fff1f2 !important;
-  color: #dc2626 !important;
+  background: rgba(var(--bs-danger-rgb), 0.12) !important;
+  color: var(--bs-danger) !important;
 }
 </style>

@@ -10,15 +10,15 @@
       <div class="mb-3">
         <label class="form-label fw-semibold text-secondary small">Email</label>
         <div class="input-group input-group-lg">
-          <span class="input-group-text bg-light border-end-0 text-muted" style="border-radius: 12px 0 0 12px; border-color: #e2e8f0;">
+          <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-radius: 12px 0 0 12px; border-color: var(--bs-border-color);">
             <i class="bi bi-envelope"></i>
           </span>
           <input 
             v-model="email" 
             type="email" 
-            class="form-control bg-light border-start-0 ps-0 text-dark" 
+            class="form-control bg-body-secondary border-start-0 ps-0" 
             placeholder="you@example.com" 
-            style="border-radius: 0 12px 12px 0; font-size: 0.95rem; height: 48px; border-color: #e2e8f0;" 
+            style="border-radius: 0 12px 12px 0; font-size: 0.95rem; height: 48px; border-color: var(--bs-border-color);" 
             required 
           />
         </div>
@@ -27,15 +27,15 @@
       <div class="mb-4">
         <label class="form-label fw-semibold text-secondary small">Password</label>
         <div class="input-group input-group-lg">
-          <span class="input-group-text bg-light border-end-0 text-muted" style="border-radius: 12px 0 0 12px; border-color: #e2e8f0;">
+          <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-radius: 12px 0 0 12px; border-color: var(--bs-border-color);">
             <i class="bi bi-lock"></i>
           </span>
           <input 
             v-model="password" 
             type="password" 
-            class="form-control bg-light border-start-0 ps-0 text-dark" 
-            placeholder="Enter your password" 
-            style="border-radius: 0 12px 12px 0; font-size: 0.95rem; height: 48px; border-color: #e2e8f0;" 
+            class="form-control bg-body-secondary border-start-0 ps-0" 
+            placeholder="At least 6 characters" 
+            style="border-radius: 0 12px 12px 0; font-size: 0.95rem; height: 48px; border-color: var(--bs-border-color);" 
             @keyup.enter="login" 
             required 
           />
@@ -78,7 +78,7 @@ const login = async () => {
 
     router.push('/tasks')
   } catch (error) {
-    toastError(extractMessage(error, 'Đăng nhập thất bại.'))
+    toastError(extractMessage(error, 'Login failed.'))
   } finally {
     loading.value = false
   }

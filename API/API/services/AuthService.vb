@@ -19,7 +19,7 @@ Public Class AuthService
     Public Sub Register(req As Register) Implements IAuthService.Register
 
         If _userRepo.GetByEmail(req.Email) IsNot Nothing Then
-            Throw ApiException.Conflict("Email đã được sử dụng.")
+            Throw ApiException.Conflict("Email is already in use.")
         End If
 
         Dim user As New User With {
@@ -39,15 +39,15 @@ Public Class AuthService
         Dim user = _userRepo.GetByEmail(req.Email?.Trim().ToLower())
 
         If user Is Nothing Then
-            Throw ApiException.Unauthorized("Email hoặc mật khẩu không đúng.")
+            Throw ApiException.Unauthorized("Invalid email or password.")
         End If
 
         If Not user.IsActive Then
-            Throw ApiException.Forbidden("Tài khoản đã bị vô hiệu hóa.")
+            Throw ApiException.Forbidden("Account has been deactivated.")
         End If
 
         If Not PasswordHelper.VerifyPassword(req.Password, user.PasswordHash) Then
-            Throw ApiException.Unauthorized("Email hoặc mật khẩu không đúng.")
+            Throw ApiException.Unauthorized("Invalid email or password.")
         End If
 
         Dim oldToken = _refreshTokenRepo.GetActiveTokenByUserId(user.Id)
@@ -63,7 +63,7 @@ Public Class AuthService
             .UserId = user.Id,
             .Token = refreshToken,
             .CreatedAt = DateTime.UtcNow,
-            .ExpiresAt = DateTime.UtcNow.AddDays(30)
+            .ExpiresAt = DateTime.UtcNow.AddDays(7)
         })
         _refreshTokenRepo.Save()
 
@@ -91,21 +91,21 @@ Public Class AuthService
         Dim token = _refreshTokenRepo.GetByToken(refreshToken)
 
         If token Is Nothing Then
-            Throw ApiException.Unauthorized("Refresh token không hợp lệ.")
+            Throw ApiException.Unauthorized("Invalid refresh token.")
         End If
 
         If token.RevokedAt.HasValue Then
-            Throw ApiException.Unauthorized("Refresh token đã bị thu hồi, vui lòng đăng nhập lại.")
+            Throw ApiException.Unauthorized("Refresh token has been revoked. Please sign in again.")
         End If
 
         If token.ExpiresAt < DateTime.UtcNow Then
-            Throw ApiException.Unauthorized("Refresh token đã hết hạn, vui lòng đăng nhập lại.")
+            Throw ApiException.Unauthorized("Refresh token has expired. Please sign in again.")
         End If
 
         Dim user = _userRepo.GetById(token.UserId)
 
         If user Is Nothing OrElse Not user.IsActive Then
-            Throw ApiException.Forbidden("Tài khoản không còn hoạt động.")
+            Throw ApiException.Forbidden("Account is no longer active.")
         End If
 
         Return New LoginResponse With {

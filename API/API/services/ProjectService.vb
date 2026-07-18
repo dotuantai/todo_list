@@ -16,12 +16,12 @@ Public Class ProjectService
         Implements IProjectService.CreateProject
 
         If String.IsNullOrWhiteSpace(req.Name) Then
-            Throw ApiException.BadRequest("Tên project không được để trống.")
+            Throw ApiException.BadRequest("Project name cannot be empty.")
         End If
 
         Dim user = _userRepo.GetById(currentUserId)
         If user Is Nothing Then
-            Throw ApiException.Unauthorized("Không tìm thấy thông tin tài khoản.")
+            Throw ApiException.Unauthorized("Account information not found.")
         End If
 
         Dim project = New Project With {
@@ -71,12 +71,12 @@ Public Class ProjectService
 
         Dim project = _projectRepo.GetById(projectId)
         If project Is Nothing Then
-            Throw ApiException.NotFound("Project không tồn tại.")
+            Throw ApiException.NotFound("Project does not exist.")
         End If
 
         Dim member = _projectRepo.GetMember(projectId, currentUserId)
         If member Is Nothing Then
-            Throw ApiException.Forbidden("Bạn không có quyền truy cập project này.")
+            Throw ApiException.Forbidden("You do not have access to this project.")
         End If
 
         Return MapToProjectResponse(project, member.Role)
@@ -87,17 +87,17 @@ Public Class ProjectService
 
         Dim project = _projectRepo.GetById(projectId)
         If project Is Nothing Then
-            Throw ApiException.NotFound("Project không tồn tại.")
+            Throw ApiException.NotFound("Project does not exist.")
         End If
 
         ' Authorization check (must be Owner)
         Dim member = _projectRepo.GetMember(projectId, currentUserId)
         If member Is Nothing OrElse Not member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) Then
-            Throw ApiException.Forbidden("Chỉ có Owner mới được phép sửa thông tin Project.")
+            Throw ApiException.Forbidden("Only the Owner is allowed to edit project information.")
         End If
 
         If String.IsNullOrWhiteSpace(req.Name) Then
-            Throw ApiException.BadRequest("Tên project không được để trống.")
+            Throw ApiException.BadRequest("Project name cannot be empty.")
         End If
 
         project.Name = req.Name.Trim()
@@ -114,12 +114,12 @@ Public Class ProjectService
 
         Dim project = _projectRepo.GetById(projectId)
         If project Is Nothing Then
-            Throw ApiException.NotFound("Project không tồn tại.")
+            Throw ApiException.NotFound("Project does not exist.")
         End If
 
         ' Only the creator (Owner of project table) can delete the project
         If project.OwnerId <> currentUserId Then
-            Throw ApiException.Forbidden("Chỉ người sở hữu dự án mới được phép xóa Project.")
+            Throw ApiException.Forbidden("Only the project owner is allowed to delete the project.")
         End If
 
         _projectRepo.Delete(project)
@@ -145,17 +145,17 @@ Public Class ProjectService
            (Not req.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso
             Not req.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase) AndAlso
             Not req.Role.Equals("Viewer", StringComparison.OrdinalIgnoreCase)) Then
-            Throw ApiException.BadRequest("Vai trò không hợp lệ. Các vai trò hợp lệ: Owner, Editor, Viewer.")
+            Throw ApiException.BadRequest("Invalid role. Valid roles: Owner, Editor, Viewer.")
         End If
 
         Dim targetUser = _userRepo.GetByEmail(req.Email?.Trim())
         If targetUser Is Nothing Then
-            Throw ApiException.NotFound($"Không tìm thấy tài khoản với email '{req.Email}'.")
+            Throw ApiException.NotFound($"No account found with email '{req.Email}'.")
         End If
 
         Dim existingMember = _projectRepo.GetMember(projectId, targetUser.Id)
         If existingMember IsNot Nothing Then
-            Throw ApiException.Conflict("Người dùng này đã là thành viên của dự án.")
+            Throw ApiException.Conflict("This user is already a member of the project.")
         End If
 
         Dim member = New ProjectMember With {
@@ -187,22 +187,22 @@ Public Class ProjectService
            (Not req.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) AndAlso
             Not req.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase) AndAlso
             Not req.Role.Equals("Viewer", StringComparison.OrdinalIgnoreCase)) Then
-            Throw ApiException.BadRequest("Vai trò không hợp lệ.")
+            Throw ApiException.BadRequest("Invalid role.")
         End If
 
         Dim project = _projectRepo.GetById(projectId)
         If project Is Nothing Then
-            Throw ApiException.NotFound("Project không tồn tại.")
+            Throw ApiException.NotFound("Project does not exist.")
         End If
 
         ' Prevent changing the primary Owner's role
         If project.OwnerId = userId Then
-            Throw ApiException.BadRequest("Không thể thay đổi vai trò của người sở hữu dự án.")
+            Throw ApiException.BadRequest("Cannot change the role of the project owner.")
         End If
 
         Dim targetMember = _projectRepo.GetMember(projectId, userId)
         If targetMember Is Nothing Then
-            Throw ApiException.NotFound("Thành viên không thuộc dự án này.")
+            Throw ApiException.NotFound("Member does not belong to this project.")
         End If
 
         targetMember.Role = req.Role
@@ -221,17 +221,17 @@ Public Class ProjectService
 
         Dim project = _projectRepo.GetById(projectId)
         If project Is Nothing Then
-            Throw ApiException.NotFound("Project không tồn tại.")
+            Throw ApiException.NotFound("Project does not exist.")
         End If
 
         ' Prevent removing the primary Owner
         If project.OwnerId = userId Then
-            Throw ApiException.BadRequest("Không thể xóa người sở hữu dự án khỏi dự án.")
+            Throw ApiException.BadRequest("Cannot remove the project owner from the project.")
         End If
 
         Dim targetMember = _projectRepo.GetMember(projectId, userId)
         If targetMember Is Nothing Then
-            Throw ApiException.NotFound("Thành viên không thuộc dự án này.")
+            Throw ApiException.NotFound("Member does not belong to this project.")
         End If
 
         _projectRepo.RemoveMember(targetMember)

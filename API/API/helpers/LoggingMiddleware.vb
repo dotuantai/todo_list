@@ -1,4 +1,4 @@
-﻿Imports Microsoft.Owin
+Imports Microsoft.Owin
 Imports System.Diagnostics
 Imports System.Threading.Tasks
 
@@ -15,7 +15,7 @@ Public Class LoggingMiddleware
         Dim response = context.Response
         Dim ip = GetClientIp(request)
 
-        ' ── Đọc request body ──────────────────────────
+        ' ── Read request body ──────────────────────────
         Dim requestBody = String.Empty
         If request.Body IsNot Nothing Then
             Using reader = New IO.StreamReader(
@@ -30,7 +30,7 @@ Public Class LoggingMiddleware
             System.Text.Encoding.UTF8.GetBytes(requestBody))
         End If
 
-        ' ✅ Wrap response stream TRƯỚC khi gọi next 
+        ' ✓ Wrap response stream BEFORE calling next 
         Dim originalStream = response.Body
         Dim responseBuffer = New IO.MemoryStream()
         response.Body = responseBuffer
@@ -48,10 +48,10 @@ Public Class LoggingMiddleware
             .userAgent = request.Headers.Get("User-Agent")
         })
 
-        ' ── Gọi middleware tiếp theo ──────────────────
+        ' ── Call next middleware ──────────────────
         Await MyBase.Next.Invoke(context)
 
-        ' ✅ Đọc response body SAU khi next chạy xong
+        ' ✓ Read response body AFTER next has finished
         Dim responseBody = String.Empty
         If responseBuffer.Length > 0 Then
             responseBuffer.Seek(0, IO.SeekOrigin.Begin)
@@ -63,7 +63,7 @@ Public Class LoggingMiddleware
             leaveOpen:=True).ReadToEndAsync()
         End If
 
-        ' ✅ Copy về stream gốc để client nhận được response
+        ' ✓ Copy back to original stream so the client receives the response
         responseBuffer.Seek(0, IO.SeekOrigin.Begin)
         Await responseBuffer.CopyToAsync(originalStream)
         response.Body = originalStream
@@ -100,16 +100,16 @@ Public Class LoggingMiddleware
         End If
     End Function
     Private Function GetClientIp(request As IOwinRequest) As String
-        ' Khi qua proxy / load balancer
+        ' When behind a proxy / load balancer
         Dim forwardedFor = request.Headers.Get("X-Forwarded-For")
         If Not String.IsNullOrEmpty(forwardedFor) Then
             Return forwardedFor.Split(","c)(0).Trim()
         End If
 
-        ' Lấy IP trực tiếp
+        ' Get direct IP
         Dim ip = request.RemoteIpAddress
 
-        ' Đổi ::1 thành 127.0.0.1 cho dễ đọc
+        ' Convert ::1 to 127.0.0.1 for readability
         If ip = "::1" Then Return "127.0.0.1"
 
         Return If(ip, "unknown")

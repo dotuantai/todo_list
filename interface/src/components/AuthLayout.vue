@@ -25,12 +25,12 @@
         </div>
 
         <!-- Panel Column -->
-        <div class="col-lg-6 p-4 p-md-5 bg-white d-flex flex-column justify-content-center">
+        <div class="col-lg-6 p-4 p-md-5 bg-body d-flex flex-column justify-content-center">
           <div class="mb-4">
             <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold mb-3" style="font-size: 0.8rem;">
               TaskFlow
             </span>
-            <h2 class="fw-bold text-dark h4 mb-1">{{ title }}</h2>
+            <h2 class="fw-bold text-dark-override h4 mb-1">{{ title }}</h2>
             <p class="text-muted small mb-0">{{ subtitle }}</p>
           </div>
 
@@ -61,10 +61,17 @@ defineProps({
   background: radial-gradient(circle at top left, rgba(99,102,241,0.15), transparent 40%),
               linear-gradient(135deg, #f8faff 0%, #eef2ff 100%);
 }
+[data-bs-theme="dark"] .auth-shell {
+  background: radial-gradient(circle at top left, rgba(99,102,241,0.08), transparent 40%),
+              linear-gradient(135deg, #0b0f19 0%, #111827 100%);
+}
 .auth-hero {
   background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
 }
 .hover-underline:hover {
   text-decoration: underline !important;
+}
+.text-dark-override {
+  color: var(--bs-heading-color, #212529);
 }
 </style>

@@ -4,35 +4,35 @@
     <!-- Page Header -->
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
       <div>
-        <h2 class="fw-bold mb-0 page-title text-body">Dự án của bạn</h2>
-        <p class="text-muted small mb-0 mt-1">Danh sách chi tiết các dự án bạn tham gia quản lý và theo dõi tiến độ.</p>
+        <h2 class="fw-bold mb-0 page-title text-body">Your Projects</h2>
+        <p class="text-muted small mb-0 mt-1">Detailed list of projects you participate in, manage, and track progress.</p>
       </div>
       <button 
         class="btn btn-primary fw-semibold d-flex align-items-center gap-2 shadow-sm" 
         @click="handleCreateProject"
         style="border-radius: 8px; height: 38px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"
       >
-        <i class="bi bi-plus-lg"></i> Tạo dự án mới
+        <i class="bi bi-plus-lg"></i> New Project
       </button>
     </div>
 
     <!-- Loading State -->
     <div v-if="loading && projectsWithProgress.length === 0" class="text-center py-5 my-5">
       <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
-      <p class="text-muted mt-3">Đang tải danh sách dự án...</p>
+      <p class="text-muted mt-3">Loading projects...</p>
     </div>
 
     <!-- Empty State -->
     <div v-else-if="projectsWithProgress.length === 0" class="text-center py-5 bg-body rounded-4 shadow-sm border border-dashed p-4">
       <i class="bi bi-folder2-open text-primary" style="font-size: 4rem;"></i>
-      <h3 class="fw-bold text-body mt-3">Chưa có dự án nào</h3>
-      <p class="text-muted mx-auto mb-4" style="max-width: 480px;">Hãy tạo dự án đầu tiên của bạn để thiết lập bảng Kanban và quản lý công việc.</p>
+      <h3 class="fw-bold text-body mt-3">No projects yet</h3>
+      <p class="text-muted mx-auto mb-4" style="max-width: 480px;">Create your first project to set up a Kanban board and manage your tasks.</p>
       <button 
         class="btn btn-primary fw-semibold px-4 py-2" 
         @click="handleCreateProject"
         style="border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"
       >
-        Tạo dự án mới
+        New Project
       </button>
     </div>
 
@@ -56,17 +56,17 @@
               </span>
             </div>
             
-            <p class="text-muted small text-start mb-3 text-wrap" style="font-size: 0.85rem; min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-              {{ proj.Description || 'Không có mô tả cho dự án này.' }}
+            <p class="text-muted small text-start mb-3 text-wrap" style="font-size: 0.85rem; min-height: 40px; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              {{ proj.Description || 'No description for this project.' }}
             </p>
 
             <div class="row g-2 mb-4 border-top border-bottom py-2.5 bg-body-tertiary" style="font-size: 0.8rem;">
               <div class="col-6">
-                <span class="text-secondary d-block">Người tạo:</span>
+                <span class="text-secondary d-block">Created by:</span>
                 <span class="text-body fw-medium text-truncate d-block" :title="proj.OwnerEmail">{{ proj.OwnerEmail }}</span>
               </div>
               <div class="col-6">
-                <span class="text-secondary d-block">Ngày tạo:</span>
+                <span class="text-secondary d-block">Created on:</span>
                 <span class="text-body fw-medium">{{ formatDateShort(proj.CreatedAt) }}</span>
               </div>
             </div>
@@ -95,7 +95,7 @@
                 @click="goToProjectBoard(proj.Id)"
                 style="border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"
               >
-                <i class="bi bi-box-arrow-in-right me-1"></i> Vào bảng việc
+                <i class="bi bi-box-arrow-in-right me-1"></i> Go to Board
               </button>
               
               <!-- Owner Actions -->
@@ -103,7 +103,7 @@
                 <button 
                   class="btn btn-sm btn-outline-secondary p-2" 
                   @click="handleEditProject(proj)" 
-                  title="Sửa dự án" 
+                  title="Edit project" 
                   style="border-radius: 8px; width: 38px; height: 38px;"
                 >
                   <i class="bi bi-pencil-square"></i>
@@ -111,7 +111,7 @@
                 <button 
                   class="btn btn-sm btn-outline-danger p-2" 
                   @click="handleDeleteProject(proj)" 
-                  title="Xóa dự án" 
+                  title="Delete project" 
                   style="border-radius: 8px; width: 38px; height: 38px;"
                 >
                   <i class="bi bi-trash"></i>
@@ -172,7 +172,7 @@ const loadProjectsWithProgress = async () => {
     projectsWithProgress.value = await Promise.all(promises)
   } catch (err) {
     console.error('Error loading projects list', err)
-    toastError('Không thể tải danh sách dự án.')
+    toastError('Failed to load project list.')
   } finally {
     loading.value = false
   }
@@ -185,16 +185,16 @@ const goToProjectBoard = (projectId) => {
 
 const handleCreateProject = async () => {
   const { value: formValues } = await Swal.fire({
-    title: 'Tạo dự án mới',
+    title: 'Create New Project',
     html:
-      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Tên dự án</label></div>' +
-      '<input id="swal-proj-name" class="form-control mb-3" placeholder="Nhập tên dự án" style="border-radius:10px; height:42px;">' +
-      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Mô tả (tùy chọn)</label></div>' +
-      '<textarea id="swal-proj-desc" class="form-control" placeholder="Nhập mô tả" rows="3" style="border-radius:10px;"></textarea>',
+      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Project Name</label></div>' +
+      '<input id="swal-proj-name" class="form-control mb-3" placeholder="Enter project name" style="border-radius:10px; height:42px;">' +
+      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Description (optional)</label></div>' +
+      '<textarea id="swal-proj-desc" class="form-control" placeholder="Enter description" rows="3" style="border-radius:10px;"></textarea>',
     focusConfirm: false,
     showCancelButton: true,
-    confirmButtonText: 'Tạo dự án',
-    cancelButtonText: 'Hủy',
+    confirmButtonText: 'Create Project',
+    cancelButtonText: 'Cancel',
     customClass: {
       popup: 'swal-popup',
       confirmButton: 'swal-btn swal-btn--confirm',
@@ -205,7 +205,7 @@ const handleCreateProject = async () => {
       const name = document.getElementById('swal-proj-name').value
       const description = document.getElementById('swal-proj-desc').value
       if (!name || !name.trim()) {
-        Swal.showValidationMessage('Tên dự án không được để trống')
+        Swal.showValidationMessage('Project name is required')
       }
       return { name, description }
     }
@@ -214,30 +214,30 @@ const handleCreateProject = async () => {
   if (formValues) {
     try {
       const res = await createProject(formValues)
-      toastSuccess('Tạo dự án thành công!')
+      toastSuccess('Project created successfully!')
       await loadProjectsWithProgress()
       window.dispatchEvent(new Event('projects-changed'))
       if (res?.data?.Id) {
         projectStore.setCurrentProjectId(res.data.Id)
       }
     } catch (err) {
-      toastError(extractMessage(err, 'Không thể tạo dự án.'))
+      toastError(extractMessage(err, 'Failed to create project.'))
     }
   }
 }
 
 const handleEditProject = async (proj) => {
   const { value: formValues } = await Swal.fire({
-    title: 'Sửa dự án',
+    title: 'Edit Project',
     html:
-      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Tên dự án</label></div>' +
-      `<input id="swal-proj-name" class="form-control mb-3" placeholder="Nhập tên dự án" value="${proj.Name || ''}" style="border-radius:10px; height:42px;">` +
-      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Mô tả (tùy chọn)</label></div>' +
-      `<textarea id="swal-proj-desc" class="form-control" placeholder="Nhập mô tả" rows="3" style="border-radius:10px;">${proj.Description || ''}</textarea>`,
+      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Project Name</label></div>' +
+      `<input id="swal-proj-name" class="form-control mb-3" placeholder="Enter project name" value="${proj.Name || ''}" style="border-radius:10px; height:42px;">` +
+      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Description (optional)</label></div>' +
+      `<textarea id="swal-proj-desc" class="form-control" placeholder="Enter description" rows="3" style="border-radius:10px;">${proj.Description || ''}</textarea>`,
     focusConfirm: false,
     showCancelButton: true,
-    confirmButtonText: 'Lưu thay đổi',
-    cancelButtonText: 'Hủy',
+    confirmButtonText: 'Save Changes',
+    cancelButtonText: 'Cancel',
     customClass: {
       popup: 'swal-popup',
       confirmButton: 'swal-btn swal-btn--confirm',
@@ -248,7 +248,7 @@ const handleEditProject = async (proj) => {
       const name = document.getElementById('swal-proj-name').value
       const description = document.getElementById('swal-proj-desc').value
       if (!name || !name.trim()) {
-        Swal.showValidationMessage('Tên dự án không được để trống')
+        Swal.showValidationMessage('Project name is required')
       }
       return { name, description }
     }
@@ -257,26 +257,26 @@ const handleEditProject = async (proj) => {
   if (formValues) {
     try {
       await updateProject(proj.Id, formValues)
-      toastSuccess('Cập nhật dự án thành công!')
+      toastSuccess('Project updated successfully!')
       await loadProjectsWithProgress()
       window.dispatchEvent(new Event('projects-changed'))
     } catch (err) {
-      toastError(extractMessage(err, 'Không thể cập nhật dự án.'))
+      toastError(extractMessage(err, 'Failed to update project.'))
     }
   }
 }
 
 const handleDeleteProject = async (proj) => {
   const ok = await confirm(
-    'Xóa dự án?',
-    `Bạn có chắc chắn muốn xóa dự án <strong>${proj.Name}</strong>? Hành động này sẽ xóa tất cả công việc và thành viên thuộc dự án này và không thể hoàn tác.`,
-    'Xóa Dự Án'
+    'Delete project?',
+    `Are you sure you want to delete project <strong>${proj.Name}</strong>? This will remove all tasks and members from this project and cannot be undone.`,
+    'Delete Project'
   )
   if (!ok) return
 
   try {
     await deleteProject(proj.Id)
-    toastSuccess('Xóa dự án thành công!')
+    toastSuccess('Project deleted successfully!')
     if (projectStore.currentProjectId === proj.Id) {
       projectStore.setCurrentProjectId(null)
     }
@@ -284,7 +284,7 @@ const handleDeleteProject = async (proj) => {
     window.dispatchEvent(new Event('projects-changed'))
   } catch (err) {
     console.error(err)
-    toastError(extractMessage(err, 'Không thể xóa dự án.'))
+    toastError(extractMessage(err, 'Failed to delete project.'))
   }
 }
 
@@ -300,7 +300,7 @@ const getRoleBadgeClass = (role) => {
   }
 }
 
-const formatDateShort = (d) => d ? new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
+const formatDateShort = (d) => d ? new Date(d).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
 
 onMounted(() => {
   loadProjectsWithProgress()
