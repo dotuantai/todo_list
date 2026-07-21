@@ -17,7 +17,16 @@ Tài liệu này cung cấp cái nhìn tổng quan về kiến trúc, cấu trú
 
 Dự án áp dụng mô hình client-server tách biệt giữa Frontend và Backend:
 
-### Backend (API)
+### Backend (API) - Có 2 phiên bản:
+#### Phiên bản C# (API_v2 - Mặc định hiện tại)
+- **Framework**: ASP.NET Core Web API trên nền .NET 10.0.
+- **Ngôn ngữ**: C#.
+- **Database Access / ORM**: Entity Framework Core kết nối PostgreSQL.
+- **Xác thực & Bảo mật (Authentication & Security)**: JWT Bearer Authentication middleware tích hợp sẵn.
+- **Tài liệu hóa API (API Documentation)**: Tích hợp Scalar OpenAPI ([Scalar.AspNetCore](https://github.com/scalar/scalar)).
+- **Logging**: Serilog ghi log chi tiết cấu trúc ra Console và File.
+
+#### Phiên bản Legacy VB.NET (API)
 - **Framework**: ASP.NET Web API 2 trên nền .NET Framework 4.8.
 - **Ngôn ngữ**: Visual Basic .NET (VB.NET).
 - **Dependency Injection**: [AutofacConfig.vb](file:///d:/WebApp/todo_list/API/API/App_Start/AutofacConfig.vb) (Autofac.WebApi).
@@ -33,34 +42,37 @@ Dự án áp dụng mô hình client-server tách biệt giữa Frontend và Bac
 - **Tùy biến giao diện (Style Customization)**: Sử dụng CSS variables toàn cục thông qua [style.css](file:///d:/WebApp/todo_list/interface/src/style.css) để cấu hình chế độ tối tùy chỉnh (Slate-Navy palette), thanh cuộn và các hiệu ứng chuyển đổi giao diện mượt mà.
 - **HTTP Client**: Axios ([axios.js](file:///d:/WebApp/todo_list/interface/src/api/axios.js)) với cơ chế tự động refresh token qua Interceptor.
 - **Notification & Alerts**: SweetAlert2 ([swal.js](file:///d:/WebApp/todo_list/interface/src/utils/swal.js)) được tinh chỉnh CSS variables để tự động đổi màu theo thuộc tính của thẻ `html`.
-- **State Management**: Reactive state object ([projectStore.js](file:///d:/WebApp/todo_list/interface/src/utils/projectStore.js)) theo dõi dự án đang chọn và vai trò của người dùng hiện tại.
+- **State Management**: Pinia Store ([projectStore.js](file:///d:/WebApp/todo_list/interface/src/stores/projectStore.js)) quản lý trạng thái xác thực (token), dự án đang chọn và vai trò của người dùng hiện tại một cách reactive.
 
 ---
 
 ## 3. Cấu trúc thư mục (Directory Structure)
 
-Thư mục gốc chứa 2 phần chính: `API` (Backend) và `interface` (Frontend).
+Thư mục gốc chứa 3 phần chính: `API_v2` (Backend C# mới), `API` (Backend VB.NET cũ) và `interface` (Frontend).
 
 ```
 todo_list/
-├── API/                                 # ASP.NET Web API (VB.NET Backend)
+├── API_v2/                              # ASP.NET Core Web API (.NET 10 C# Backend - Mặc định)
+│   ├── Controllers/                     # API Endpoints
+│   ├── Datas/                           # Entity Framework Core DbContext
+│   ├── Helpers/                         # Các lớp tiện ích bổ trợ
+│   ├── Middleware/                      # Custom Middlewares (Logging, CorrelationId, Exception)
+│   ├── Models/                          # Định nghĩa thực thể Database & DTOs
+│   ├── Repositorys/                     # Repository Pattern xử lý truy vấn DB
+│   ├── Services/                        # Lớp xử lý logic nghiệp vụ
+│   ├── Program.cs                       # File cấu hình khởi chạy ứng dụng
+│   └── appsettings.json                 # File cấu hình database connection và JWT
+│
+├── API/                                 # ASP.NET Web API (VB.NET Backend - Legacy)
 │   ├── API.sln                          # Visual Studio Solution File
-│   └── API/                             # Source code dự án API
+│   └── API/                             # Source code dự án API VB.NET
 │       ├── App_Start/                   # Đăng ký cấu hình hệ thống
 │       │   ├── AutofacConfig.vb         # Cấu hình Dependency Injection (Autofac)
 │       │   ├── Startup.vb               # Cấu hình OWIN & JWT Bearer Authentication
 │       │   └── WebApiConfig.vb          # Cấu hình route API và JSON Formatter
 │       ├── Controllers/                 # API Endpoints
-│       │   ├── AuthController.vb        # Đăng ký, đăng nhập, tìm kiếm user, refresh token
-│       │   ├── ProjectController.vb     # Quản lý dự án, thành viên dự án và công việc trong dự án
-│       │   └── TaskController.vb        # Cập nhật công việc, giao việc và cập nhật trạng thái
 │       ├── Datas/                       # Tương tác Cơ sở dữ liệu
-│       │   ├── AppDbContext.vb          # Entity Framework DbContext
-│       │   └── Configurations/          # Cấu hình Fluent API cho các bảng cơ sở dữ liệu
 │       ├── Helpers/                     # Middleware và Attributes bổ trợ
-│       │   ├── LoggingMiddleware.vb     # Middleware ghi log request/response
-│       │   ├── PasswordHelper.vb        # Băm và kiểm tra mật khẩu bằng BCrypt
-│       │   └── ProjectAuthorizeAttribute.vb # Bộ lọc phân quyền thành viên dự án (RBAC)
 │       ├── Migrations/                  # Lịch sử Database Migrations
 │       ├── Models/                      # Định nghĩa thực thể Database & DTOs
 │       ├── repositorys/                 # Lớp truy vấn dữ liệu (Repository Pattern)
@@ -77,8 +89,9 @@ todo_list/
         │   └── axios.js                 # Axios Client & Interceptor (Quản lý JWT Access/Refresh Token)
         ├── router/
         │   └── index.js                 # Định tuyến Client-side & Middleware bảo mật route
+        ├── stores/
+        │   └── projectStore.js          # Pinia store quản lý phiên đăng nhập và thông tin dự án
         ├── utils/
-        │   ├── projectStore.js          # Pinia-like reactive store theo dõi dự án hiện tại
         │   └── swal.js                  # Wrapper cho SweetAlert2 hiển thị thông báo
         ├── Services/                    # Gọi API từ Frontend sang Backend
         │   ├── authService.js
@@ -238,23 +251,40 @@ sequenceDiagram
 ## 9. Hướng dẫn thiết lập & Khởi chạy dự án (Setup Guide)
 
 ### Yêu cầu tiên quyết (Prerequisites)
-- **Hệ điều hành**: Windows (để chạy tốt nhất với .NET Framework 4.8).
-- **IDE**: Visual Studio 2019/2022.
+- **Hệ điều hành**: Windows (để chạy tốt nhất với cả .NET Core và .NET Framework 4.8).
+- **IDE**: Visual Studio 2022 hoặc VS Code / Rider.
 - **Database**: PostgreSQL 12 trở lên (chạy cục bộ ở cổng `5432`).
 - **Runtime**: Node.js v18 trở lên + npm.
 
-### Khởi chạy Backend (API)
+### Khởi chạy Backend C# (API_v2 - Mặc định)
 1. **Thiết lập database**:
-   - Đảm bảo dịch vụ PostgreSQL đang chạy.
+   - Đảm bảo PostgreSQL đang chạy.
+   - Tạo một database trống tên là `todo_list`.
+   - Kiểm tra kết nối trong file [appsettings.json](file:///d:/WebApp/todo_list/API_v2/appsettings.json#L5) ở chuỗi `ConnectionStrings.PostgresConnection`.
+2. **Khởi chạy Migration**:
+   - Mở terminal tại thư mục `API_v2` và chạy lệnh cập nhật database:
+     ```bash
+     dotnet ef database update
+     ```
+3. **Chạy ứng dụng API**:
+   - Chạy lệnh khởi chạy:
+     ```bash
+     dotnet run
+     ```
+   - API mặc định chạy ở cổng: `https://localhost:7087` (và `http://localhost:5151`). Cổng này đã được thiết lập sẵn trong [.env](file:///d:/WebApp/todo_list/interface/.env) của Frontend.
+   - Bạn có thể xem tài liệu Scalar OpenAPI tại địa chỉ: `https://localhost:7087/scalar/v1`.
+
+### Khởi chạy Backend VB.NET (API - Legacy)
+1. **Thiết lập database**:
    - Tạo một database trống tên là `todo_listt`.
-   - Kiểm tra thông tin kết nối trong file [Web.config](file:///d:/WebApp/todo_list/API/API/Web.config#L117) ở chuỗi `PostgresConnection`.
+   - Kiểm tra kết nối trong file [Web.config](file:///d:/WebApp/todo_list/API/API/Web.config#L117) ở chuỗi `PostgresConnection`.
 2. **Restore Packages & Run Migrations**:
    - Mở file [API.sln](file:///d:/WebApp/todo_list/API/API.sln) bằng Visual Studio.
    - Mở cửa sổ **Package Manager Console** (`Tools > NuGet Package Manager > Package Manager Console`).
-   - Run lệnh `Update-Database` để Entity Framework tự động tạo cấu trúc bảng trên cơ sở dữ liệu PostgreSQL.
+   - Chạy lệnh `Update-Database`.
 3. **Chạy API**:
-   - Nhấn **F5** hoặc bấm nút **Start** trong Visual Studio để khởi động IIS Express.
-   - API mặc định chạy ở cổng: `https://localhost:44355`.
+   - Bấm **F5** hoặc **Start** trên Visual Studio để khởi chạy IIS Express.
+   - API chạy ở cổng: `https://localhost:44355`.
 
 ### Khởi chạy Frontend (interface)
 1. **Di chuyển vào thư mục interface**:
@@ -269,4 +299,4 @@ sequenceDiagram
    ```
    - Ứng dụng client mặc định chạy ở địa chỉ `http://localhost:5173`.
 4. **Kiểm tra kết nối**:
-   - Đảm bảo giá trị `baseURL` trong [axios.js](file:///d:/WebApp/todo_list/interface/src/api/axios.js#L4) khớp với cổng IIS Express của Backend (`https://localhost:44355/api`).
+   - Đảm bảo giá trị `VITE_API_BASE_URL` trong [interface/.env](file:///d:/WebApp/todo_list/interface/.env) khớp với cổng API mà bạn đang chạy (Ví dụ: `https://localhost:7087/api` cho API C# hoặc `https://localhost:44355/api` cho API VB.NET).

@@ -31,7 +31,33 @@ namespace API_v2.Controllers
             }
 
             _authService.Register(req);
-            return Ok(new ApiResponse<object>(true, "Registration successful.", null));
+            return Ok(new ApiResponse<object>(true, "Registration successful. Please check your email for the OTP verification code.", null));
+        }
+
+        [HttpPost("verify-otp")]
+        [AllowAnonymous]
+        public ActionResult VerifyOtp([FromBody] VerifyOtpRequest req)
+        {
+            if (req is null || string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Otp))
+            {
+                return BadRequest(new ApiResponse<object>(false, "Email and OTP are required.", null));
+            }
+
+            _authService.VerifyOtp(req);
+            return Ok(new ApiResponse<object>(true, "Email verified successfully. You can now log in.", null));
+        }
+
+        [HttpPost("resend-otp")]
+        [AllowAnonymous]
+        public ActionResult ResendOtp([FromQuery] string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return BadRequest(new ApiResponse<object>(false, "Email is required.", null));
+            }
+
+            _authService.ResendOtp(email);
+            return Ok(new ApiResponse<object>(true, "OTP verification code resent successfully.", null));
         }
 
         [HttpPost("login")]

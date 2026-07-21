@@ -32,13 +32,21 @@
           </span>
           <input 
             v-model="password" 
-            type="password" 
-            class="form-control bg-body-secondary border-start-0 ps-0" 
+            :type="showPassword ? 'text' : 'password'" 
+            class="form-control bg-body-secondary border-start-0 border-end-0 ps-0" 
             placeholder="At least 6 characters" 
-            style="border-radius: 0 12px 12px 0; font-size: 0.95rem; height: 48px; border-color: var(--bs-border-color);" 
+            style="font-size: 0.95rem; height: 48px; border-color: var(--bs-border-color);" 
             @keyup.enter="login" 
             required 
           />
+          <button 
+            type="button" 
+            class="input-group-text bg-body-secondary border-start-0 text-muted" 
+            style="border-radius: 0 12px 12px 0; border-color: var(--bs-border-color); cursor: pointer;"
+            @click="showPassword = !showPassword"
+          >
+            <i class="bi" :class="showPassword ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
+          </button>
         </div>
       </div>
 
@@ -62,6 +70,7 @@ const router = useRouter()
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
+const showPassword = ref(false)
 
 const login = async () => {
   try {

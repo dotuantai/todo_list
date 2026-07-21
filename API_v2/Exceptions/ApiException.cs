@@ -26,5 +26,8 @@ namespace API_v2.Exceptions
 
         public static ApiException Conflict(string message) =>
             new ApiException(HttpStatusCode.Conflict, message);
+
+        public static ApiException InternalServerError(string message) =>
+            new ApiException(HttpStatusCode.InternalServerError, message);
     }
 }
