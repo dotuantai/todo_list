@@ -25,8 +25,8 @@
             style="width: 120px; border-radius: 8px; height: 38px;"
           >
             <option value="Owner">Owner</option>
-            <option value="Editor">Editor</option>
-            <option value="Viewer">Viewer</option>
+            <option value="Manager">Manager</option>
+            <option value="Member">Member</option>
           </select>
           <button 
             class="btn btn-sm btn-primary fw-semibold d-flex align-items-center justify-content-center" 
@@ -56,14 +56,22 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="user in members" :key="user.UserId" class="border-bottom">
+            <tr 
+              v-for="user in members" 
+              :key="user.UserId" 
+              class="border-bottom"
+              :class="{ 'current-user-row': user.Email?.toLowerCase() === projectStore.currentUserEmail?.toLowerCase() }"
+            >
               <td style="padding: 16px;" class="text-start">
                 <div class="d-flex align-items-center gap-3">
                   <div class="user-avatar text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" :style="{ background: getUserColor(user.Email) }" style="width:38px; height:38px;">
                     {{ userInitial(user.Email) }}
                   </div>
                   <div class="text-start">
-                    <div class="fw-semibold text-body">{{ user.Email }}</div>
+                    <div class="fw-semibold text-body">
+                      {{ user.Email }}
+                      <span v-if="user.Email?.toLowerCase() === projectStore.currentUserEmail?.toLowerCase()" class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-0.5 ms-1.5" style="font-size:0.65rem; text-transform: none; font-weight: 600;">You</span>
+                    </div>
                     <div class="text-muted font-monospace" style="font-size:10px;">ID: {{ user.UserId }}</div>
                   </div>
                 </div>
@@ -77,8 +85,8 @@
                   style="width: 110px; border-radius: 8px;"
                 >
                   <option value="Owner">Owner</option>
-                  <option value="Editor">Editor</option>
-                  <option value="Viewer">Viewer</option>
+                  <option value="Manager">Manager</option>
+                  <option value="Member">Member</option>
                 </select>
                 <span v-else class="badge text-uppercase font-monospace" :class="getRoleBadgeClass(user.Role)" style="font-size: 10px; padding: 4px 8px;">
                   {{ user.Role }}
@@ -117,7 +125,7 @@ const projectStore = useProjectStore()
 const members = ref([])
 const loadingMembers = ref(false)
 const memberEmail = ref('')
-const memberRole = ref('Editor')
+const memberRole = ref('Manager')
 
 const projectId = computed(() => route.params.projectId)
 
@@ -180,9 +188,9 @@ const getRoleBadgeClass = (role) => {
   switch (role?.toLowerCase()) {
     case 'owner':
       return 'bg-danger-subtle text-danger border border-danger-subtle'
-    case 'editor':
+    case 'manager':
       return 'bg-primary-subtle text-primary border border-primary-subtle'
-    case 'viewer':
+    case 'member':
     default:
       return 'bg-secondary-subtle text-secondary border border-secondary-subtle'
   }
@@ -215,5 +223,8 @@ onMounted(() => {
 .page-title {
   font-size: 1.68rem;
   letter-spacing: -0.02em;
+}
+.current-user-row td {
+  background-color: rgba(99, 102, 241, 0.08) !important;
 }
 </style>

@@ -32,9 +32,6 @@ namespace API_v2.Models.DTOs
 
         [Required(ErrorMessage = "User id is required")]
         public Guid UserId { get; set; }
-
-        public bool CanView { get; set; } = true;
-        public bool CanEdit { get; set; } = true;
     }
 
     public class RemoveAssignmentRequest
@@ -70,8 +67,6 @@ namespace API_v2.Models.DTOs
     {
         public Guid UserId { get; set; }
         public string? Email { get; set; }
-        public bool CanView { get; set; }
-        public bool CanEdit { get; set; }
     }
 
     public class TaskDetailResponse

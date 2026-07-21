@@ -6,8 +6,6 @@ namespace API_v2.Models
     {
         public int TaskId { get; set; }
         public Guid UserId { get; set; }
-        public bool CanView { get; set; }
-        public bool CanEdit { get; set; }
         public DateTime AssignedAt { get; set; }
 
         // Navigation properties

@@ -6,7 +6,7 @@ export const useProjectStore = defineStore('project', {
     projects: [],
     currentProjectId: localStorage.getItem('currentProjectId') || null,
     currentProject: null,
-    userRole: 'Viewer',
+    userRole: 'Member',
     loading: false,
     currentUserEmail: localStorage.getItem('userEmail') || null,
     token: localStorage.getItem('token') || null
@@ -43,14 +43,14 @@ export const useProjectStore = defineStore('project', {
         const p = this.projects.find(x => x.Id === this.currentProjectId)
         if (p) {
           this.currentProject = p
-          this.userRole = p.UserRole || 'Viewer'
+          this.userRole = p.UserRole || 'Member'
         } else {
           this.currentProject = null
-          this.userRole = 'Viewer'
+          this.userRole = 'Member'
         }
       } else {
         this.currentProject = null
-        this.userRole = 'Viewer'
+        this.userRole = 'Member'
       }
     },
 
@@ -69,7 +69,11 @@ export const useProjectStore = defineStore('project', {
             return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
         }).join(''))
         const payload = JSON.parse(jsonPayload)
-        const email = payload.email || payload.unique_name || payload.sub || 'User'
+        const email = payload.email || 
+                      payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || 
+                      payload.unique_name || 
+                      payload.sub || 
+                      'User'
         this.currentUserEmail = email
         localStorage.setItem('userEmail', email)
       } catch (e) {
@@ -95,7 +99,7 @@ export const useProjectStore = defineStore('project', {
       this.projects = []
       this.currentProjectId = null
       this.currentProject = null
-      this.userRole = 'Viewer'
+      this.userRole = 'Member'
       this.currentUserEmail = null
       this.token = null
       localStorage.removeItem('currentProjectId')

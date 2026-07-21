@@ -9,7 +9,7 @@ namespace API_v2.Services.Interfaces
         ProjectResponse GetProjectDetail(Guid projectId, Guid currentUserId);
         ProjectResponse UpdateProject(Guid projectId, UpdateProjectRequest req, Guid currentUserId);
         void DeleteProject(Guid projectId, Guid currentUserId);
-        List<MemberResponse> GetMembers(Guid projectId);
+        List<MemberResponse> GetMembers(Guid projectId, Guid currentUserId);
         MemberResponse AddMember(Guid projectId, AddMemberRequest req, Guid currentUserId);
         MemberResponse UpdateMemberRole(Guid projectId, Guid userId, UpdateMemberRequest req, Guid currentUserId);
         void RemoveMember(Guid projectId, Guid userId, Guid currentUserId);

@@ -25,8 +25,7 @@
         <button type="button" class="btn-close d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu" aria-label="Close"></button>
       </div>
 
-      <!-- Action Button: Create Task -->
-      <div class="px-3 py-3" v-if="projectStore.currentProjectId && projectStore.userRole !== 'Viewer'">
+      <div class="px-3 py-3" v-if="projectStore.currentProjectId && projectStore.userRole !== 'Member'">
         <button class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2 shadow-sm" style="border-radius: 10px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;" @click="openCreateTaskModal">
           <i class="bi bi-plus-lg"></i> Create Task
         </button>
@@ -170,9 +169,9 @@ const getRoleBadgeClass = (role) => {
   switch (role?.toLowerCase()) {
     case 'owner':
       return 'bg-danger-subtle text-danger border border-danger-subtle'
-    case 'editor':
+    case 'manager':
       return 'bg-primary-subtle text-primary border border-primary-subtle'
-    case 'viewer':
+    case 'member':
     default:
       return 'bg-secondary-subtle text-secondary border border-secondary-subtle'
   }

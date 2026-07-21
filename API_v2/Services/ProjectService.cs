@@ -132,8 +132,14 @@ namespace API_v2.Services
             _projectRepo.Save();
         }
 
-        public List<MemberResponse> GetMembers(Guid projectId)
+        public List<MemberResponse> GetMembers(Guid projectId, Guid currentUserId)
         {
+            var member = _projectRepo.GetMember(projectId, currentUserId);
+            if (member is null)
+            {
+                throw ApiException.Forbidden("You do not have access to this project.");
+            }
+
             var members = _projectRepo.GetProjectMembers(projectId);
             return members.Select(m => new MemberResponse
             {
@@ -146,12 +152,18 @@ namespace API_v2.Services
 
         public MemberResponse AddMember(Guid projectId, AddMemberRequest req, Guid currentUserId)
         {
+            var currentMember = _projectRepo.GetMember(projectId, currentUserId);
+            if (currentMember is null || !currentMember.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase))
+            {
+                throw ApiException.Forbidden("Only the project owner is allowed to manage members.");
+            }
+
             if (string.IsNullOrWhiteSpace(req.Role) ||
                 (!req.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                 !req.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase) &&
-                 !req.Role.Equals("Viewer", StringComparison.OrdinalIgnoreCase)))
+                 !req.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase) &&
+                 !req.Role.Equals("Member", StringComparison.OrdinalIgnoreCase)))
             {
-                throw ApiException.BadRequest("Invalid role. Valid roles: Owner, Editor, Viewer.");
+                throw ApiException.BadRequest("Invalid role. Valid roles: Owner, Manager, Member.");
             }
 
             var targetUser = _userRepo.GetByEmail(req.Email?.Trim() ?? string.Empty);
@@ -189,12 +201,18 @@ namespace API_v2.Services
 
         public MemberResponse UpdateMemberRole(Guid projectId, Guid userId, UpdateMemberRequest req, Guid currentUserId)
         {
+            var currentMember = _projectRepo.GetMember(projectId, currentUserId);
+            if (currentMember is null || !currentMember.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase))
+            {
+                throw ApiException.Forbidden("Only the project owner is allowed to manage members.");
+            }
+
             if (string.IsNullOrWhiteSpace(req.Role) ||
                 (!req.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                 !req.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase) &&
-                 !req.Role.Equals("Viewer", StringComparison.OrdinalIgnoreCase)))
+                 !req.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase) &&
+                 !req.Role.Equals("Member", StringComparison.OrdinalIgnoreCase)))
             {
-                throw ApiException.BadRequest("Invalid role.");
+                throw ApiException.BadRequest("Invalid role. Valid roles: Owner, Manager, Member.");
             }
 
             var project = _projectRepo.GetById(projectId);
@@ -228,6 +246,12 @@ namespace API_v2.Services
 
         public void RemoveMember(Guid projectId, Guid userId, Guid currentUserId)
         {
+            var currentMember = _projectRepo.GetMember(projectId, currentUserId);
+            if (currentMember is null || !currentMember.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase))
+            {
+                throw ApiException.Forbidden("Only the project owner is allowed to manage members.");
+            }
+
             var project = _projectRepo.GetById(projectId);
             if (project is null)
             {

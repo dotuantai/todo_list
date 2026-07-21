@@ -28,9 +28,9 @@ namespace API_v2.Services
                 throw ApiException.Forbidden("You are not a member of this project.");
             }
             if (!member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                !member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase))
+                !member.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase))
             {
-                throw ApiException.Forbidden("Only Owners or Editors can create tasks.");
+                throw ApiException.Forbidden("Only Owners or Managers can create tasks.");
             }
 
             if (string.IsNullOrWhiteSpace(req.Title))
@@ -63,7 +63,7 @@ namespace API_v2.Services
                 var member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId);
                 if (member is null ||
                     (!member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                     !member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)))
+                     !member.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase)))
                 {
                     throw ApiException.Forbidden("You do not have permission to edit tasks in this project.");
                 }
@@ -73,7 +73,7 @@ namespace API_v2.Services
                 if (task.CreatorId != currentUserId)
                 {
                     var assignment = _assignRepo.GetAssignment(req.TaskId, currentUserId);
-                    if (assignment is null || !assignment.CanEdit)
+                    if (assignment is null)
                     {
                         throw ApiException.Forbidden("You do not have permission to edit this task.");
                     }
@@ -103,7 +103,7 @@ namespace API_v2.Services
                 var member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId);
                 if (member is null ||
                     (!member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                     !member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)))
+                     !member.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase)))
                 {
                     throw ApiException.Forbidden("You do not have permission to delete tasks in this project.");
                 }
@@ -130,7 +130,7 @@ namespace API_v2.Services
                 var member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId);
                 if (member is null ||
                     (!member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                     !member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)))
+                     !member.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase)))
                 {
                     throw ApiException.Forbidden("You do not have permission to assign tasks in this project.");
                 }
@@ -163,8 +163,6 @@ namespace API_v2.Services
             {
                 TaskId = req.TaskId,
                 UserId = req.UserId,
-                CanView = req.CanView,
-                CanEdit = req.CanEdit,
                 AssignedAt = DateTime.UtcNow
             });
             _assignRepo.Save();
@@ -185,39 +183,6 @@ namespace API_v2.Services
                 .ToList();
         }
 
-        public string UpdatePermission(AssignTaskRequest req, Guid currentUserId)
-        {
-            var task = GetTaskOrThrow(req.TaskId);
-
-            if (task.ProjectId.HasValue)
-            {
-                var member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId);
-                if (member is null ||
-                    (!member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                     !member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)))
-                {
-                    throw ApiException.Forbidden("You do not have permission to update task permissions in this project.");
-                }
-            }
-            else
-            {
-                if (task.CreatorId != currentUserId)
-                {
-                    throw ApiException.Forbidden("Only the task creator can update permissions.");
-                }
-            }
-
-            var assignment = _assignRepo.GetAssignment(req.TaskId, req.UserId);
-            if (assignment is null)
-            {
-                throw ApiException.NotFound("This user has not been assigned to this task.");
-            }
-
-            assignment.CanView = req.CanView;
-            assignment.CanEdit = req.CanEdit;
-            _assignRepo.Save();
-            return "Permissions updated successfully.";
-        }
 
         public string RemoveAssignment(RemoveAssignmentRequest req, Guid currentUserId)
         {
@@ -228,7 +193,7 @@ namespace API_v2.Services
                 var member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId);
                 if (member is null ||
                     (!member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                     !member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)))
+                     !member.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase)))
                 {
                     throw ApiException.Forbidden("You do not have permission to revoke assignments in this project.");
                 }
@@ -259,23 +224,27 @@ namespace API_v2.Services
             if (task.ProjectId.HasValue)
             {
                 var member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId);
-                if (member is null ||
-                    (!member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                     !member.Role.Equals("Editor", StringComparison.OrdinalIgnoreCase)))
+                if (member is null)
                 {
-                    throw ApiException.Forbidden("You do not have permission to change task status in this project.");
+                    throw ApiException.Forbidden("You do not have access to this project.");
+                }
+
+                if (!member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
+                    !member.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase))
+                {
+                    var isAssigned = _assignRepo.Exists(req.TaskId, currentUserId);
+                    if (!isAssigned)
+                    {
+                        throw ApiException.Forbidden("Members can only update status of tasks assigned to themselves.");
+                    }
                 }
             }
             else
             {
                 if (task.CreatorId != currentUserId)
                 {
-                    var assignment = _assignRepo.GetAssignment(req.TaskId, currentUserId);
-                    if (assignment is null)
-                    {
-                        throw ApiException.Forbidden("You are not assigned to this task.");
-                    }
-                    if (!assignment.CanEdit)
+                    var isAssigned = _assignRepo.Exists(req.TaskId, currentUserId);
+                    if (!isAssigned)
                     {
                         throw ApiException.Forbidden("You do not have permission to change the status of this task.");
                     }
@@ -342,9 +311,7 @@ namespace API_v2.Services
                     .Select(a => new AssignedUserResponse
                     {
                         UserId = a.UserId,
-                        Email = a.User?.Email,
-                        CanView = a.CanView,
-                        CanEdit = a.CanEdit
+                        Email = a.User?.Email
                     })
                     .ToList()
             };

@@ -260,9 +260,9 @@ const getRoleBadgeClass = (role) => {
   switch (role?.toLowerCase()) {
     case 'owner':
       return 'bg-danger-subtle text-danger border border-danger-subtle'
-    case 'editor':
+    case 'manager':
       return 'bg-primary-subtle text-primary border border-primary-subtle'
-    case 'viewer':
+    case 'member':
     default:
       return 'bg-secondary-subtle text-secondary border border-secondary-subtle'
   }
