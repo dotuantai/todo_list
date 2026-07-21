@@ -8,12 +8,13 @@ export const useProjectStore = defineStore('project', {
     currentProject: null,
     userRole: 'Viewer',
     loading: false,
-    currentUserEmail: localStorage.getItem('userEmail') || null
+    currentUserEmail: localStorage.getItem('userEmail') || null,
+    token: localStorage.getItem('token') || null
   }),
 
   getters: {
     isAuthenticated() {
-      const token = localStorage.getItem('token')
+      const token = this.token
       return !!token && token !== 'null' && token !== 'undefined' && token.split('.').length === 3
     },
     currentInitial() {
@@ -55,6 +56,7 @@ export const useProjectStore = defineStore('project', {
 
     decodeToken() {
       const token = localStorage.getItem('token')
+      this.token = token
       if (!token) {
         this.currentUserEmail = null
         localStorage.removeItem('userEmail')
@@ -95,6 +97,7 @@ export const useProjectStore = defineStore('project', {
       this.currentProject = null
       this.userRole = 'Viewer'
       this.currentUserEmail = null
+      this.token = null
       localStorage.removeItem('currentProjectId')
       localStorage.removeItem('userEmail')
     }

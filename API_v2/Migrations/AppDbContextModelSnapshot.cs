@@ -48,7 +48,7 @@ namespace API_v2.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Projects");
+                    b.ToTable("Projects", (string)null);
                 });
 
             modelBuilder.Entity("API_v2.Models.ProjectMember", b =>
@@ -76,7 +76,7 @@ namespace API_v2.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ProjectMembers");
+                    b.ToTable("ProjectMembers", (string)null);
                 });
 
             modelBuilder.Entity("API_v2.Models.RefreshToken", b =>
@@ -105,7 +105,7 @@ namespace API_v2.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("API_v2.Models.TaskAssignment", b =>
@@ -129,7 +129,7 @@ namespace API_v2.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TaskAssignments");
+                    b.ToTable("TaskAssignments", (string)null);
                 });
 
             modelBuilder.Entity("API_v2.Models.TodoTask", b =>
@@ -168,7 +168,7 @@ namespace API_v2.Migrations
 
                     b.HasIndex("ProjectId");
 
-                    b.ToTable("Tasks");
+                    b.ToTable("Tasks", (string)null);
                 });
 
             modelBuilder.Entity("API_v2.Models.User", b =>
@@ -193,7 +193,7 @@ namespace API_v2.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("API_v2.Models.Project", b =>

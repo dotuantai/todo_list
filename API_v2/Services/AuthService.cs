@@ -5,6 +5,9 @@ using API_v2.Models;
 using API_v2.Models.DTOs;
 using API_v2.Repositorys.IRepositorys;
 using API_v2.Services.Interfaces;
+using API_v2.Datas;
+using System.Linq;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace API_v2.Services
 {
@@ -14,41 +17,184 @@ namespace API_v2.Services
         private readonly IRefreshTokenRepository _refreshTokenRepo;
         private readonly JwtHelper _jwtHelper;
         private readonly ILogger<AuthService> _logger;
+        private readonly AppDbContext _db;
+        private readonly IEmailService _emailService;
+        private readonly IMemoryCache _memoryCache;
 
         public AuthService(
             IUserRepository userRepo, 
             IRefreshTokenRepository refreshTokenRepo, 
             JwtHelper jwtHelper,
-            ILogger<AuthService> logger)
+            ILogger<AuthService> logger,
+            AppDbContext db,
+            IEmailService emailService,
+            IMemoryCache memoryCache)
         {
             _userRepo = userRepo;
             _refreshTokenRepo = refreshTokenRepo;
             _jwtHelper = jwtHelper;
             _logger = logger;
+            _db = db;
+            _emailService = emailService;
+            _memoryCache = memoryCache;
+        }
+
+        private bool IsStrongPassword(string password)
+        {
+            if (string.IsNullOrEmpty(password) || password.Length < 8)
+                return false;
+            
+            bool hasUpper = false;
+            bool hasLower = false;
+            bool hasDigit = false;
+            bool hasSpecial = false;
+
+            foreach (var ch in password)
+            {
+                if (char.IsUpper(ch)) hasUpper = true;
+                else if (char.IsLower(ch)) hasLower = true;
+                else if (char.IsDigit(ch)) hasDigit = true;
+                else if (!char.IsLetterOrDigit(ch)) hasSpecial = true;
+            }
+
+            return hasUpper && hasLower && hasDigit && hasSpecial;
         }
 
         public void Register(RegisterRequest req)
         {
             var emailLower = req.Email.Trim().ToLower();
-            if (_userRepo.GetByEmail(emailLower) is not null)
+            
+            // Password validation
+            if (!IsStrongPassword(req.Password))
             {
-                _logger.LogWarning("AUDIT [Register Failed] Email: {Email} already exists.", emailLower);
-                throw ApiException.Conflict("Email is already in use.");
+                throw ApiException.BadRequest("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.");
             }
 
-            var user = new User
+            var existingUser = _db.Users.FirstOrDefault(u => u.Email.ToLower() == emailLower);
+            if (existingUser is not null)
             {
-                Id = Guid.NewGuid(),
-                Email = emailLower,
-                PasswordHash = PasswordHelper.HashPassword(req.Password),
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow
-            };
+                if (existingUser.IsActive)
+                {
+                    _logger.LogWarning("AUDIT [Register Failed] Email: {Email} already exists and is active.", emailLower);
+                    throw ApiException.Conflict("Email is already in use.");
+                }
+                else
+                {
+                    // Update password for inactive user (re-registering)
+                    existingUser.PasswordHash = PasswordHelper.HashPassword(req.Password);
+                    existingUser.CreatedAt = DateTime.UtcNow;
+                    _db.Users.Update(existingUser);
+                }
+            }
+            else
+            {
+                var user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = emailLower,
+                    PasswordHash = PasswordHelper.HashPassword(req.Password),
+                    IsActive = false, // Must verify OTP to activate
+                    CreatedAt = DateTime.UtcNow
+                };
+                _db.Users.Add(user);
+            }
 
-            _userRepo.Create(user);
-            _userRepo.Save();
+            // Generate OTP
+            var otp = Random.Shared.Next(100000, 999999).ToString();
+            
+            // Save to memory cache (valid for 5 minutes)
+            _memoryCache.Set($"OTP_{emailLower}", otp, TimeSpan.FromMinutes(5));
+            _db.SaveChanges();
 
-            _logger.LogInformation("AUDIT [Register Success] User Created ID: {UserId}, Email: {Email}", user.Id, emailLower);
+            // Send Email
+            var subject = "TaskFlow Pro - Verification Code";
+            var body = $@"
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;'>
+                    <h2 style='color: #4f46e5; text-align: center;'>Welcome to TaskFlow Pro</h2>
+                    <p>Thank you for registering. Please use the following One-Time Password (OTP) to verify your account. This code is valid for 5 minutes.</p>
+                    <div style='background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; text-align: center; margin: 20px 0;'>
+                        <span style='font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #1e293b;'>{otp}</span>
+                    </div>
+                    <p style='font-size: 12px; color: #64748b; text-align: center;'>If you did not request this code, you can safely ignore this email.</p>
+                </div>";
+
+            try 
+            {
+                _emailService.SendEmail(emailLower, subject, body);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send OTP to {Email}", emailLower);
+                throw ApiException.InternalServerError("Failed to send OTP verification email. Please try again.");
+            }
+
+            _logger.LogInformation("AUDIT [Register Initialized] OTP sent to Email: {Email}", emailLower);
+        }
+
+        public void VerifyOtp(VerifyOtpRequest req)
+        {
+            var emailLower = req.Email.Trim().ToLower();
+
+            if (!_memoryCache.TryGetValue($"OTP_{emailLower}", out string? storedOtp) || storedOtp != req.Otp.Trim())
+            {
+                throw ApiException.BadRequest("Invalid or expired OTP code.");
+            }
+
+            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == emailLower);
+            if (user == null)
+            {
+                throw ApiException.NotFound("User not found.");
+            }
+
+            user.IsActive = true;
+            _memoryCache.Remove($"OTP_{emailLower}");
+            _db.SaveChanges();
+
+            _logger.LogInformation("AUDIT [Email Verified] User ID: {UserId}, Email: {Email} has been activated.", user.Id, emailLower);
+        }
+
+        public void ResendOtp(string email)
+        {
+            var emailLower = email.Trim().ToLower();
+            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == emailLower);
+
+            if (user == null)
+            {
+                throw ApiException.NotFound("User not found.");
+            }
+
+            if (user.IsActive)
+            {
+                throw ApiException.BadRequest("Account is already active.");
+            }
+
+            var otp = Random.Shared.Next(100000, 999999).ToString();
+
+            // Save to memory cache (valid for 5 minutes)
+            _memoryCache.Set($"OTP_{emailLower}", otp, TimeSpan.FromMinutes(5));
+
+            var subject = "TaskFlow Pro - Verification Code";
+            var body = $@"
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;'>
+                    <h2 style='color: #4f46e5; text-align: center;'>Welcome to TaskFlow Pro</h2>
+                    <p>Please use the following One-Time Password (OTP) to verify your account. This code is valid for 5 minutes.</p>
+                    <div style='background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; text-align: center; margin: 20px 0;'>
+                        <span style='font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #1e293b;'>{otp}</span>
+                    </div>
+                    <p style='font-size: 12px; color: #64748b; text-align: center;'>If you did not request this code, you can safely ignore this email.</p>
+                </div>";
+
+            try 
+            {
+                _emailService.SendEmail(emailLower, subject, body);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to resend OTP to {Email}", emailLower);
+                throw ApiException.InternalServerError("Failed to send OTP verification email. Please try again.");
+            }
+
+            _logger.LogInformation("AUDIT [OTP Resent] Email: {Email}", emailLower);
         }
 
         public LoginResponse Login(LoginRequest req)

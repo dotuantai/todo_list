@@ -57,8 +57,8 @@ api.interceptors.response.use(
 
       } catch (refreshError) {
         localStorage.removeItem('token')
-        if (router.currentRoute.value.path !== '/login' && router.currentRoute.value.path !== '/register') {
-          router.replace('/login')
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+          window.location.href = '/login'
         }
         return Promise.reject(refreshError)
       }

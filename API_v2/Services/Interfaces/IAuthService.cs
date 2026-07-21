@@ -5,6 +5,8 @@ namespace API_v2.Services.Interfaces
     public interface IAuthService
     {
         void Register(RegisterRequest req);
+        void VerifyOtp(VerifyOtpRequest req);
+        void ResendOtp(string email);
         LoginResponse Login(LoginRequest req);
         LoginResponse Refresh(string refreshToken);
         void Logout(string refreshToken);

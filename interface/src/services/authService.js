@@ -19,3 +19,13 @@ export const searchUsers = (keyword) => {
     }
   })
 }
+
+export const verifyOtp = (data) => {
+  return api.post('/auth/verify-otp', data)
+}
+
+export const resendOtp = (email) => {
+  return api.post('/auth/resend-otp', null, {
+    params: { email }
+  })
+}
