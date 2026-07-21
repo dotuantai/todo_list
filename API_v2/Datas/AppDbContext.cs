@@ -15,9 +15,15 @@ namespace API_v2.Datas
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectMember> ProjectMembers { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
