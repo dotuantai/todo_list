@@ -47,17 +47,6 @@ namespace API_v2.Controllers
             return Ok(new ApiResponse<string>(true, result, null));
         }
 
-        [HttpPut("assign")]
-        public ActionResult UpdatePermission([FromBody] AssignTaskRequest req)
-        {
-            if (req is null || !ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse<object>(false, "Invalid assignment data.", null));
-            }
-
-            var result = _taskService.UpdatePermission(req, CurrentUserId);
-            return Ok(new ApiResponse<string>(true, result, null));
-        }
 
         [HttpDelete("assign")]
         public ActionResult RemoveAssignment([FromBody] RemoveAssignmentRequest req)

@@ -66,7 +66,7 @@ namespace API_v2.Controllers
         [HttpGet("{projectId:guid}/members")]
         public ActionResult GetMembers(Guid projectId)
         {
-            var result = _projectService.GetMembers(projectId);
+            var result = _projectService.GetMembers(projectId, CurrentUserId);
             return Ok(new ApiResponse<List<MemberResponse>>(true, "Success", result));
         }
 

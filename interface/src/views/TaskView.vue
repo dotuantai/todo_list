@@ -57,8 +57,8 @@
               :key="task.Id"
               class="card border-0 border-top border-4 shadow-sm task-tag-card p-3"
               :class="{ 'task-tag-card--dragging': draggingTask?.Id === task.Id }"
-              :style="{ borderTopColor: col.color, cursor: projectStore.userRole !== 'Viewer' ? 'grab' : 'default' }"
-              :draggable="projectStore.userRole !== 'Viewer'"
+              :style="{ borderTopColor: col.color, cursor: 'grab' }"
+              :draggable="true"
               @dragstart="onDragStart(task)"
               @dragend="onDragEnd"
               @click="openModal(task)"
@@ -104,7 +104,7 @@
                 <h5 class="modal-title fw-bold text-body h5 mb-0 text-start">{{ modal.task?.Title }}</h5>
               </div>
               <div class="d-flex gap-1 align-items-center">
-                <button v-if="projectStore.userRole !== 'Viewer'" class="btn btn-sm btn-light border p-2" :class="{ 'btn-primary text-white': editMode }" @click="toggleEdit" title="Edit task" style="border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
+                <button v-if="projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager'" class="btn btn-sm btn-light border p-2" :class="{ 'btn-primary text-white': editMode }" @click="toggleEdit" title="Edit task" style="border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
                   <i class="bi bi-pencil-fill"></i>
                 </button>
                 <button class="btn-close ms-2" @click="closeModal" aria-label="Close"></button>
@@ -137,7 +137,12 @@
                 </div>
                 <div class="col-6 col-md-3">
                   <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Status</label>
-                  <div>
+                  <div v-if="projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager' || isAssignedToCurrentUser(modal.task)">
+                    <select :value="modal.task?.Status" @change="changeTaskStatusFromSelect($event.target.value)" class="form-select form-select-sm" style="border-radius: 8px;">
+                      <option v-for="col in columns" :key="col.status" :value="col.status">{{ col.label }}</option>
+                    </select>
+                  </div>
+                  <div v-else>
                     <span class="badge" :style="{ background: getColByStatus(modal.task?.Status)?.bgMid, color: getColByStatus(modal.task?.Status)?.color }">
                       {{ getColByStatus(modal.task?.Status)?.label }}
                     </span>
@@ -166,45 +171,9 @@
                         <div class="flex-grow-1 min-w-0 text-start">
                           <div class="small fw-semibold text-body text-truncate" :title="user.Email">{{ user.Email }}</div>
                         </div>
-
-                        <!-- Edit permission inline (Only for Owner/Editor) -->
-                        <template v-if="editingPermUserId !== user.UserId && projectStore.userRole !== 'Viewer'">
-                          <span v-if="user.CanView" class="badge bg-info bg-opacity-10 text-info" style="font-size: 0.7rem;"><i class="bi bi-eye-fill"></i> View</span>
-                          <span v-if="user.CanEdit" class="badge bg-success bg-opacity-10 text-success ms-1" style="font-size: 0.7rem;"><i class="bi bi-pencil-fill"></i> Edit</span>
-                          <button class="btn btn-sm btn-light border p-1 ms-1" @click="startEditPerm(user)" title="Edit permissions" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-gear" style="font-size:11px"></i>
-                          </button>
-                          <button class="btn btn-sm btn-outline-danger p-1 ms-1" @click="removeUser(user)" title="Remove assignment" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-trash3-fill" style="font-size:11px"></i>
-                          </button>
-                        </template>
-                        <template v-else-if="editingPermUserId === user.UserId">
-                          <button class="btn btn-sm btn-light border p-1 ms-auto" @click="cancelEditPerm" title="Cancel" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">
-                            <i class="bi bi-x-lg" style="font-size:10px"></i>
-                          </button>
-                        </template>
-                        <template v-else>
-                          <span v-if="user.CanView" class="badge bg-info bg-opacity-10 text-info" style="font-size: 0.7rem;"><i class="bi bi-eye-fill"></i> View</span>
-                          <span v-if="user.CanEdit" class="badge bg-success bg-opacity-10 text-success ms-1" style="font-size: 0.7rem;"><i class="bi bi-pencil-fill"></i> Edit</span>
-                        </template>
-                      </div>
-
-                      <div v-if="editingPermUserId === user.UserId" class="d-flex align-items-center gap-3 pt-2 mt-2 border-top">
-                        <div class="form-check form-check-inline mb-0">
-                          <input type="checkbox" class="form-check-input" :id="'view-chk-' + user.UserId" v-model="editingPerms.canView" />
-                          <label class="form-check-label small" :for="'view-chk-' + user.UserId">View</label>
-                        </div>
-                        <div class="form-check form-check-inline mb-0">
-                          <input type="checkbox" class="form-check-input" :id="'edit-chk-' + user.UserId" v-model="editingPerms.canEdit" />
-                          <label class="form-check-label small" :for="'edit-chk-' + user.UserId">Edit</label>
-                        </div>
-                        <button
-                          class="btn btn-sm btn-primary ms-auto px-3 py-1"
-                          style="font-size: 0.75rem;"
-                          @click="savePermission(user)"
-                          :disabled="!editingPerms.canView && !editingPerms.canEdit"
-                        >
-                          Save
+                        <!-- Remove assignment button (Only for Owner/Manager) -->
+                        <button v-if="projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager'" class="btn btn-sm btn-outline-danger p-1 ms-auto" @click="removeUser(user)" title="Remove assignment" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">
+                          <i class="bi bi-trash3-fill" style="font-size:11px"></i>
                         </button>
                       </div>
                     </div>
@@ -250,8 +219,8 @@
               </div>
             </div>
 
-            <!-- ── FOOTER — View mode, Assign Users (Only for Owner/Editor) ── -->
-            <div v-if="!editMode && projectStore.userRole !== 'Viewer'" class="modal-footer p-4 border-top bg-body-secondary d-flex align-items-center gap-3 flex-wrap">
+            <!-- ── FOOTER — View mode, Assign Users (Only for Owner/Manager) ── -->
+            <div v-if="!editMode && (projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager')" class="modal-footer p-4 border-top bg-body-secondary d-flex align-items-center gap-3 flex-wrap">
               <div class="flex-grow-1 text-start" style="min-width: 250px;">
                 <select v-model="selectedAssigneeId" class="form-select form-select-sm" style="border-radius: 8px; height: 38px;">
                   <option :value="null">-- Select member to assign --</option>
@@ -261,26 +230,15 @@
                 </select>
               </div>
 
-              <div class="d-flex align-items-center gap-3 bg-body border rounded-3 px-3 py-1.5" style="height: 38px;">
-                <div class="form-check form-check-inline mb-0">
-                  <input type="checkbox" class="form-check-input" id="assign-view-chk" v-model="assignPerms.canView" />
-                  <label class="form-check-label small" for="assign-view-chk">View</label>
-                </div>
-                <div class="form-check form-check-inline mb-0">
-                  <input type="checkbox" class="form-check-input" id="assign-edit-chk" v-model="assignPerms.canEdit" />
-                  <label class="form-check-label small" for="assign-edit-chk">Edit</label>
-                </div>
-              </div>
-
               <div class="ms-auto d-flex gap-2">
-                <button class="btn btn-sm btn-primary fw-semibold" @click="assignUser" :disabled="!selectedAssigneeId || (!assignPerms.canView && !assignPerms.canEdit)" style="height: 38px; border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none; padding: 0 16px;">
+                <button class="btn btn-sm btn-primary fw-semibold" @click="assignUser" :disabled="!selectedAssigneeId" style="height: 38px; border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none; padding: 0 16px;">
                   <i class="bi bi-person-plus-fill me-1"></i> Assign
                 </button>
                 <button class="btn btn-sm btn-outline-secondary" @click="closeModal" style="height: 38px; border-radius: 8px; padding: 0 16px;">Close</button>
               </div>
             </div>
 
-            <!-- ── FOOTER — View mode, Viewer ── -->
+            <!-- ── FOOTER — View mode, Member ── -->
             <div v-else-if="!editMode" class="modal-footer p-4 border-top bg-body-secondary text-end">
               <button class="btn btn-sm btn-outline-secondary px-4 py-2" @click="closeModal" style="border-radius: 8px;">Close</button>
             </div>
@@ -307,7 +265,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
-import { assignTask, updateTask, updatePermission, removeAssignment, updateStatusTask, deleteTask } from '../services/taskService.js'
+import { assignTask, updateTask, removeAssignment, updateStatusTask, deleteTask } from '../services/taskService.js'
 import { getMembers, addMember, updateMemberRole, removeMember, getProjectTasks, updateProject, deleteProject } from '../services/projectService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 const projectStore = useProjectStore()
@@ -327,9 +285,6 @@ const loadingMembers = ref(false)
 
 // Assignee selection states
 const selectedAssigneeId = ref(null)
-const assignPerms        = reactive({ canView: true, canEdit: false })
-const editingPermUserId  = ref(null)
-const editingPerms       = reactive({ canView: false, canEdit: false })
 
 // Drag states
 const draggingTask       = ref(null)
@@ -363,9 +318,6 @@ const closeModal = () => {
   editMode.value = false
   document.body.style.overflow = ''
   selectedAssigneeId.value = null
-  assignPerms.canView = true
-  assignPerms.canEdit = false
-  editingPermUserId.value = null
 }
 
 const toDatetimeLocal = (iso) => {
@@ -478,18 +430,38 @@ const refreshAll = async () => {
 // Note: Project actions & member management are handled in SettingsView and MembersView respectively.
 
 // Task assignment Actions
+const isAssignedToCurrentUser = (task) => {
+  if (!task || !task.AssignedUsers) return false
+  return task.AssignedUsers.some(u => u.Email === projectStore.currentUserEmail)
+}
+
+const changeTaskStatusFromSelect = async (newStatus) => {
+  if (!modal.task) return
+  const oldStatus = modal.task.Status
+  modal.task.Status = newStatus
+  try {
+    await updateStatusTask({
+      taskId: modal.task.Id,
+      status: newStatus
+    })
+    await loadData()
+    toastSuccess('Task status updated successfully!')
+  } catch (err) {
+    modal.task.Status = oldStatus
+    console.error(err)
+    toastError(extractMessage(err, 'Failed to update task status.'))
+  }
+}
+
+// Task assignment Actions
 const assignUser = async () => {
   if (!selectedAssigneeId.value) return
   try {
     await assignTask({
       taskId:  modal.task.Id,
       userId:  selectedAssigneeId.value,
-      canView: assignPerms.canView,
-      canEdit: assignPerms.canEdit,
     })
     selectedAssigneeId.value = null
-    assignPerms.canView = true
-    assignPerms.canEdit = false
     await loadData()
     const updated = tasks.value.find(t => t.Id === modal.task.Id)
     if (updated) modal.task = updated
@@ -497,35 +469,6 @@ const assignUser = async () => {
   } catch (err) {
     console.error(err)
     toastError(extractMessage(err, 'Failed to assign task.'))
-  }
-}
-
-const startEditPerm = (user) => {
-  editingPermUserId.value = user.UserId
-  editingPerms.canView = user.CanView
-  editingPerms.canEdit = user.CanEdit
-}
-
-const cancelEditPerm = () => {
-  editingPermUserId.value = null
-}
-
-const savePermission = async (user) => {
-  try {
-    await updatePermission({
-      taskId: modal.task.Id,
-      userId: user.UserId,
-      canView: editingPerms.canView,
-      canEdit: editingPerms.canEdit,
-    })
-    editingPermUserId.value = null
-    await loadData()
-    const updated = tasks.value.find(t => t.Id === modal.task.Id)
-    if (updated) modal.task = updated
-    toastSuccess('Permissions updated successfully!')
-  } catch (err) {
-    console.error(err)
-    toastError(extractMessage(err, 'Failed to update permissions.'))
   }
 }
 
@@ -548,9 +491,8 @@ const removeUser = async (user) => {
   }
 }
 
-// Drag & drop (disabled for Viewers)
+// Drag & drop
 const onDragStart = (task) => {
-  if (projectStore.userRole === 'Viewer') return
   draggingTask.value = task
   draggingFromStatus.value = task.Status
 }
@@ -562,7 +504,6 @@ const onDragEnd = () => {
 }
 
 const onDragOver = (e, status) => {
-  if (projectStore.userRole === 'Viewer') return
   e.preventDefault()
   dragOverCol.value = status
 }
@@ -572,7 +513,6 @@ const onDragLeave = () => {
 }
 
 const onDrop = async (e, targetStatus) => {
-  if (projectStore.userRole === 'Viewer') return
   e.preventDefault()
   dragOverCol.value = null
   const task = draggingTask.value
@@ -601,9 +541,9 @@ const getRoleBadgeClass = (role) => {
   switch (role?.toLowerCase()) {
     case 'owner':
       return 'bg-danger-subtle text-danger border border-danger-subtle'
-    case 'editor':
+    case 'manager':
       return 'bg-primary-subtle text-primary border border-primary-subtle'
-    case 'viewer':
+    case 'member':
     default:
       return 'bg-secondary-subtle text-secondary border border-secondary-subtle'
   }
