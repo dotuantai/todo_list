@@ -12,12 +12,18 @@ namespace API_v2.Services
         private readonly ITaskRepository _taskRepo;
         private readonly ITaskAssignmentRepository _assignRepo;
         private readonly IProjectRepository _projectRepo;
+        private readonly INotificationService _notificationService;
 
-        public TaskService(ITaskRepository taskRepo, ITaskAssignmentRepository assignRepo, IProjectRepository projectRepo)
+        public TaskService(
+            ITaskRepository taskRepo, 
+            ITaskAssignmentRepository assignRepo, 
+            IProjectRepository projectRepo,
+            INotificationService notificationService)
         {
             _taskRepo = taskRepo;
             _assignRepo = assignRepo;
             _projectRepo = projectRepo;
+            _notificationService = notificationService;
         }
 
         public string CreateTask(CreateTaskRequest req, Guid creatorId, Guid projectId)
@@ -166,6 +172,30 @@ namespace API_v2.Services
                 AssignedAt = DateTime.UtcNow
             });
             _assignRepo.Save();
+
+            try
+            {
+                var projectName = "";
+                if (task.ProjectId.HasValue)
+                {
+                    var project = _projectRepo.GetById(task.ProjectId.Value);
+                    if (project != null)
+                    {
+                        projectName = $" in project '{project.Name}'";
+                    }
+                }
+                _notificationService.CreateAndSendNotification(
+                    req.UserId,
+                    "New Task Assigned",
+                    $"You have been assigned the task '{task.Title}'{projectName}.",
+                    "TaskAssigned",
+                    task.Id.ToString()
+                );
+            }
+            catch (Exception ex)
+            {
+                // Soft fail
+            }
 
             return "Task assigned successfully.";
         }

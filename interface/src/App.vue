@@ -108,10 +108,59 @@
         <!-- Right Side: Profile & notification -->
         <div class="d-flex align-items-center gap-2 ms-auto">
           <!-- Notification system -->
-          <button class="btn btn-light p-0 border rounded-3 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; color: #64748b; position: relative;">
-            <i class="bi bi-bell"></i>
-            <span class="position-absolute bg-danger border border-white rounded-circle" style="width: 7px; height: 7px; top: 8px; right: 8px;"></span>
-          </button>
+          <div class="position-relative notification-wrapper">
+            <button 
+              @click="toggleNotificationDropdown" 
+              class="btn btn-light p-0 border rounded-3 d-flex align-items-center justify-content-center" 
+              style="width: 36px; height: 36px; color: #64748b; position: relative;"
+              title="Notifications"
+            >
+              <i class="bi" :class="unreadCount > 0 ? 'bi-bell-fill text-primary' : 'bi-bell'"></i>
+              <span v-if="unreadCount > 0" class="position-absolute bg-danger border border-white rounded-circle" style="width: 8px; height: 8px; top: 7px; right: 7px;"></span>
+            </button>
+
+            <!-- Dropdown panel -->
+            <div 
+              v-if="showNotifications" 
+              class="card shadow-lg border position-absolute mt-2 p-0 notification-dropdown" 
+              style="width: 320px; right: 0; z-index: 1050; border-radius: 12px; overflow: hidden;"
+            >
+              <div class="card-header bg-white border-bottom py-2.5 px-3 d-flex align-items-center justify-content-between">
+                <span class="fw-bold text-body small text-uppercase tracking-wider mb-0" style="font-size: 11px;">Notifications</span>
+                <button 
+                  v-if="unreadCount > 0" 
+                  @click="handleMarkAllAsRead" 
+                  class="btn btn-link p-0 text-decoration-none small text-primary fw-semibold" 
+                  style="font-size: 11px;"
+                >
+                  Mark all as read
+                </button>
+              </div>
+              <div class="list-group list-group-flush overflow-auto" style="max-height: 350px;">
+                <div v-if="notifications.length === 0" class="text-center py-4 text-muted small fst-italic">
+                  <i class="bi bi-bell-slash d-block fs-4 opacity-50 mb-1"></i>
+                  No notifications
+                </div>
+                <button 
+                  v-else
+                  v-for="n in notifications" 
+                  :key="n.Id" 
+                  @click="handleNotificationClick(n)"
+                  class="list-group-item list-group-item-action text-start p-3 border-bottom d-flex align-items-start gap-2"
+                  :style="!n.IsRead ? { backgroundColor: 'rgba(99, 102, 241, 0.03)' } : {}"
+                >
+                  <div class="flex-grow-1 min-w-0">
+                    <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                      <span class="fw-bold text-body text-truncate" style="font-size: 12.5px;">{{ n.Title }}</span>
+                      <span v-if="!n.IsRead" class="badge rounded-circle p-1 bg-primary" style="width: 6px; height: 6px;" title="Unread"></span>
+                    </div>
+                    <p class="text-secondary mb-1 small lh-sm" style="font-size: 12px;">{{ n.Message }}</p>
+                    <span class="text-muted" style="font-size: 9.5px; font-family: monospace;">{{ formatTime(n.CreatedAt) }}</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
           
           <div class="vr opacity-25 mx-1" style="height:28px"></div>
           
@@ -150,12 +199,117 @@ import TaskModal from './components/TaskModal.vue'
 import { logout } from './services/authService.js'
 import { useProjectStore } from './stores/projectStore.js'
 import { getMembers } from './services/projectService.js'
+import { HubConnectionBuilder } from '@microsoft/signalr'
+import { getNotifications, markAsRead, markAllAsRead } from './services/notificationService.js'
 
 const router = useRouter()
 const route = router.currentRoute
 const createTaskModal = ref(null)
 const projectStore = useProjectStore()
 const sidebarMembers = ref([])
+
+// Notification states
+const notifications = ref([])
+const showNotifications = ref(false)
+const unreadCount = computed(() => notifications.value.filter(n => !n.IsRead).length)
+let signalRConnection = null
+
+const initSignalR = async () => {
+  if (signalRConnection) return
+  const token = localStorage.getItem('token')
+  if (!token) return
+
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7087/api'
+  const hubUrl = baseUrl.replace('/api', '/hubs/notifications')
+
+  signalRConnection = new HubConnectionBuilder()
+    .withUrl(hubUrl, {
+      accessTokenFactory: () => token
+    })
+    .withAutomaticReconnect()
+    .build()
+
+  signalRConnection.on('ReceiveNotification', (n) => {
+    notifications.value.unshift(n)
+  })
+
+  try {
+    await signalRConnection.start()
+    console.log('SignalR connected.')
+    if (projectStore.currentUserId) {
+      await signalRConnection.invoke('RegisterUser', projectStore.currentUserId)
+    }
+  } catch (err) {
+    console.error('SignalR connection failed', err)
+  }
+}
+
+const stopSignalR = async () => {
+  if (signalRConnection) {
+    try {
+      await signalRConnection.stop()
+    } catch (e) {}
+    signalRConnection = null
+  }
+}
+
+const loadNotifications = async () => {
+  if (!projectStore.isAuthenticated) return
+  try {
+    const res = await getNotifications()
+    notifications.value = res?.data || []
+  } catch (e) {
+    console.error('Failed to load notifications:', e)
+  }
+}
+
+const toggleNotificationDropdown = async () => {
+  showNotifications.value = !showNotifications.value
+  if (showNotifications.value) {
+    await loadNotifications()
+  }
+}
+
+const handleNotificationClick = async (n) => {
+  if (n.IsRead) return
+  try {
+    await markAsRead(n.Id)
+    n.IsRead = true
+  } catch (e) {
+    console.error('Failed to mark notification as read:', e)
+  }
+}
+
+const handleMarkAllAsRead = async () => {
+  try {
+    await markAllAsRead()
+    notifications.value.forEach(n => n.IsRead = true)
+  } catch (e) {
+    console.error('Failed to mark all as read:', e)
+  }
+}
+
+const closeNotificationDropdownOnOutside = (e) => {
+  if (!e.target.closest('.notification-wrapper')) {
+    showNotifications.value = false
+  }
+}
+
+const formatTime = (iso) => {
+  if (!iso) return ''
+  const dateObj = new Date(iso)
+  return dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' ' + dateObj.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit' })
+}
+
+watch(() => projectStore.isAuthenticated, (newVal) => {
+  if (newVal) {
+    initSignalR()
+    loadNotifications()
+  } else {
+    stopSignalR()
+    notifications.value = []
+  }
+})
 
 const openCreateTaskModal = () => {
   createTaskModal.value?.openModal()
@@ -240,13 +394,20 @@ onMounted(() => {
   document.documentElement.setAttribute('data-bs-theme', currentTheme)
   projectStore.decodeToken()
   window.addEventListener('project-members-changed', loadSidebarMembers)
+  window.addEventListener('click', closeNotificationDropdownOnOutside)
   if (route.value.params.projectId) {
     loadSidebarMembers()
+  }
+  if (projectStore.isAuthenticated) {
+    initSignalR()
+    loadNotifications()
   }
 })
 
 onUnmounted(() => {
   window.removeEventListener('project-members-changed', loadSidebarMembers)
+  window.removeEventListener('click', closeNotificationDropdownOnOutside)
+  stopSignalR()
 })
 
 const handleLogout = async () => {
@@ -256,6 +417,7 @@ const handleLogout = async () => {
     console.error(error)
   } finally {
     localStorage.removeItem('token')
+    stopSignalR()
     projectStore.clearStore()
     router.push('/login')      
   }
@@ -270,6 +432,13 @@ const handleLogout = async () => {
 .sidebar-link:hover {
   background: var(--bs-secondary-bg) !important;
   color: var(--bs-heading-color) !important;
+}
+.notification-dropdown {
+  background: var(--bs-card-bg);
+  border-color: var(--bs-border-color) !important;
+}
+.notification-dropdown .list-group-item:hover {
+  background-color: var(--bs-secondary-bg) !important;
 }
 .active-project {
   background: linear-gradient(135deg, #4f46e5, #6366f1) !important;

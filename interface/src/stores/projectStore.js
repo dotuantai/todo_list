@@ -9,6 +9,7 @@ export const useProjectStore = defineStore('project', {
     userRole: 'Member',
     loading: false,
     currentUserEmail: localStorage.getItem('userEmail') || null,
+    currentUserId: localStorage.getItem('userId') || null,
     token: localStorage.getItem('token') || null
   }),
 
@@ -59,7 +60,9 @@ export const useProjectStore = defineStore('project', {
       this.token = token
       if (!token) {
         this.currentUserEmail = null
+        this.currentUserId = null
         localStorage.removeItem('userEmail')
+        localStorage.removeItem('userId')
         return
       }
       try {
@@ -74,11 +77,17 @@ export const useProjectStore = defineStore('project', {
                       payload.unique_name || 
                       payload.sub || 
                       'User'
+        const userId = payload.sub || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']
         this.currentUserEmail = email
+        this.currentUserId = userId
         localStorage.setItem('userEmail', email)
+        if (userId) {
+          localStorage.setItem('userId', userId)
+        }
       } catch (e) {
         console.error('Error decoding token', e)
         this.currentUserEmail = 'User'
+        this.currentUserId = null
       }
     },
 
@@ -101,9 +110,11 @@ export const useProjectStore = defineStore('project', {
       this.currentProject = null
       this.userRole = 'Member'
       this.currentUserEmail = null
+      this.currentUserId = null
       this.token = null
       localStorage.removeItem('currentProjectId')
       localStorage.removeItem('userEmail')
+      localStorage.removeItem('userId')
     }
   }
 })

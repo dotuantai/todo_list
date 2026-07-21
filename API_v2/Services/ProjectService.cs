@@ -10,11 +10,16 @@ namespace API_v2.Services
     {
         private readonly IProjectRepository _projectRepo;
         private readonly IUserRepository _userRepo;
+        private readonly INotificationService _notificationService;
 
-        public ProjectService(IProjectRepository projectRepo, IUserRepository userRepo)
+        public ProjectService(
+            IProjectRepository projectRepo, 
+            IUserRepository userRepo,
+            INotificationService notificationService)
         {
             _projectRepo = projectRepo;
             _userRepo = userRepo;
+            _notificationService = notificationService;
         }
 
         public ProjectResponse CreateProject(CreateProjectRequest req, Guid currentUserId)
@@ -187,8 +192,30 @@ namespace API_v2.Services
                 JoinedAt = DateTime.UtcNow
             };
 
+            var project = _projectRepo.GetById(projectId);
+            if (project is null)
+            {
+                throw ApiException.NotFound("Project not found.");
+            }
+
             _projectRepo.AddMember(member);
             _projectRepo.Save();
+
+            try
+            {
+                _notificationService.CreateAndSendNotification(
+                    targetUser.Id,
+                    "New Project Invitation",
+                    $"You have been added to the project '{project.Name}' as a {req.Role}.",
+                    "ProjectInvited",
+                    projectId.ToString()
+                );
+            }
+            catch (Exception ex)
+            {
+                // Soft fail if SignalR hub or database notification logic encounters issues
+                // so that the member addition itself is not rolled back.
+            }
 
             return new MemberResponse
             {
