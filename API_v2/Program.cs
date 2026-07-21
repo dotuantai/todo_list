@@ -13,15 +13,35 @@ using API_v2.Services.Interfaces;
 using Scalar.AspNetCore;
 using Serilog;
 
+// Enable Serilog self-logging to standard error to capture internal errors
+Serilog.Debugging.SelfLog.Enable(Console.Error);
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Serilog from appsettings.json
+// Configure Serilog programmatically (independent of appsettings.json)
 builder.Host.UseSerilog((context, services, loggerConfiguration) =>
 {
     loggerConfiguration
-        .ReadFrom.Configuration(context.Configuration)
-        .ReadFrom.Services(services)
-        .Enrich.FromLogContext();
+        .MinimumLevel.Information()
+        .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+        .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.Hosting.Lifetime", Serilog.Events.LogEventLevel.Information)
+        .MinimumLevel.Override("Microsoft.AspNetCore.Hosting", Serilog.Events.LogEventLevel.Information)
+        .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", Serilog.Events.LogEventLevel.Information)
+        .Enrich.FromLogContext()
+        .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] ({CorrelationId}) {Message:lj}{NewLine}{Exception}");
+
+    if (context.HostingEnvironment.IsDevelopment())
+    {
+        loggerConfiguration.WriteTo.File(
+            path: "Logs/log-.txt",
+            rollingInterval: RollingInterval.Day,
+            fileSizeLimitBytes: 10485760,
+            rollOnFileSizeLimit: true,
+            retainedFileCountLimit: 7,
+            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] ({CorrelationId}) {Message:lj} {Properties:j}{NewLine}{Exception}"
+        );
+    }
 });
 
 // Add services to the container.
