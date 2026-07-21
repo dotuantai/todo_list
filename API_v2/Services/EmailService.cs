@@ -1,6 +1,9 @@
 using System;
-using System.Net;
-using System.Net.Mail;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using API_v2.Services.Interfaces;
@@ -11,41 +14,60 @@ namespace API_v2.Services
     {
         private readonly IConfiguration _config;
         private readonly ILogger<EmailService> _logger;
+        private readonly HttpClient _httpClient;
 
-        public EmailService(IConfiguration config, ILogger<EmailService> logger)
+        public EmailService(IConfiguration config, ILogger<EmailService> logger, HttpClient httpClient)
         {
             _config = config;
             _logger = logger;
+            _httpClient = httpClient;
         }
 
         public void SendEmail(string toEmail, string subject, string body)
         {
-            var gmailAddress = _config["GmailSettings:GmailAddress"]?.Trim();
-            var appPassword = _config["GmailSettings:AppPassword"]?.Replace(" ", "").Trim();
+            SendEmailAsync(toEmail, subject, body).GetAwaiter().GetResult();
+        }
 
-            if (string.IsNullOrEmpty(gmailAddress) || string.IsNullOrEmpty(appPassword))
+        private async Task SendEmailAsync(string toEmail, string subject, string body)
+        {
+            var apiKey = _config["BrevoSettings:ApiKey"]?.Trim();
+            var senderEmail = _config["BrevoSettings:SenderEmail"]?.Trim() ?? "tai.do@rikai.technology";
+            var senderName = _config["BrevoSettings:SenderName"]?.Trim() ?? "TaskFlow Pro";
+
+            if (string.IsNullOrEmpty(apiKey) || apiKey == "YOUR_BREVO_API_KEY_HERE")
             {
-                _logger.LogError("Gmail settings are not configured properly in appsettings.");
+                _logger.LogError("Brevo API Key is not configured. Please set BrevoSettings:ApiKey.");
                 throw new InvalidOperationException("Email settings are not configured.");
             }
 
+            var requestBody = new
+            {
+                sender = new { name = senderName, email = senderEmail },
+                to = new[] { new { email = toEmail } },
+                subject = subject,
+                htmlContent = body
+            };
+
+            var jsonContent = JsonSerializer.Serialize(requestBody);
+            using var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email");
+            request.Headers.Add("api-key", apiKey);
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            request.Content = httpContent;
+
             try
             {
-                using var mailMessage = new MailMessage();
-                mailMessage.From = new MailAddress(gmailAddress, "TaskFlow Pro");
-                mailMessage.To.Add(toEmail);
-                mailMessage.Subject = subject;
-                mailMessage.Body = body;
-                mailMessage.IsBodyHtml = true;
+                using var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorDetails = await response.Content.ReadAsStringAsync();
+                    _logger.LogError("Failed to send email via Brevo API. Status: {StatusCode}, Error: {Error}", 
+                        response.StatusCode, errorDetails);
+                    throw new HttpRequestException($"Brevo API error: {response.StatusCode}");
+                }
 
-                using var smtpClient = new SmtpClient("smtp.gmail.com", 587);
-                smtpClient.EnableSsl = true;
-                smtpClient.UseDefaultCredentials = false;
-                smtpClient.Credentials = new NetworkCredential(gmailAddress, appPassword);
-                smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
-
-                smtpClient.Send(mailMessage);
-                _logger.LogInformation("Email sent successfully to {Email}", toEmail);
+                _logger.LogInformation("Email sent successfully via Brevo API to {Email}", toEmail);
             }
             catch (Exception ex)
             {

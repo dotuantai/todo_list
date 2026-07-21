@@ -68,7 +68,7 @@ builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
-builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddHttpClient<IEmailService, EmailService>();
 builder.Services.AddSingleton<IEmailQueue, EmailQueue>();
 builder.Services.AddHostedService<EmailBackgroundService>();
 
