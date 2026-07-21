@@ -45,6 +45,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddSingleton<IEmailQueue, EmailQueue>();
+builder.Services.AddHostedService<EmailBackgroundService>();
 
 // Register JwtHelper utility
 builder.Services.AddScoped<JwtHelper>();
@@ -89,8 +91,8 @@ var app = builder.Build();
 
 // Configure HTTP request pipeline middlewares in the correct order
 app.UseMiddleware<CorrelationIdMiddleware>(); // 1. Establish Correlation ID context
-app.UseMiddleware<GlobalExceptionHandlerMiddleware>(); // 2. Catch and sanitize errors
-app.UseMiddleware<RequestResponseLoggingMiddleware>(); // 3. Log request entry & response exit details
+app.UseMiddleware<RequestResponseLoggingMiddleware>(); // 2. Log request entry & response exit details (wrapping exception handling)
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>(); // 3. Catch and sanitize errors
 
 if (app.Environment.IsDevelopment())
 {
