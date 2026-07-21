@@ -18,7 +18,7 @@ namespace API_v2.Services
         private readonly JwtHelper _jwtHelper;
         private readonly ILogger<AuthService> _logger;
         private readonly AppDbContext _db;
-        private readonly IEmailService _emailService;
+        private readonly IEmailQueue _emailQueue;
         private readonly IMemoryCache _memoryCache;
 
         public AuthService(
@@ -27,7 +27,7 @@ namespace API_v2.Services
             JwtHelper jwtHelper,
             ILogger<AuthService> logger,
             AppDbContext db,
-            IEmailService emailService,
+            IEmailQueue emailQueue,
             IMemoryCache memoryCache)
         {
             _userRepo = userRepo;
@@ -35,7 +35,7 @@ namespace API_v2.Services
             _jwtHelper = jwtHelper;
             _logger = logger;
             _db = db;
-            _emailService = emailService;
+            _emailQueue = emailQueue;
             _memoryCache = memoryCache;
         }
 
@@ -118,17 +118,8 @@ namespace API_v2.Services
                     <p style='font-size: 12px; color: #64748b; text-align: center;'>If you did not request this code, you can safely ignore this email.</p>
                 </div>";
 
-            try 
-            {
-                _emailService.SendEmail(emailLower, subject, body);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send OTP to {Email}", emailLower);
-                throw ApiException.InternalServerError("Failed to send OTP verification email. Please try again.");
-            }
-
-            _logger.LogInformation("AUDIT [Register Initialized] OTP sent to Email: {Email}", emailLower);
+            _emailQueue.QueueEmail(emailLower, subject, body);
+            _logger.LogInformation("AUDIT [Register Initialized] OTP queued for Email: {Email}", emailLower);
         }
 
         public void VerifyOtp(VerifyOtpRequest req)
@@ -184,17 +175,8 @@ namespace API_v2.Services
                     <p style='font-size: 12px; color: #64748b; text-align: center;'>If you did not request this code, you can safely ignore this email.</p>
                 </div>";
 
-            try 
-            {
-                _emailService.SendEmail(emailLower, subject, body);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to resend OTP to {Email}", emailLower);
-                throw ApiException.InternalServerError("Failed to send OTP verification email. Please try again.");
-            }
-
-            _logger.LogInformation("AUDIT [OTP Resent] Email: {Email}", emailLower);
+            _emailQueue.QueueEmail(emailLower, subject, body);
+            _logger.LogInformation("AUDIT [OTP Resent] Email queue request submitted for: {Email}", emailLower);
         }
 
         public LoginResponse Login(LoginRequest req)
