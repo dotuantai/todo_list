@@ -16,9 +16,13 @@ using Serilog;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure Serilog from appsettings.json
-builder.Host.UseSerilog((context, services, configuration) => configuration
-    .ReadFrom.Configuration(context.Configuration)
-    .Enrich.FromLogContext());
+builder.Host.UseSerilog((context, services, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext();
+});
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -88,7 +92,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
-
+Log.Information("========== Application Started ==========");
 // Configure HTTP request pipeline middlewares in the correct order
 app.UseMiddleware<CorrelationIdMiddleware>(); // 1. Establish Correlation ID context
 app.UseMiddleware<RequestResponseLoggingMiddleware>(); // 2. Log request entry & response exit details (wrapping exception handling)
