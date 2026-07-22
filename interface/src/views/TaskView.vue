@@ -550,17 +550,56 @@ const getRoleBadgeClass = (role) => {
 }
 
 const onKeydown = (e) => { if (e.key === 'Escape') closeModal() }
-const onTaskCreated = () => loadData()
+const onTaskCreated = (e) => {
+  const task = e?.detail
+  if (task) {
+    if (!tasks.value.some(t => t.Id === task.Id)) {
+      tasks.value.push(task)
+    }
+  } else {
+    loadData()
+  }
+}
+
+const onTaskUpdated = (e) => {
+  const task = e.detail
+  if (!task) return
+  const idx = tasks.value.findIndex(t => t.Id === task.Id)
+  if (idx !== -1) {
+    tasks.value[idx] = task
+  }
+  if (modal.open && modal.task && modal.task.Id === task.Id) {
+    modal.task = task
+  }
+}
+
+const onTaskDeleted = (e) => {
+  const taskId = e.detail
+  tasks.value = tasks.value.filter(t => t.Id !== taskId)
+  if (modal.open && modal.task && modal.task.Id === taskId) {
+    closeModal()
+    Swal.fire({
+      title: 'Task Deleted',
+      text: 'This task has been deleted by another user.',
+      icon: 'info',
+      confirmButtonText: 'OK'
+    })
+  }
+}
 
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
   window.addEventListener('task-created', onTaskCreated)
+  window.addEventListener('task-updated', onTaskUpdated)
+  window.addEventListener('task-deleted', onTaskDeleted)
   refreshAll()
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
   window.removeEventListener('task-created', onTaskCreated)
+  window.removeEventListener('task-updated', onTaskUpdated)
+  window.removeEventListener('task-deleted', onTaskDeleted)
 })
 
 const formatDate      = (d) => d ? new Date(d).toLocaleString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'

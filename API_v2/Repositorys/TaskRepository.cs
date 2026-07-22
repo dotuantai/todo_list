@@ -19,6 +19,14 @@ namespace API_v2.Repositorys
             return _db.Tasks.FirstOrDefault(x => x.Id == id);
         }
 
+        public TodoTask? GetByIdWithDetails(int id)
+        {
+            return _db.Tasks
+                .Include(x => x.Assignments)
+                .ThenInclude(a => a.User)
+                .FirstOrDefault(x => x.Id == id);
+        }
+
         public List<TodoTask> GetTasksByProjectId(Guid projectId)
         {
             return _db.Tasks
