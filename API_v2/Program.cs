@@ -75,7 +75,11 @@ builder.Services.AddHttpClient<IEmailService, EmailService>()
 builder.Services.AddSingleton<IEmailQueue, EmailQueue>();
 builder.Services.AddHostedService<EmailBackgroundService>();
 builder.Services.AddHostedService<CleanupBackgroundService>();
-builder.Services.AddSignalR();
+builder.Services.AddSignalR()
+    .AddJsonProtocol(options =>
+    {
+        options.PayloadSerializerOptions.PropertyNamingPolicy = null;
+    });
 
 // Register JwtHelper utility
 builder.Services.AddScoped<JwtHelper>();

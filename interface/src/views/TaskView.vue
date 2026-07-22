@@ -566,7 +566,7 @@ const onTaskUpdated = (e) => {
   if (!task) return
   const idx = tasks.value.findIndex(t => t.Id === task.Id)
   if (idx !== -1) {
-    tasks.value[idx] = task
+    tasks.value.splice(idx, 1, task)
   }
   if (modal.open && modal.task && modal.task.Id === task.Id) {
     modal.task = task
