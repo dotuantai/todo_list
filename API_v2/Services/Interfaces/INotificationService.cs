@@ -10,5 +10,8 @@ namespace API_v2.Services.Interfaces
         void MarkAsRead(Guid notificationId, Guid userId);
         void MarkAllAsRead(Guid userId);
         void CreateAndSendNotification(Guid userId, string title, string message, string type, string referenceId);
+        void SendTaskCreated(Guid projectId, TaskDetailResponse task);
+        void SendTaskUpdated(Guid projectId, TaskDetailResponse task);
+        void SendTaskDeleted(Guid projectId, int taskId);
     }
 }

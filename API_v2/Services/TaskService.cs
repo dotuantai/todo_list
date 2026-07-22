@@ -45,7 +45,7 @@ namespace API_v2.Services
             }
 
             var status = ParseTaskStatus(req.Status, TaskStatusModel.ToDo);
-            _taskRepo.Add(new TodoTask
+            var task = new TodoTask
             {
                 Title = req.Title.Trim(),
                 Description = req.Description?.Trim(),
@@ -54,8 +54,22 @@ namespace API_v2.Services
                 Deadline = NormalizeToUtc(req.Deadline),
                 Status = status,
                 ProjectId = projectId
-            });
+            };
+            _taskRepo.Add(task);
             _taskRepo.Save();
+
+            try
+            {
+                var taskWithDetails = _taskRepo.GetByIdWithDetails(task.Id);
+                if (taskWithDetails != null)
+                {
+                    _notificationService.SendTaskCreated(projectId, MapToTaskDetailResponse(taskWithDetails));
+                }
+            }
+            catch (Exception)
+            {
+                // Soft fail on signalr error so it doesn't break API response
+            }
 
             return "Task created successfully.";
         }
@@ -97,6 +111,19 @@ namespace API_v2.Services
             task.Status = ParseTaskStatus(req.Status, task.Status);
             _taskRepo.Save();
 
+            if (task.ProjectId.HasValue)
+            {
+                try
+                {
+                    var taskWithDetails = _taskRepo.GetByIdWithDetails(task.Id);
+                    if (taskWithDetails != null)
+                    {
+                        _notificationService.SendTaskUpdated(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
+                    }
+                }
+                catch (Exception) { }
+            }
+
             return "Task updated successfully.";
         }
 
@@ -122,8 +149,19 @@ namespace API_v2.Services
                 }
             }
 
+            var projectId = task.ProjectId;
             _taskRepo.Delete(task);
             _taskRepo.Save();
+
+            if (projectId.HasValue)
+            {
+                try
+                {
+                    _notificationService.SendTaskDeleted(projectId.Value, taskId);
+                }
+                catch (Exception) { }
+            }
+
             return "Task deleted successfully.";
         }
 
@@ -192,9 +230,22 @@ namespace API_v2.Services
                     task.Id.ToString()
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Soft fail
+            }
+
+            if (task.ProjectId.HasValue)
+            {
+                try
+                {
+                    var taskWithDetails = _taskRepo.GetByIdWithDetails(task.Id);
+                    if (taskWithDetails != null)
+                    {
+                        _notificationService.SendTaskUpdated(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
+                    }
+                }
+                catch (Exception) { }
             }
 
             return "Task assigned successfully.";
@@ -244,6 +295,20 @@ namespace API_v2.Services
 
             _assignRepo.Remove(assignment);
             _assignRepo.Save();
+
+            if (task.ProjectId.HasValue)
+            {
+                try
+                {
+                    var taskWithDetails = _taskRepo.GetByIdWithDetails(task.Id);
+                    if (taskWithDetails != null)
+                    {
+                        _notificationService.SendTaskUpdated(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
+                    }
+                }
+                catch (Exception) { }
+            }
+
             return "Assignment revoked successfully.";
         }
 
@@ -283,6 +348,19 @@ namespace API_v2.Services
 
             task.Status = ParseTaskStatus(req.Status, task.Status);
             _taskRepo.Save();
+
+            if (task.ProjectId.HasValue)
+            {
+                try
+                {
+                    var taskWithDetails = _taskRepo.GetByIdWithDetails(task.Id);
+                    if (taskWithDetails != null)
+                    {
+                        _notificationService.SendTaskUpdated(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
+                    }
+                }
+                catch (Exception) { }
+            }
         }
 
         private TodoTask GetTaskOrThrow(int taskId)

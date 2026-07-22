@@ -93,5 +93,20 @@ namespace API_v2.Services
             // Send in real-time via SignalR
             _hubContext.Clients.Group(userId.ToString()).SendAsync("ReceiveNotification", resp);
         }
+
+        public void SendTaskCreated(Guid projectId, TaskDetailResponse task)
+        {
+            _hubContext.Clients.Group($"Project_{projectId}").SendAsync("TaskCreated", task);
+        }
+
+        public void SendTaskUpdated(Guid projectId, TaskDetailResponse task)
+        {
+            _hubContext.Clients.Group($"Project_{projectId}").SendAsync("TaskUpdated", task);
+        }
+
+        public void SendTaskDeleted(Guid projectId, int taskId)
+        {
+            _hubContext.Clients.Group($"Project_{projectId}").SendAsync("TaskDeleted", taskId);
+        }
     }
 }

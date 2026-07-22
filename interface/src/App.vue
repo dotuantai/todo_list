@@ -233,11 +233,36 @@ const initSignalR = async () => {
     notifications.value.unshift(n)
   })
 
+  signalRConnection.on('TaskCreated', (task) => {
+    window.dispatchEvent(new CustomEvent('task-created', { detail: task }))
+  })
+
+  signalRConnection.on('TaskUpdated', (task) => {
+    window.dispatchEvent(new CustomEvent('task-updated', { detail: task }))
+  })
+
+  signalRConnection.on('TaskDeleted', (taskId) => {
+    window.dispatchEvent(new CustomEvent('task-deleted', { detail: taskId }))
+  })
+
+  signalRConnection.onreconnected(async (connectionId) => {
+    console.log(`SignalR reconnected: ${connectionId}`)
+    if (projectStore.currentUserId) {
+      await signalRConnection.invoke('RegisterUser', projectStore.currentUserId)
+    }
+    if (projectStore.currentProjectId) {
+      await signalRConnection.invoke('JoinProject', projectStore.currentProjectId)
+    }
+  })
+
   try {
     await signalRConnection.start()
     console.log('SignalR connected.')
     if (projectStore.currentUserId) {
       await signalRConnection.invoke('RegisterUser', projectStore.currentUserId)
+    }
+    if (projectStore.currentProjectId) {
+      await signalRConnection.invoke('JoinProject', projectStore.currentProjectId)
     }
   } catch (err) {
     console.error('SignalR connection failed', err)
@@ -308,6 +333,27 @@ watch(() => projectStore.isAuthenticated, (newVal) => {
   } else {
     stopSignalR()
     notifications.value = []
+  }
+})
+
+watch(() => projectStore.currentProjectId, async (newVal, oldVal) => {
+  if (signalRConnection && signalRConnection.state === 'Connected') {
+    if (oldVal) {
+      try {
+        await signalRConnection.invoke('LeaveProject', oldVal)
+        console.log(`Left SignalR project group: ${oldVal}`)
+      } catch (err) {
+        console.error('Failed to leave SignalR project group', err)
+      }
+    }
+    if (newVal) {
+      try {
+        await signalRConnection.invoke('JoinProject', newVal)
+        console.log(`Joined SignalR project group: ${newVal}`)
+      } catch (err) {
+        console.error('Failed to join SignalR project group', err)
+      }
+    }
   }
 })
 
