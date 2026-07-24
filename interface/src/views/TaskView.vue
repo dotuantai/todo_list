@@ -15,7 +15,7 @@
     <!-- Empty Project Selection State -->
     <div v-if="!projectStore.currentProjectId" class="text-center py-5 bg-body rounded-4 shadow-sm border border-dashed p-4">
       <i class="bi bi-folder2-open text-primary" style="font-size: 4rem;"></i>
-      <h3 class="fw-bold text-body mt-3">Welcome to TaskFlow Pro</h3>
+      <h3 class="fw-bold text-body mt-3">Welcome to TutaFlow</h3>
       <p class="text-muted mx-auto" style="max-width: 480px;">Please select a project from the sidebar or create a new one to start managing your tasks.</p>
     </div>
 

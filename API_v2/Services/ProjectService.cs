@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using API_v2.Exceptions;
 using API_v2.Models;
 using API_v2.Models.DTOs;
@@ -22,14 +26,14 @@ namespace API_v2.Services
             _notificationService = notificationService;
         }
 
-        public ProjectResponse CreateProject(CreateProjectRequest req, Guid currentUserId)
+        public async Task<ProjectResponse> CreateProjectAsync(CreateProjectRequest req, Guid currentUserId)
         {
             if (string.IsNullOrWhiteSpace(req.Name))
             {
                 throw ApiException.BadRequest("Project name cannot be empty.");
             }
 
-            var user = _userRepo.GetById(currentUserId);
+            var user = await _userRepo.GetByIdAsync(currentUserId);
             if (user is null)
             {
                 throw ApiException.Unauthorized("Account information not found.");
@@ -56,35 +60,27 @@ namespace API_v2.Services
                 JoinedAt = DateTime.UtcNow
             };
             _projectRepo.AddMember(member);
-            _projectRepo.Save();
+            await _projectRepo.SaveAsync();
 
-            var dbProject = _projectRepo.GetById(project.Id);
+            var dbProject = await _projectRepo.GetByIdAsync(project.Id);
             return MapToProjectResponse(dbProject!, "Owner");
         }
 
-        public List<ProjectResponse> GetProjectsForUser(Guid currentUserId)
+        public async Task<List<ProjectResponse>> GetProjectsForUserAsync(Guid currentUserId)
         {
-            var projects = _projectRepo.GetProjectsByUserId(currentUserId);
-            var responses = new List<ProjectResponse>();
-
-            foreach (var project in projects)
-            {
-                var member = _projectRepo.GetMember(project.Id, currentUserId);
-                responses.Add(MapToProjectResponse(project, member?.Role));
-            }
-
-            return responses;
+            var members = await _projectRepo.GetProjectMembersWithProjectsByUserIdAsync(currentUserId);
+            return members.Select(m => MapToProjectResponse(m.Project, m.Role)).ToList();
         }
 
-        public ProjectResponse GetProjectDetail(Guid projectId, Guid currentUserId)
+        public async Task<ProjectResponse> GetProjectDetailAsync(Guid projectId, Guid currentUserId)
         {
-            var project = _projectRepo.GetById(projectId);
+            var project = await _projectRepo.GetByIdAsync(projectId);
             if (project is null)
             {
                 throw ApiException.NotFound("Project does not exist.");
             }
 
-            var member = _projectRepo.GetMember(projectId, currentUserId);
+            var member = await _projectRepo.GetMemberAsync(projectId, currentUserId);
             if (member is null)
             {
                 throw ApiException.Forbidden("You do not have access to this project.");
@@ -93,15 +89,15 @@ namespace API_v2.Services
             return MapToProjectResponse(project, member.Role);
         }
 
-        public ProjectResponse UpdateProject(Guid projectId, UpdateProjectRequest req, Guid currentUserId)
+        public async Task<ProjectResponse> UpdateProjectAsync(Guid projectId, UpdateProjectRequest req, Guid currentUserId)
         {
-            var project = _projectRepo.GetById(projectId);
+            var project = await _projectRepo.GetByIdAsync(projectId);
             if (project is null)
             {
                 throw ApiException.NotFound("Project does not exist.");
             }
 
-            var member = _projectRepo.GetMember(projectId, currentUserId);
+            var member = await _projectRepo.GetMemberAsync(projectId, currentUserId);
             if (member is null || !member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase))
             {
                 throw ApiException.Forbidden("Only the Owner is allowed to edit project information.");
@@ -116,13 +112,13 @@ namespace API_v2.Services
             project.Description = req.Description?.Trim();
             project.UpdatedAt = DateTime.UtcNow;
 
-            _projectRepo.Save();
+            await _projectRepo.SaveAsync();
             return MapToProjectResponse(project, member.Role);
         }
 
-        public void DeleteProject(Guid projectId, Guid currentUserId)
+        public async Task DeleteProjectAsync(Guid projectId, Guid currentUserId)
         {
-            var project = _projectRepo.GetById(projectId);
+            var project = await _projectRepo.GetByIdAsync(projectId);
             if (project is null)
             {
                 throw ApiException.NotFound("Project does not exist.");
@@ -134,18 +130,18 @@ namespace API_v2.Services
             }
 
             _projectRepo.Delete(project);
-            _projectRepo.Save();
+            await _projectRepo.SaveAsync();
         }
 
-        public List<MemberResponse> GetMembers(Guid projectId, Guid currentUserId)
+        public async Task<List<MemberResponse>> GetMembersAsync(Guid projectId, Guid currentUserId)
         {
-            var member = _projectRepo.GetMember(projectId, currentUserId);
+            var member = await _projectRepo.GetMemberAsync(projectId, currentUserId);
             if (member is null)
             {
                 throw ApiException.Forbidden("You do not have access to this project.");
             }
 
-            var members = _projectRepo.GetProjectMembers(projectId);
+            var members = await _projectRepo.GetProjectMembersAsync(projectId);
             return members.Select(m => new MemberResponse
             {
                 UserId = m.UserId,
@@ -155,9 +151,9 @@ namespace API_v2.Services
             }).ToList();
         }
 
-        public MemberResponse AddMember(Guid projectId, AddMemberRequest req, Guid currentUserId)
+        public async Task<MemberResponse> AddMemberAsync(Guid projectId, AddMemberRequest req, Guid currentUserId)
         {
-            var currentMember = _projectRepo.GetMember(projectId, currentUserId);
+            var currentMember = await _projectRepo.GetMemberAsync(projectId, currentUserId);
             if (currentMember is null || !currentMember.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase))
             {
                 throw ApiException.Forbidden("Only the project owner is allowed to manage members.");
@@ -171,13 +167,13 @@ namespace API_v2.Services
                 throw ApiException.BadRequest("Invalid role. Valid roles: Owner, Manager, Member.");
             }
 
-            var targetUser = _userRepo.GetByEmail(req.Email?.Trim() ?? string.Empty);
+            var targetUser = await _userRepo.GetByEmailAsync(req.Email?.Trim() ?? string.Empty);
             if (targetUser is null)
             {
                 throw ApiException.NotFound($"No account found with email '{req.Email}'.");
             }
 
-            var existingMember = _projectRepo.GetMember(projectId, targetUser.Id);
+            var existingMember = await _projectRepo.GetMemberAsync(projectId, targetUser.Id);
             if (existingMember is not null)
             {
                 throw ApiException.Conflict("This user is already a member of the project.");
@@ -192,18 +188,18 @@ namespace API_v2.Services
                 JoinedAt = DateTime.UtcNow
             };
 
-            var project = _projectRepo.GetById(projectId);
+            var project = await _projectRepo.GetByIdAsync(projectId);
             if (project is null)
             {
                 throw ApiException.NotFound("Project not found.");
             }
 
             _projectRepo.AddMember(member);
-            _projectRepo.Save();
+            await _projectRepo.SaveAsync();
 
             try
             {
-                _notificationService.CreateAndSendNotification(
+                await _notificationService.CreateAndSendNotificationAsync(
                     targetUser.Id,
                     "New Project Invitation",
                     $"You have been added to the project '{project.Name}' as a {req.Role}.",
@@ -211,7 +207,7 @@ namespace API_v2.Services
                     projectId.ToString()
                 );
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Soft fail if SignalR hub or database notification logic encounters issues
                 // so that the member addition itself is not rolled back.
@@ -226,9 +222,9 @@ namespace API_v2.Services
             };
         }
 
-        public MemberResponse UpdateMemberRole(Guid projectId, Guid userId, UpdateMemberRequest req, Guid currentUserId)
+        public async Task<MemberResponse> UpdateMemberRoleAsync(Guid projectId, Guid userId, UpdateMemberRequest req, Guid currentUserId)
         {
-            var currentMember = _projectRepo.GetMember(projectId, currentUserId);
+            var currentMember = await _projectRepo.GetMemberAsync(projectId, currentUserId);
             if (currentMember is null || !currentMember.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase))
             {
                 throw ApiException.Forbidden("Only the project owner is allowed to manage members.");
@@ -242,7 +238,7 @@ namespace API_v2.Services
                 throw ApiException.BadRequest("Invalid role. Valid roles: Owner, Manager, Member.");
             }
 
-            var project = _projectRepo.GetById(projectId);
+            var project = await _projectRepo.GetByIdAsync(projectId);
             if (project is null)
             {
                 throw ApiException.NotFound("Project does not exist.");
@@ -253,14 +249,14 @@ namespace API_v2.Services
                 throw ApiException.BadRequest("Cannot change the role of the project owner.");
             }
 
-            var targetMember = _projectRepo.GetMember(projectId, userId);
+            var targetMember = await _projectRepo.GetMemberAsync(projectId, userId);
             if (targetMember is null)
             {
                 throw ApiException.NotFound("Member does not belong to this project.");
             }
 
             targetMember.Role = req.Role;
-            _projectRepo.Save();
+            await _projectRepo.SaveAsync();
 
             return new MemberResponse
             {
@@ -271,15 +267,15 @@ namespace API_v2.Services
             };
         }
 
-        public void RemoveMember(Guid projectId, Guid userId, Guid currentUserId)
+        public async Task RemoveMemberAsync(Guid projectId, Guid userId, Guid currentUserId)
         {
-            var currentMember = _projectRepo.GetMember(projectId, currentUserId);
+            var currentMember = await _projectRepo.GetMemberAsync(projectId, currentUserId);
             if (currentMember is null || !currentMember.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase))
             {
                 throw ApiException.Forbidden("Only the project owner is allowed to manage members.");
             }
 
-            var project = _projectRepo.GetById(projectId);
+            var project = await _projectRepo.GetByIdAsync(projectId);
             if (project is null)
             {
                 throw ApiException.NotFound("Project does not exist.");
@@ -290,14 +286,14 @@ namespace API_v2.Services
                 throw ApiException.BadRequest("Cannot remove the project owner from the project.");
             }
 
-            var targetMember = _projectRepo.GetMember(projectId, userId);
+            var targetMember = await _projectRepo.GetMemberAsync(projectId, userId);
             if (targetMember is null)
             {
                 throw ApiException.NotFound("Member does not belong to this project.");
             }
 
             _projectRepo.RemoveMember(targetMember);
-            _projectRepo.Save();
+            await _projectRepo.SaveAsync();
         }
 
         private ProjectResponse MapToProjectResponse(Project project, string? userRole)

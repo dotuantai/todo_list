@@ -1,15 +1,19 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using API_v2.Models.DTOs;
 
 namespace API_v2.Services.Interfaces
 {
     public interface IAuthService
     {
-        void Register(RegisterRequest req);
-        void VerifyOtp(VerifyOtpRequest req);
-        void ResendOtp(string email);
-        LoginResponse Login(LoginRequest req);
-        LoginResponse Refresh(string refreshToken);
-        void Logout(string refreshToken);
-        List<UserSearchResponse> SearchUsers(string keyword);
+        Task RegisterAsync(RegisterRequest req);
+        Task VerifyOtpAsync(VerifyOtpRequest req);
+        Task ResendOtpAsync(string email);
+        Task<LoginResponse> LoginAsync(LoginRequest req);
+        Task<LoginResponse> RefreshAsync(string refreshToken);
+        Task LogoutAsync(string refreshToken);
+        Task<List<UserSearchResponse>> SearchUsersAsync(string keyword);
+        Task ChangePasswordAsync(Guid userId, ChangePasswordRequest req);
     }
 }

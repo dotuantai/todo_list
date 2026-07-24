@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using API_v2.Models;
 using API_v2.Models.DTOs;
 
@@ -5,10 +8,10 @@ namespace API_v2.Repositorys.IRepositorys
 {
     public interface IUserRepository
     {
-        User? GetByEmail(string email);
-        User? GetById(Guid id);
+        Task<User?> GetByEmailAsync(string email);
+        Task<User?> GetByIdAsync(Guid id);
         void Create(User user);
-        void Save();
-        List<UserSearchResponse> SearchUsers(string keyword);
+        Task SaveAsync();
+        Task<List<UserSearchResponse>> SearchUsersAsync(string keyword);
     }
 }

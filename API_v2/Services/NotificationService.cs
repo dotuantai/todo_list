@@ -1,68 +1,66 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
-using API_v2.Datas;
 using API_v2.Exceptions;
 using API_v2.Hubs;
 using API_v2.Models;
 using API_v2.Models.DTOs;
+using API_v2.Repositorys.IRepositorys;
 using API_v2.Services.Interfaces;
 
 namespace API_v2.Services
 {
     public class NotificationService : INotificationService
     {
-        private readonly AppDbContext _db;
+        private readonly INotificationRepository _notificationRepo;
         private readonly IHubContext<NotificationHub> _hubContext;
 
-        public NotificationService(AppDbContext db, IHubContext<NotificationHub> hubContext)
+        public NotificationService(INotificationRepository notificationRepo, IHubContext<NotificationHub> hubContext)
         {
-            _db = db;
+            _notificationRepo = notificationRepo;
             _hubContext = hubContext;
         }
 
-        public List<NotificationResponse> GetNotifications(Guid userId)
+        public async Task<List<NotificationResponse>> GetNotificationsAsync(Guid userId)
         {
-            return _db.Notifications
-                .Where(n => n.UserId == userId)
-                .OrderByDescending(n => n.CreatedAt)
-                .Select(n => new NotificationResponse
-                {
-                    Id = n.Id,
-                    Title = n.Title,
-                    Message = n.Message,
-                    IsRead = n.IsRead,
-                    CreatedAt = n.CreatedAt,
-                    Type = n.Type,
-                    ReferenceId = n.ReferenceId
-                })
-                .ToList();
+            var notifications = await _notificationRepo.GetNotificationsByUserIdAsync(userId);
+            return notifications.Select(n => new NotificationResponse
+            {
+                Id = n.Id,
+                Title = n.Title,
+                Message = n.Message,
+                IsRead = n.IsRead,
+                CreatedAt = n.CreatedAt,
+                Type = n.Type,
+                ReferenceId = n.ReferenceId
+            }).ToList();
         }
 
-        public void MarkAsRead(Guid notificationId, Guid userId)
+        public async Task MarkAsReadAsync(Guid notificationId, Guid userId)
         {
-            var notif = _db.Notifications.FirstOrDefault(n => n.Id == notificationId && n.UserId == userId);
+            var notif = await _notificationRepo.GetNotificationByIdAndUserIdAsync(notificationId, userId);
             if (notif == null)
             {
                 throw ApiException.NotFound("Notification not found.");
             }
 
             notif.IsRead = true;
-            _db.SaveChanges();
+            await _notificationRepo.SaveAsync();
         }
 
-        public void MarkAllAsRead(Guid userId)
+        public async Task MarkAllAsReadAsync(Guid userId)
         {
-            var unread = _db.Notifications.Where(n => n.UserId == userId && !n.IsRead).ToList();
+            var unread = await _notificationRepo.GetUnreadNotificationsByUserIdAsync(userId);
             foreach (var n in unread)
             {
                 n.IsRead = true;
             }
-            _db.SaveChanges();
+            await _notificationRepo.SaveAsync();
         }
 
-        public void CreateAndSendNotification(Guid userId, string title, string message, string type, string referenceId)
+        public async Task CreateAndSendNotificationAsync(Guid userId, string title, string message, string type, string referenceId)
         {
             var notif = new Notification
             {
@@ -76,8 +74,8 @@ namespace API_v2.Services
                 ReferenceId = referenceId
             };
 
-            _db.Notifications.Add(notif);
-            _db.SaveChanges();
+            _notificationRepo.Add(notif);
+            await _notificationRepo.SaveAsync();
 
             var resp = new NotificationResponse
             {
@@ -91,22 +89,22 @@ namespace API_v2.Services
             };
 
             // Send in real-time via SignalR
-            _hubContext.Clients.Group(userId.ToString()).SendAsync("ReceiveNotification", resp);
+            await _hubContext.Clients.Group(userId.ToString()).SendAsync("ReceiveNotification", resp);
         }
 
-        public void SendTaskCreated(Guid projectId, TaskDetailResponse task)
+        public async Task SendTaskCreatedAsync(Guid projectId, TaskDetailResponse task)
         {
-            _hubContext.Clients.Group($"Project_{projectId}").SendAsync("TaskCreated", task);
+            await _hubContext.Clients.Group($"Project_{projectId}").SendAsync("TaskCreated", task);
         }
 
-        public void SendTaskUpdated(Guid projectId, TaskDetailResponse task)
+        public async Task SendTaskUpdatedAsync(Guid projectId, TaskDetailResponse task)
         {
-            _hubContext.Clients.Group($"Project_{projectId}").SendAsync("TaskUpdated", task);
+            await _hubContext.Clients.Group($"Project_{projectId}").SendAsync("TaskUpdated", task);
         }
 
-        public void SendTaskDeleted(Guid projectId, int taskId)
+        public async Task SendTaskDeletedAsync(Guid projectId, int taskId)
         {
-            _hubContext.Clients.Group($"Project_{projectId}").SendAsync("TaskDeleted", taskId);
+            await _hubContext.Clients.Group($"Project_{projectId}").SendAsync("TaskDeleted", taskId);
         }
     }
 }

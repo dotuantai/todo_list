@@ -1,7 +1,7 @@
 <template>
   <AuthLayout
     :title="showOtpVerification ? 'Verify your email' : 'Create your account'"
-    :subtitle="showOtpVerification ? 'We have sent a 6-digit OTP verification code to ' + email + '.' : 'Join TaskFlow and start organizing work with clarity.'"
+    :subtitle="showOtpVerification ? 'We have sent a 6-digit OTP verification code to ' + email + '.' : 'Join TutaFlow and start organizing work with clarity.'"
     :switchLabel="showOtpVerification ? '' : 'Already have an account?'"
     :switchText="showOtpVerification ? '' : 'Sign in'"
     :switchTo="showOtpVerification ? '' : '/login'"

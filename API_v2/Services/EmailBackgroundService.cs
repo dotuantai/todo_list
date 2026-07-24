@@ -40,7 +40,7 @@ namespace API_v2.Services
                         try
                         {
                             _logger.LogInformation("Sending email from background queue to {Email}", emailItem.ToEmail);
-                            emailService.SendEmail(emailItem.ToEmail, emailItem.Subject, emailItem.Body);
+                            await emailService.SendEmailAsync(emailItem.ToEmail, emailItem.Subject, emailItem.Body);
                             _logger.LogInformation("Successfully sent email from background queue to {Email}", emailItem.ToEmail);
                         }
                         catch (Exception ex)

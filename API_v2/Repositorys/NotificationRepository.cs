@@ -1,0 +1,59 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using API_v2.Datas;
+using API_v2.Models;
+using API_v2.Repositorys.IRepositorys;
+using Microsoft.EntityFrameworkCore;
+
+namespace API_v2.Repositorys
+{
+    public class NotificationRepository : INotificationRepository
+    {
+        private readonly AppDbContext _db;
+
+        public NotificationRepository(AppDbContext db)
+        {
+            _db = db;
+        }
+
+        public async Task<List<Notification>> GetNotificationsByUserIdAsync(Guid userId)
+        {
+            return await _db.Notifications
+                .Where(n => n.UserId == userId)
+                .OrderByDescending(n => n.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<Notification?> GetNotificationByIdAndUserIdAsync(Guid notificationId, Guid userId)
+        {
+            return await _db.Notifications
+                .FirstOrDefaultAsync(n => n.Id == notificationId && n.UserId == userId);
+        }
+
+        public async Task<List<Notification>> GetUnreadNotificationsByUserIdAsync(Guid userId)
+        {
+            return await _db.Notifications
+                .Where(n => n.UserId == userId && !n.IsRead)
+                .ToListAsync();
+        }
+
+        public void Add(Notification notification)
+        {
+            _db.Notifications.Add(notification);
+        }
+
+        public async Task DeleteOldNotificationsAsync(DateTime cutoff)
+        {
+            await _db.Notifications
+                .Where(n => n.CreatedAt < cutoff)
+                .ExecuteDeleteAsync();
+        }
+
+        public async Task SaveAsync()
+        {
+            await _db.SaveChangesAsync();
+        }
+    }
+}

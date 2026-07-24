@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using API_v2.Models.DTOs;
@@ -17,58 +18,58 @@ namespace API_v2.Controllers
         }
 
         [HttpPut]
-        public ActionResult Update([FromBody] UpdateTaskRequest req)
+        public async Task<ActionResult> Update([FromBody] UpdateTaskRequest req)
         {
             if (req is null || !ModelState.IsValid)
             {
                 return BadRequest(new ApiResponse<object>(false, "Invalid task data.", null));
             }
 
-            var result = _taskService.UpdateTask(req, CurrentUserId);
+            var result = await _taskService.UpdateTaskAsync(req, CurrentUserId);
             return Ok(new ApiResponse<string>(true, result, null));
         }
 
         [HttpDelete("{id:int}")]
-        public ActionResult Delete(int id)
+        public async Task<ActionResult> Delete(int id)
         {
-            var result = _taskService.DeleteTask(id, CurrentUserId);
+            var result = await _taskService.DeleteTaskAsync(id, CurrentUserId);
             return Ok(new ApiResponse<string>(true, result, null));
         }
 
         [HttpPost("assign")]
-        public ActionResult Assign([FromBody] AssignTaskRequest req)
+        public async Task<ActionResult> Assign([FromBody] AssignTaskRequest req)
         {
             if (req is null || !ModelState.IsValid)
             {
                 return BadRequest(new ApiResponse<object>(false, "Invalid assignment data.", null));
             }
 
-            var result = _taskService.AssignTask(req, CurrentUserId);
+            var result = await _taskService.AssignTaskAsync(req, CurrentUserId);
             return Ok(new ApiResponse<string>(true, result, null));
         }
 
 
         [HttpDelete("assign")]
-        public ActionResult RemoveAssignment([FromBody] RemoveAssignmentRequest req)
+        public async Task<ActionResult> RemoveAssignment([FromBody] RemoveAssignmentRequest req)
         {
             if (req is null || !ModelState.IsValid)
             {
                 return BadRequest(new ApiResponse<object>(false, "Invalid assignment data.", null));
             }
 
-            var result = _taskService.RemoveAssignment(req, CurrentUserId);
+            var result = await _taskService.RemoveAssignmentAsync(req, CurrentUserId);
             return Ok(new ApiResponse<string>(true, result, null));
         }
 
         [HttpPut("status")]
-        public ActionResult ChangeStatus([FromBody] ChangeTaskStatusRequest req)
+        public async Task<ActionResult> ChangeStatus([FromBody] ChangeTaskStatusRequest req)
         {
             if (req is null || !ModelState.IsValid)
             {
                 return BadRequest(new ApiResponse<object>(false, "Invalid status data.", null));
             }
 
-            _taskService.ChangeStatus(req, CurrentUserId);
+            await _taskService.ChangeStatusAsync(req, CurrentUserId);
             return Ok(new ApiResponse<object>(true, "Task status updated successfully.", null));
         }
     }

@@ -1,17 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using API_v2.Models.DTOs;
 
 namespace API_v2.Services.Interfaces
 {
     public interface INotificationService
     {
-        List<NotificationResponse> GetNotifications(Guid userId);
-        void MarkAsRead(Guid notificationId, Guid userId);
-        void MarkAllAsRead(Guid userId);
-        void CreateAndSendNotification(Guid userId, string title, string message, string type, string referenceId);
-        void SendTaskCreated(Guid projectId, TaskDetailResponse task);
-        void SendTaskUpdated(Guid projectId, TaskDetailResponse task);
-        void SendTaskDeleted(Guid projectId, int taskId);
+        Task<List<NotificationResponse>> GetNotificationsAsync(Guid userId);
+        Task MarkAsReadAsync(Guid notificationId, Guid userId);
+        Task MarkAllAsReadAsync(Guid userId);
+        Task CreateAndSendNotificationAsync(Guid userId, string title, string message, string type, string referenceId);
+        Task SendTaskCreatedAsync(Guid projectId, TaskDetailResponse task);
+        Task SendTaskUpdatedAsync(Guid projectId, TaskDetailResponse task);
+        Task SendTaskDeletedAsync(Guid projectId, int taskId);
     }
 }

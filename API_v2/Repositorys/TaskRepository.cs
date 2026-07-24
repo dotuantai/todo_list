@@ -14,27 +14,27 @@ namespace API_v2.Repositorys
             _db = db;
         }
 
-        public TodoTask? GetById(int id)
+        public async Task<TodoTask?> GetByIdAsync(int id)
         {
-            return _db.Tasks.FirstOrDefault(x => x.Id == id);
+            return await _db.Tasks.FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public TodoTask? GetByIdWithDetails(int id)
+        public async Task<TodoTask?> GetByIdWithDetailsAsync(int id)
         {
-            return _db.Tasks
+            return await _db.Tasks
                 .Include(x => x.Assignments)
                 .ThenInclude(a => a.User)
-                .FirstOrDefault(x => x.Id == id);
+                .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public List<TodoTask> GetTasksByProjectId(Guid projectId)
+        public async Task<List<TodoTask>> GetTasksByProjectIdAsync(Guid projectId)
         {
-            return _db.Tasks
+            return await _db.Tasks
                 .Include(x => x.Assignments)
                 .ThenInclude(a => a.User)
                 .Where(x => x.ProjectId == projectId)
                 .OrderByDescending(x => x.CreatedAt)
-                .ToList();
+                .ToListAsync();
         }
 
         public void Add(TodoTask task)
@@ -47,9 +47,9 @@ namespace API_v2.Repositorys
             _db.Tasks.Remove(task);
         }
 
-        public void Save()
+        public async Task SaveAsync()
         {
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
         }
     }
 }

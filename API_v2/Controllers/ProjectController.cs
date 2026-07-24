@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using API_v2.Models.DTOs;
@@ -19,104 +20,104 @@ namespace API_v2.Controllers
         }
 
         [HttpGet]
-        public ActionResult GetMyProjects()
+        public async Task<ActionResult> GetMyProjects()
         {
-            var result = _projectService.GetProjectsForUser(CurrentUserId);
+            var result = await _projectService.GetProjectsForUserAsync(CurrentUserId);
             return Ok(new ApiResponse<List<ProjectResponse>>(true, "Success", result));
         }
 
         [HttpPost]
-        public ActionResult Create([FromBody] CreateProjectRequest req)
+        public async Task<ActionResult> Create([FromBody] CreateProjectRequest req)
         {
             if (req is null || !ModelState.IsValid)
             {
                 return BadRequest(new ApiResponse<object>(false, "Invalid project data.", null));
             }
 
-            var result = _projectService.CreateProject(req, CurrentUserId);
+            var result = await _projectService.CreateProjectAsync(req, CurrentUserId);
             return Ok(new ApiResponse<ProjectResponse>(true, "Project created successfully.", result));
         }
 
         [HttpGet("{projectId:guid}")]
-        public ActionResult GetProjectDetail(Guid projectId)
+        public async Task<ActionResult> GetProjectDetail(Guid projectId)
         {
-            var result = _projectService.GetProjectDetail(projectId, CurrentUserId);
+            var result = await _projectService.GetProjectDetailAsync(projectId, CurrentUserId);
             return Ok(new ApiResponse<ProjectResponse>(true, "Success", result));
         }
 
         [HttpPut("{projectId:guid}")]
-        public ActionResult UpdateProject(Guid projectId, [FromBody] UpdateProjectRequest req)
+        public async Task<ActionResult> UpdateProject(Guid projectId, [FromBody] UpdateProjectRequest req)
         {
             if (req is null || !ModelState.IsValid)
             {
                 return BadRequest(new ApiResponse<object>(false, "Invalid project data.", null));
             }
 
-            var result = _projectService.UpdateProject(projectId, req, CurrentUserId);
+            var result = await _projectService.UpdateProjectAsync(projectId, req, CurrentUserId);
             return Ok(new ApiResponse<ProjectResponse>(true, "Project updated successfully.", result));
         }
 
         [HttpDelete("{projectId:guid}")]
-        public ActionResult DeleteProject(Guid projectId)
+        public async Task<ActionResult> DeleteProject(Guid projectId)
         {
-            _projectService.DeleteProject(projectId, CurrentUserId);
+            await _projectService.DeleteProjectAsync(projectId, CurrentUserId);
             return Ok(new ApiResponse<object>(true, "Project deleted successfully.", null));
         }
 
         [HttpGet("{projectId:guid}/members")]
-        public ActionResult GetMembers(Guid projectId)
+        public async Task<ActionResult> GetMembers(Guid projectId)
         {
-            var result = _projectService.GetMembers(projectId, CurrentUserId);
+            var result = await _projectService.GetMembersAsync(projectId, CurrentUserId);
             return Ok(new ApiResponse<List<MemberResponse>>(true, "Success", result));
         }
 
         [HttpPost("{projectId:guid}/members")]
-        public ActionResult AddMember(Guid projectId, [FromBody] AddMemberRequest req)
+        public async Task<ActionResult> AddMember(Guid projectId, [FromBody] AddMemberRequest req)
         {
             if (req is null || !ModelState.IsValid)
             {
                 return BadRequest(new ApiResponse<object>(false, "Invalid member data.", null));
             }
 
-            var result = _projectService.AddMember(projectId, req, CurrentUserId);
+            var result = await _projectService.AddMemberAsync(projectId, req, CurrentUserId);
             return Ok(new ApiResponse<MemberResponse>(true, "Member added successfully.", result));
         }
 
         [HttpPut("{projectId:guid}/members/{userId:guid}")]
-        public ActionResult UpdateMemberRole(Guid projectId, Guid userId, [FromBody] UpdateMemberRequest req)
+        public async Task<ActionResult> UpdateMemberRole(Guid projectId, Guid userId, [FromBody] UpdateMemberRequest req)
         {
             if (req is null || !ModelState.IsValid)
             {
                 return BadRequest(new ApiResponse<object>(false, "Invalid member data.", null));
             }
 
-            var result = _projectService.UpdateMemberRole(projectId, userId, req, CurrentUserId);
+            var result = await _projectService.UpdateMemberRoleAsync(projectId, userId, req, CurrentUserId);
             return Ok(new ApiResponse<MemberResponse>(true, "Member role updated successfully.", result));
         }
 
         [HttpDelete("{projectId:guid}/members/{userId:guid}")]
-        public ActionResult RemoveMember(Guid projectId, Guid userId)
+        public async Task<ActionResult> RemoveMember(Guid projectId, Guid userId)
         {
-            _projectService.RemoveMember(projectId, userId, CurrentUserId);
+            await _projectService.RemoveMemberAsync(projectId, userId, CurrentUserId);
             return Ok(new ApiResponse<object>(true, "Member removed successfully.", null));
         }
 
         [HttpGet("{projectId:guid}/tasks")]
-        public ActionResult GetProjectTasks(Guid projectId)
+        public async Task<ActionResult> GetProjectTasks(Guid projectId)
         {
-            var result = _taskService.GetProjectTasks(projectId, CurrentUserId);
+            var result = await _taskService.GetProjectTasksAsync(projectId, CurrentUserId);
             return Ok(new ApiResponse<List<TaskDetailResponse>>(true, "Success", result));
         }
 
         [HttpPost("{projectId:guid}/tasks")]
-        public ActionResult CreateTask(Guid projectId, [FromBody] CreateTaskRequest req)
+        public async Task<ActionResult> CreateTask(Guid projectId, [FromBody] CreateTaskRequest req)
         {
             if (req is null || !ModelState.IsValid)
             {
                 return BadRequest(new ApiResponse<object>(false, "Invalid task data.", null));
             }
 
-            var result = _taskService.CreateTask(req, CurrentUserId, projectId);
+            var result = await _taskService.CreateTaskAsync(req, CurrentUserId, projectId);
             return Ok(new ApiResponse<string>(true, result, null));
         }
     }

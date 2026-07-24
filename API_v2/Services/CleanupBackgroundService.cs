@@ -1,11 +1,10 @@
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using API_v2.Datas;
+using API_v2.Repositorys.IRepositorys;
 
 namespace API_v2.Services
 {
@@ -32,19 +31,17 @@ namespace API_v2.Services
 
                     using (var scope = _serviceProvider.CreateScope())
                     {
-                        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                        var tokenRepo = scope.ServiceProvider.GetRequiredService<IRefreshTokenRepository>();
+                        var notifRepo = scope.ServiceProvider.GetRequiredService<INotificationRepository>();
                         var cutoff = DateTime.UtcNow.AddMonths(-1);
 
                         // Cleanup old RefreshTokens
-                        var oldTokens = db.RefreshTokens.Where(t => t.CreatedAt < cutoff);
-                        db.RefreshTokens.RemoveRange(oldTokens);
+                        await tokenRepo.DeleteExpiredTokensAsync(cutoff);
 
                         // Cleanup old Notifications
-                        var oldNotifications = db.Notifications.Where(n => n.CreatedAt < cutoff);
-                        db.Notifications.RemoveRange(oldNotifications);
+                        await notifRepo.DeleteOldNotificationsAsync(cutoff);
 
-                        int deletedCount = db.SaveChanges();
-                        _logger.LogInformation("Database cleanup completed. Cleaned up {Count} records older than 1 month.", deletedCount);
+                        _logger.LogInformation("Database cleanup completed. Cleaned up records older than 1 month.");
                     }
                 }
                 catch (Exception ex)

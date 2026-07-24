@@ -29,3 +29,7 @@ export const resendOtp = (email) => {
     params: { email }
   })
 }
+
+export const changePassword = (data) => {
+  return api.post('/auth/change-password', data)
+}

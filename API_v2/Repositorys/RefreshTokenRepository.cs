@@ -1,6 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using API_v2.Datas;
 using API_v2.Models;
 using API_v2.Repositorys.IRepositorys;
+using Microsoft.EntityFrameworkCore;
 
 namespace API_v2.Repositorys
 {
@@ -13,19 +18,19 @@ namespace API_v2.Repositorys
             _db = db;
         }
 
-        public RefreshToken? GetByToken(string token)
+        public async Task<RefreshToken?> GetByTokenAsync(string token)
         {
-            return _db.RefreshTokens.FirstOrDefault(x => x.Token == token);
+            return await _db.RefreshTokens.FirstOrDefaultAsync(x => x.Token == token);
         }
 
-        public RefreshToken? GetActiveTokenByUserId(Guid userId)
+        public async Task<RefreshToken?> GetActiveTokenByUserIdAsync(Guid userId)
         {
-            return _db.RefreshTokens.FirstOrDefault(x => x.UserId == userId && x.RevokedAt == null && x.ExpiresAt > DateTime.UtcNow);
+            return await _db.RefreshTokens.FirstOrDefaultAsync(x => x.UserId == userId && x.RevokedAt == null && x.ExpiresAt > DateTime.UtcNow);
         }
 
-        public List<RefreshToken> GetActiveTokensByUserId(Guid userId)
+        public async Task<List<RefreshToken>> GetActiveTokensByUserIdAsync(Guid userId)
         {
-            return _db.RefreshTokens.Where(x => x.UserId == userId && x.RevokedAt == null && x.ExpiresAt > DateTime.UtcNow).ToList();
+            return await _db.RefreshTokens.Where(x => x.UserId == userId && x.RevokedAt == null && x.ExpiresAt > DateTime.UtcNow).ToListAsync();
         }
 
         public void Add(RefreshToken token)
@@ -33,9 +38,16 @@ namespace API_v2.Repositorys
             _db.RefreshTokens.Add(token);
         }
 
-        public void Save()
+        public async Task DeleteExpiredTokensAsync(DateTime cutoff)
         {
-            _db.SaveChanges();
+            await _db.RefreshTokens
+                .Where(t => t.CreatedAt < cutoff)
+                .ExecuteDeleteAsync();
+        }
+
+        public async Task SaveAsync()
+        {
+            await _db.SaveChangesAsync();
         }
     }
 }

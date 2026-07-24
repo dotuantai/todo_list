@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using API_v2.Models.DTOs;
@@ -17,7 +18,7 @@ namespace API_v2.Controllers
 
         [HttpPost("register")]
         [AllowAnonymous]
-        public ActionResult Register([FromBody] RegisterRequest req)
+        public async Task<ActionResult> Register([FromBody] RegisterRequest req)
         {
             if (req is null)
             {
@@ -30,46 +31,46 @@ namespace API_v2.Controllers
                 return BadRequest(new ApiResponse<object>(false, string.Join(" | ", errors), null));
             }
 
-            _authService.Register(req);
+            await _authService.RegisterAsync(req);
             return Ok(new ApiResponse<object>(true, "Registration successful. Please check your email for the OTP verification code.", null));
         }
 
         [HttpPost("verify-otp")]
         [AllowAnonymous]
-        public ActionResult VerifyOtp([FromBody] VerifyOtpRequest req)
+        public async Task<ActionResult> VerifyOtp([FromBody] VerifyOtpRequest req)
         {
             if (req is null || string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Otp))
             {
                 return BadRequest(new ApiResponse<object>(false, "Email and OTP are required.", null));
             }
 
-            _authService.VerifyOtp(req);
+            await _authService.VerifyOtpAsync(req);
             return Ok(new ApiResponse<object>(true, "Email verified successfully. You can now log in.", null));
         }
 
         [HttpPost("resend-otp")]
         [AllowAnonymous]
-        public ActionResult ResendOtp([FromQuery] string email)
+        public async Task<ActionResult> ResendOtp([FromQuery] string email)
         {
             if (string.IsNullOrWhiteSpace(email))
             {
                 return BadRequest(new ApiResponse<object>(false, "Email is required.", null));
             }
 
-            _authService.ResendOtp(email);
+            await _authService.ResendOtpAsync(email);
             return Ok(new ApiResponse<object>(true, "OTP verification code resent successfully.", null));
         }
 
         [HttpPost("login")]
         [AllowAnonymous]
-        public ActionResult Login([FromBody] LoginRequest req)
+        public async Task<ActionResult> Login([FromBody] LoginRequest req)
         {
             if (req is null || string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
             {
                 return BadRequest(new ApiResponse<object>(false, "Email and password are required.", null));
             }
 
-            var result = _authService.Login(req);
+            var result = await _authService.LoginAsync(req);
 
             var cookieOptions = new CookieOptions
             {
@@ -86,14 +87,14 @@ namespace API_v2.Controllers
 
         [HttpGet("search")]
         [Authorize]
-        public ActionResult SearchUsers([FromQuery] string q)
+        public async Task<ActionResult> SearchUsers([FromQuery] string q)
         {
-            return Ok(new ApiResponse<List<UserSearchResponse>>(true, "Success", _authService.SearchUsers(q)));
+            return Ok(new ApiResponse<List<UserSearchResponse>>(true, "Success", await _authService.SearchUsersAsync(q)));
         }
 
         [HttpPost("refresh")]
         [AllowAnonymous]
-        public ActionResult Refresh()
+        public async Task<ActionResult> Refresh()
         {
             var refreshToken = Request.Cookies["refreshToken"];
             if (string.IsNullOrWhiteSpace(refreshToken))
@@ -101,18 +102,18 @@ namespace API_v2.Controllers
                 return BadRequest(new ApiResponse<object>(false, "Refresh token not found.", null));
             }
 
-            var result = _authService.Refresh(refreshToken);
+            var result = await _authService.RefreshAsync(refreshToken);
             return Ok(new ApiResponse<object>(true, "Token refreshed successfully.", new { AccessToken = result.AccessToken }));
         }
 
         [HttpPost("logout")]
         [Authorize]
-        public ActionResult Logout()
+        public async Task<ActionResult> Logout()
         {
             var refreshToken = Request.Cookies["refreshToken"];
             if (!string.IsNullOrWhiteSpace(refreshToken))
             {
-                _authService.Logout(refreshToken);
+                await _authService.LogoutAsync(refreshToken);
             }
 
             Response.Cookies.Delete("refreshToken", new CookieOptions
@@ -124,6 +125,25 @@ namespace API_v2.Controllers
             });
 
             return Ok(new ApiResponse<object>(true, "Signed out successfully.", null));
+        }
+
+        [HttpPost("change-password")]
+        [Authorize]
+        public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordRequest req)
+        {
+            if (req is null)
+            {
+                return BadRequest(new ApiResponse<object>(false, "Invalid data.", null));
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                return BadRequest(new ApiResponse<object>(false, string.Join(" | ", errors), null));
+            }
+
+            await _authService.ChangePasswordAsync(CurrentUserId, req);
+            return Ok(new ApiResponse<object>(true, "Password changed successfully.", null));
         }
 
         [HttpGet("health")]

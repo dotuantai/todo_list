@@ -4,10 +4,10 @@
     <header class="bg-body border-bottom px-4 py-3 d-flex align-items-center justify-content-between">
       <div class="d-flex align-items-center gap-3">
         <div class="logo-box text-white d-flex align-items-center justify-content-center fw-bold fs-5 rounded-3" style="width: 38px; height: 38px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
-          TF
+          TT
         </div>
         <div class="text-start">
-          <h1 class="mb-0 fs-5 fw-bold text-body lh-1">TaskFlow Pro</h1>
+          <h1 class="mb-0 fs-5 fw-bold text-body lh-1">TutaFlow</h1>
           <p class="small text-muted mb-0 mt-1" style="font-size: 11px;">Workspaces</p>
         </div>
       </div>
@@ -16,21 +16,42 @@
         <button class="btn btn-light border-0 p-2 d-flex align-items-center justify-content-center" style="border-radius: 8px; width: 36px; height: 36px;" @click="toggleTheme" title="Toggle Theme">
           <i class="bi" :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-fill'"></i>
         </button>
-        <!-- User Profile -->
-        <div class="d-flex align-items-center gap-2">
-          <div class="user-avatar-small bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width: 36px; height: 36px; font-size: 14px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
-            {{ projectStore.currentInitial }}
-          </div>
-          <div class="d-none d-md-block text-start" style="line-height: 1.2;">
-            <div class="fw-semibold small text-body text-truncate" style="max-width: 150px;">{{ projectStore.currentUserEmail }}</div>
-            <div class="text-muted" style="font-size: 10px; margin-top: 1px;">SaaS Workspace</div>
-          </div>
+        <!-- User Profile Dropdown -->
+        <div class="dropdown">
+          <button 
+            class="btn p-0 border-0 bg-transparent d-flex align-items-center gap-2 text-decoration-none" 
+            type="button" 
+            data-bs-toggle="dropdown" 
+            aria-expanded="false"
+            style="outline: none; box-shadow: none;"
+          >
+            <div class="user-avatar-small bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width: 36px; height: 36px; font-size: 14px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
+              {{ projectStore.currentInitial }}
+            </div>
+            <div class="d-none d-md-block text-start" style="line-height: 1.2;">
+              <div class="fw-semibold small text-body text-truncate" style="max-width: 150px;">{{ projectStore.currentUserEmail }}</div>
+              <div class="text-muted" style="font-size: 10px; margin-top: 1px;">SaaS Workspace</div>
+            </div>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-2 rounded-3" style="min-width: 200px; font-size: 0.9rem; z-index: 1060;">
+            <li class="px-3 py-2 border-bottom mb-1">
+              <span class="d-block fw-bold text-truncate text-body" :title="projectStore.currentUserEmail">{{ projectStore.currentUserEmail }}</span>
+              <span class="text-muted small">Active Account</span>
+            </li>
+            <li>
+              <router-link to="/change-password" class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2">
+                <i class="bi bi-shield-lock-fill text-primary"></i>
+                <span>Change Password</span>
+              </router-link>
+            </li>
+            <li>
+              <button @click="handleLogout" class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2 text-danger">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Sign out</span>
+              </button>
+            </li>
+          </ul>
         </div>
-        <div class="vr opacity-25" style="height: 24px;"></div>
-        <!-- Sign Out -->
-        <button class="btn btn-outline-danger btn-sm px-3 fw-semibold" style="border-radius: 8px;" @click="handleLogout">
-          <i class="bi bi-box-arrow-right me-1"></i> Sign out
-        </button>
       </div>
     </header>
 

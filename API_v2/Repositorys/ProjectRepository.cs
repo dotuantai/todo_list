@@ -14,11 +14,11 @@ namespace API_v2.Repositorys
             _dbContext = dbContext;
         }
 
-        public Project? GetById(Guid id)
+        public async Task<Project?> GetByIdAsync(Guid id)
         {
-            return _dbContext.Projects
+            return await _dbContext.Projects
                 .Include(p => p.Owner)
-                .FirstOrDefault(p => p.Id == id);
+                .FirstOrDefaultAsync(p => p.Id == id);
         }
 
         public Project Add(Project project)
@@ -31,26 +31,26 @@ namespace API_v2.Repositorys
             _dbContext.Projects.Remove(project);
         }
 
-        public List<Project> GetProjectsByUserId(Guid userId)
+        public async Task<List<Project>> GetProjectsByUserIdAsync(Guid userId)
         {
-            return _dbContext.Projects
+            return await _dbContext.Projects
                 .Include(p => p.Owner)
                 .Where(p => p.ProjectMembers.Any(pm => pm.UserId == userId))
-                .ToList();
+                .ToListAsync();
         }
 
-        public List<ProjectMember> GetProjectMembers(Guid projectId)
+        public async Task<List<ProjectMember>> GetProjectMembersAsync(Guid projectId)
         {
-            return _dbContext.ProjectMembers
+            return await _dbContext.ProjectMembers
                 .Where(pm => pm.ProjectId == projectId)
                 .Include(pm => pm.User)
-                .ToList();
+                .ToListAsync();
         }
 
-        public ProjectMember? GetMember(Guid projectId, Guid userId)
+        public async Task<ProjectMember?> GetMemberAsync(Guid projectId, Guid userId)
         {
-            return _dbContext.ProjectMembers
-                .FirstOrDefault(pm => pm.ProjectId == projectId && pm.UserId == userId);
+            return await _dbContext.ProjectMembers
+                .FirstOrDefaultAsync(pm => pm.ProjectId == projectId && pm.UserId == userId);
         }
 
         public void AddMember(ProjectMember member)
@@ -63,9 +63,18 @@ namespace API_v2.Repositorys
             _dbContext.ProjectMembers.Remove(member);
         }
 
-        public void Save()
+        public async Task SaveAsync()
         {
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<List<ProjectMember>> GetProjectMembersWithProjectsByUserIdAsync(Guid userId)
+        {
+            return await _dbContext.ProjectMembers
+                .Where(pm => pm.UserId == userId)
+                .Include(pm => pm.Project)
+                    .ThenInclude(p => p.Owner)
+                .ToListAsync();
         }
     }
 }
