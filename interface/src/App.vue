@@ -164,18 +164,44 @@
           
           <div class="vr opacity-25 mx-1" style="height:28px"></div>
           
-          <!-- User info details -->
-          <div class="d-flex align-items-center gap-2">
-            <div class="user-avatar-small bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width: 36px; height: 36px; font-size: 14px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
-              {{ projectStore.currentInitial }}
-            </div>
-            
-            <div class="d-none d-md-block text-start" style="line-height: 1.2;">
-              <div class="fw-semibold small text-body text-truncate" style="max-width: 150px;" :title="projectStore.currentUserEmail">{{ projectStore.currentUserEmail }}</div>
-              <div class="text-muted" style="font-size:10px; margin-top:2px" v-if="projectStore.currentProject">
-                <span class="badge text-uppercase font-monospace" :class="getRoleBadgeClass(projectStore.userRole)" style="font-size: 8px; padding: 2px 4px;">{{ projectStore.userRole }}</span>
+          <!-- User Profile Dropdown -->
+          <div class="dropdown">
+            <button 
+              class="btn p-0 border-0 bg-transparent d-flex align-items-center gap-2 text-decoration-none" 
+              type="button" 
+              data-bs-toggle="dropdown" 
+              aria-expanded="false"
+              style="outline: none; box-shadow: none;"
+            >
+              <div class="user-avatar-small bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width: 36px; height: 36px; font-size: 14px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
+                {{ projectStore.currentInitial }}
               </div>
-            </div>
+              
+              <div class="d-none d-md-block text-start" style="line-height: 1.2;">
+                <div class="fw-semibold small text-body text-truncate" style="max-width: 150px;" :title="projectStore.currentUserEmail">{{ projectStore.currentUserEmail }}</div>
+                <div class="text-muted" style="font-size:10px; margin-top:2px" v-if="projectStore.currentProject">
+                  <span class="badge text-uppercase font-monospace" :class="getRoleBadgeClass(projectStore.userRole)" style="font-size: 8px; padding: 2px 4px;">{{ projectStore.userRole }}</span>
+                </div>
+              </div>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-2 rounded-3" style="min-width: 200px; font-size: 0.9rem; z-index: 1060;">
+              <li class="px-3 py-2 border-bottom mb-1">
+                <span class="d-block fw-bold text-truncate text-body" :title="projectStore.currentUserEmail">{{ projectStore.currentUserEmail }}</span>
+                <span class="text-muted small">Active Account</span>
+              </li>
+              <li>
+                <router-link to="/change-password" class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2">
+                  <i class="bi bi-shield-lock-fill text-primary"></i>
+                  <span>Change Password</span>
+                </router-link>
+              </li>
+              <li>
+                <button @click="handleLogout" class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2 text-danger">
+                  <i class="bi bi-box-arrow-right"></i>
+                  <span>Sign out</span>
+                </button>
+              </li>
+            </ul>
           </div>
         </div>
       </header>

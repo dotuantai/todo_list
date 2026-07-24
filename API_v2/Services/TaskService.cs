@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using API_v2.Exceptions;
 using API_v2.Models;
 using API_v2.Models.DTOs;
@@ -26,18 +30,9 @@ namespace API_v2.Services
             _notificationService = notificationService;
         }
 
-        public string CreateTask(CreateTaskRequest req, Guid creatorId, Guid projectId)
+        public async Task<string> CreateTaskAsync(CreateTaskRequest req, Guid creatorId, Guid projectId)
         {
-            var member = _projectRepo.GetMember(projectId, creatorId);
-            if (member is null)
-            {
-                throw ApiException.Forbidden("You are not a member of this project.");
-            }
-            if (!member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                !member.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase))
-            {
-                throw ApiException.Forbidden("Only Owners or Managers can create tasks.");
-            }
+            await VerifyOwnerOrManagerAsync(projectId, creatorId, "Only Owners or Managers can create tasks.");
 
             if (string.IsNullOrWhiteSpace(req.Title))
             {
@@ -56,14 +51,14 @@ namespace API_v2.Services
                 ProjectId = projectId
             };
             _taskRepo.Add(task);
-            _taskRepo.Save();
+            await _taskRepo.SaveAsync();
 
             try
             {
-                var taskWithDetails = _taskRepo.GetByIdWithDetails(task.Id);
+                var taskWithDetails = await _taskRepo.GetByIdWithDetailsAsync(task.Id);
                 if (taskWithDetails != null)
                 {
-                    _notificationService.SendTaskCreated(projectId, MapToTaskDetailResponse(taskWithDetails));
+                    await _notificationService.SendTaskCreatedAsync(projectId, MapToTaskDetailResponse(taskWithDetails));
                 }
             }
             catch (Exception)
@@ -74,25 +69,19 @@ namespace API_v2.Services
             return "Task created successfully.";
         }
 
-        public string UpdateTask(UpdateTaskRequest req, Guid currentUserId)
+        public async Task<string> UpdateTaskAsync(UpdateTaskRequest req, Guid currentUserId)
         {
-            var task = GetTaskOrThrow(req.TaskId);
+            var task = await GetTaskOrThrowAsync(req.TaskId);
 
             if (task.ProjectId.HasValue)
             {
-                var member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId);
-                if (member is null ||
-                    (!member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                     !member.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase)))
-                {
-                    throw ApiException.Forbidden("You do not have permission to edit tasks in this project.");
-                }
+                await VerifyOwnerOrManagerAsync(task.ProjectId.Value, currentUserId, "You do not have permission to edit tasks in this project.");
             }
             else
             {
                 if (task.CreatorId != currentUserId)
                 {
-                    var assignment = _assignRepo.GetAssignment(req.TaskId, currentUserId);
+                    var assignment = await _assignRepo.GetAssignmentAsync(req.TaskId, currentUserId);
                     if (assignment is null)
                     {
                         throw ApiException.Forbidden("You do not have permission to edit this task.");
@@ -109,16 +98,16 @@ namespace API_v2.Services
             task.Description = req.Description?.Trim();
             task.Deadline = NormalizeToUtc(req.Deadline);
             task.Status = ParseTaskStatus(req.Status, task.Status);
-            _taskRepo.Save();
+            await _taskRepo.SaveAsync();
 
             if (task.ProjectId.HasValue)
             {
                 try
                 {
-                    var taskWithDetails = _taskRepo.GetByIdWithDetails(task.Id);
+                    var taskWithDetails = await _taskRepo.GetByIdWithDetailsAsync(task.Id);
                     if (taskWithDetails != null)
                     {
-                        _notificationService.SendTaskUpdated(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
+                        await _notificationService.SendTaskUpdatedAsync(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
                     }
                 }
                 catch (Exception) { }
@@ -127,19 +116,13 @@ namespace API_v2.Services
             return "Task updated successfully.";
         }
 
-        public string DeleteTask(int taskId, Guid currentUserId)
+        public async Task<string> DeleteTaskAsync(int taskId, Guid currentUserId)
         {
-            var task = GetTaskOrThrow(taskId);
+            var task = await GetTaskOrThrowAsync(taskId);
 
             if (task.ProjectId.HasValue)
             {
-                var member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId);
-                if (member is null ||
-                    (!member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                     !member.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase)))
-                {
-                    throw ApiException.Forbidden("You do not have permission to delete tasks in this project.");
-                }
+                await VerifyOwnerOrManagerAsync(task.ProjectId.Value, currentUserId, "You do not have permission to delete tasks in this project.");
             }
             else
             {
@@ -151,13 +134,13 @@ namespace API_v2.Services
 
             var projectId = task.ProjectId;
             _taskRepo.Delete(task);
-            _taskRepo.Save();
+            await _taskRepo.SaveAsync();
 
             if (projectId.HasValue)
             {
                 try
                 {
-                    _notificationService.SendTaskDeleted(projectId.Value, taskId);
+                    await _notificationService.SendTaskDeletedAsync(projectId.Value, taskId);
                 }
                 catch (Exception) { }
             }
@@ -165,21 +148,15 @@ namespace API_v2.Services
             return "Task deleted successfully.";
         }
 
-        public string AssignTask(AssignTaskRequest req, Guid currentUserId)
+        public async Task<string> AssignTaskAsync(AssignTaskRequest req, Guid currentUserId)
         {
-            var task = GetTaskOrThrow(req.TaskId);
+            var task = await GetTaskOrThrowAsync(req.TaskId);
 
             if (task.ProjectId.HasValue)
             {
-                var member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId);
-                if (member is null ||
-                    (!member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                     !member.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase)))
-                {
-                    throw ApiException.Forbidden("You do not have permission to assign tasks in this project.");
-                }
+                await VerifyOwnerOrManagerAsync(task.ProjectId.Value, currentUserId, "You do not have permission to assign tasks in this project.");
 
-                var targetMember = _projectRepo.GetMember(task.ProjectId.Value, req.UserId);
+                var targetMember = await _projectRepo.GetMemberAsync(task.ProjectId.Value, req.UserId);
                 if (targetMember is null)
                 {
                     throw ApiException.BadRequest("The assignee must be a project member.");
@@ -198,7 +175,7 @@ namespace API_v2.Services
                 throw ApiException.BadRequest("Cannot assign a task to yourself.");
             }
 
-            if (_assignRepo.Exists(req.TaskId, req.UserId))
+            if (await _assignRepo.ExistsAsync(req.TaskId, req.UserId))
             {
                 throw ApiException.Conflict("This user has already been assigned to this task.");
             }
@@ -209,20 +186,20 @@ namespace API_v2.Services
                 UserId = req.UserId,
                 AssignedAt = DateTime.UtcNow
             });
-            _assignRepo.Save();
+            await _assignRepo.SaveAsync();
 
             try
             {
                 var projectName = "";
                 if (task.ProjectId.HasValue)
                 {
-                    var project = _projectRepo.GetById(task.ProjectId.Value);
+                    var project = await _projectRepo.GetByIdAsync(task.ProjectId.Value);
                     if (project != null)
                     {
                         projectName = $" in project '{project.Name}'";
                     }
                 }
-                _notificationService.CreateAndSendNotification(
+                await _notificationService.CreateAndSendNotificationAsync(
                     req.UserId,
                     "New Task Assigned",
                     $"You have been assigned the task '{task.Title}'{projectName}.",
@@ -239,10 +216,10 @@ namespace API_v2.Services
             {
                 try
                 {
-                    var taskWithDetails = _taskRepo.GetByIdWithDetails(task.Id);
+                    var taskWithDetails = await _taskRepo.GetByIdWithDetailsAsync(task.Id);
                     if (taskWithDetails != null)
                     {
-                        _notificationService.SendTaskUpdated(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
+                        await _notificationService.SendTaskUpdatedAsync(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
                     }
                 }
                 catch (Exception) { }
@@ -251,33 +228,28 @@ namespace API_v2.Services
             return "Task assigned successfully.";
         }
 
-        public List<TaskDetailResponse> GetProjectTasks(Guid projectId, Guid userId)
+        public async Task<List<TaskDetailResponse>> GetProjectTasksAsync(Guid projectId, Guid userId)
         {
-            var member = _projectRepo.GetMember(projectId, userId);
+            var member = await _projectRepo.GetMemberAsync(projectId, userId);
             if (member is null)
             {
                 throw ApiException.Forbidden("You are not a member of this project.");
             }
 
-            return _taskRepo.GetTasksByProjectId(projectId)
+            var tasks = await _taskRepo.GetTasksByProjectIdAsync(projectId);
+            return tasks
                 .Select(MapToTaskDetailResponse)
                 .ToList();
         }
 
 
-        public string RemoveAssignment(RemoveAssignmentRequest req, Guid currentUserId)
+        public async Task<string> RemoveAssignmentAsync(RemoveAssignmentRequest req, Guid currentUserId)
         {
-            var task = GetTaskOrThrow(req.TaskId);
+            var task = await GetTaskOrThrowAsync(req.TaskId);
 
             if (task.ProjectId.HasValue)
             {
-                var member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId);
-                if (member is null ||
-                    (!member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                     !member.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase)))
-                {
-                    throw ApiException.Forbidden("You do not have permission to revoke assignments in this project.");
-                }
+                await VerifyOwnerOrManagerAsync(task.ProjectId.Value, currentUserId, "You do not have permission to revoke assignments in this project.");
             }
             else
             {
@@ -287,23 +259,23 @@ namespace API_v2.Services
                 }
             }
 
-            var assignment = _assignRepo.GetAssignment(req.TaskId, req.UserId);
+            var assignment = await _assignRepo.GetAssignmentAsync(req.TaskId, req.UserId);
             if (assignment is null)
             {
                 throw ApiException.NotFound("This user has not been assigned to this task.");
             }
 
             _assignRepo.Remove(assignment);
-            _assignRepo.Save();
+            await _assignRepo.SaveAsync();
 
             if (task.ProjectId.HasValue)
             {
                 try
                 {
-                    var taskWithDetails = _taskRepo.GetByIdWithDetails(task.Id);
+                    var taskWithDetails = await _taskRepo.GetByIdWithDetailsAsync(task.Id);
                     if (taskWithDetails != null)
                     {
-                        _notificationService.SendTaskUpdated(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
+                        await _notificationService.SendTaskUpdatedAsync(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
                     }
                 }
                 catch (Exception) { }
@@ -312,22 +284,17 @@ namespace API_v2.Services
             return "Assignment revoked successfully.";
         }
 
-        public void ChangeStatus(ChangeTaskStatusRequest req, Guid currentUserId)
+        public async Task ChangeStatusAsync(ChangeTaskStatusRequest req, Guid currentUserId)
         {
-            var task = GetTaskOrThrow(req.TaskId);
+            var task = await GetTaskOrThrowAsync(req.TaskId);
 
             if (task.ProjectId.HasValue)
             {
-                var member = _projectRepo.GetMember(task.ProjectId.Value, currentUserId);
-                if (member is null)
-                {
-                    throw ApiException.Forbidden("You do not have access to this project.");
-                }
+                var member = await GetMemberOrThrowAsync(task.ProjectId.Value, currentUserId);
 
-                if (!member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                    !member.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase))
+                if (!IsOwnerOrManager(member))
                 {
-                    var isAssigned = _assignRepo.Exists(req.TaskId, currentUserId);
+                    var isAssigned = await _assignRepo.ExistsAsync(req.TaskId, currentUserId);
                     if (!isAssigned)
                     {
                         throw ApiException.Forbidden("Members can only update status of tasks assigned to themselves.");
@@ -338,7 +305,7 @@ namespace API_v2.Services
             {
                 if (task.CreatorId != currentUserId)
                 {
-                    var isAssigned = _assignRepo.Exists(req.TaskId, currentUserId);
+                    var isAssigned = await _assignRepo.ExistsAsync(req.TaskId, currentUserId);
                     if (!isAssigned)
                     {
                         throw ApiException.Forbidden("You do not have permission to change the status of this task.");
@@ -347,25 +314,25 @@ namespace API_v2.Services
             }
 
             task.Status = ParseTaskStatus(req.Status, task.Status);
-            _taskRepo.Save();
+            await _taskRepo.SaveAsync();
 
             if (task.ProjectId.HasValue)
             {
                 try
                 {
-                    var taskWithDetails = _taskRepo.GetByIdWithDetails(task.Id);
+                    var taskWithDetails = await _taskRepo.GetByIdWithDetailsAsync(task.Id);
                     if (taskWithDetails != null)
                     {
-                        _notificationService.SendTaskUpdated(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
+                        await _notificationService.SendTaskUpdatedAsync(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
                     }
                 }
                 catch (Exception) { }
             }
         }
 
-        private TodoTask GetTaskOrThrow(int taskId)
+        private async Task<TodoTask> GetTaskOrThrowAsync(int taskId)
         {
-            var task = _taskRepo.GetById(taskId);
+            var task = await _taskRepo.GetByIdAsync(taskId);
             if (task is null)
             {
                 throw ApiException.NotFound($"Task #{taskId} does not exist.");
@@ -423,6 +390,35 @@ namespace API_v2.Services
                     })
                     .ToList()
             };
+        }
+
+        private async Task VerifyOwnerOrManagerAsync(Guid projectId, Guid userId, string errorMessage)
+        {
+            var member = await _projectRepo.GetMemberAsync(projectId, userId);
+            if (member is null)
+            {
+                throw ApiException.Forbidden("You are not a member of this project.");
+            }
+            if (!IsOwnerOrManager(member))
+            {
+                throw ApiException.Forbidden(errorMessage);
+            }
+        }
+
+        private async Task<ProjectMember> GetMemberOrThrowAsync(Guid projectId, Guid userId, string errorMessage = "You do not have access to this project.")
+        {
+            var member = await _projectRepo.GetMemberAsync(projectId, userId);
+            if (member is null)
+            {
+                throw ApiException.Forbidden(errorMessage);
+            }
+            return member;
+        }
+
+        private bool IsOwnerOrManager(ProjectMember member)
+        {
+            return member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) ||
+                   member.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

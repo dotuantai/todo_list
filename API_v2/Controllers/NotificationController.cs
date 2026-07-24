@@ -1,9 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using API_v2.Models.DTOs;
 using API_v2.Services.Interfaces;
-using System;
-using System.Collections.Generic;
 
 namespace API_v2.Controllers
 {
@@ -19,23 +20,23 @@ namespace API_v2.Controllers
         }
 
         [HttpGet]
-        public ActionResult Get()
+        public async Task<ActionResult> Get()
         {
-            var result = _notificationService.GetNotifications(CurrentUserId);
+            var result = await _notificationService.GetNotificationsAsync(CurrentUserId);
             return Ok(new ApiResponse<List<NotificationResponse>>(true, "Success", result));
         }
 
         [HttpPut("{id:guid}/read")]
-        public ActionResult MarkAsRead(Guid id)
+        public async Task<ActionResult> MarkAsRead(Guid id)
         {
-            _notificationService.MarkAsRead(id, CurrentUserId);
+            await _notificationService.MarkAsReadAsync(id, CurrentUserId);
             return Ok(new ApiResponse<object>(true, "Notification marked as read.", null));
         }
 
         [HttpPut("read-all")]
-        public ActionResult MarkAllAsRead()
+        public async Task<ActionResult> MarkAllAsRead()
         {
-            _notificationService.MarkAllAsRead(CurrentUserId);
+            await _notificationService.MarkAllAsReadAsync(CurrentUserId);
             return Ok(new ApiResponse<object>(true, "All notifications marked as read.", null));
         }
     }

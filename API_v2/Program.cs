@@ -64,6 +64,7 @@ builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<ITaskAssignmentRepository, TaskAssignmentRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();

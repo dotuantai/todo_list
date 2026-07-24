@@ -7,6 +7,9 @@ using API_v2.Repositorys.IRepositorys;
 using API_v2.Services.Interfaces;
 using API_v2.Datas;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace API_v2.Services
@@ -17,7 +20,6 @@ namespace API_v2.Services
         private readonly IRefreshTokenRepository _refreshTokenRepo;
         private readonly JwtHelper _jwtHelper;
         private readonly ILogger<AuthService> _logger;
-        private readonly AppDbContext _db;
         private readonly IEmailQueue _emailQueue;
         private readonly IMemoryCache _memoryCache;
 
@@ -26,7 +28,6 @@ namespace API_v2.Services
             IRefreshTokenRepository refreshTokenRepo, 
             JwtHelper jwtHelper,
             ILogger<AuthService> logger,
-            AppDbContext db,
             IEmailQueue emailQueue,
             IMemoryCache memoryCache)
         {
@@ -34,7 +35,6 @@ namespace API_v2.Services
             _refreshTokenRepo = refreshTokenRepo;
             _jwtHelper = jwtHelper;
             _logger = logger;
-            _db = db;
             _emailQueue = emailQueue;
             _memoryCache = memoryCache;
         }
@@ -60,7 +60,7 @@ namespace API_v2.Services
             return hasUpper && hasLower && hasDigit && hasSpecial;
         }
 
-        public void Register(RegisterRequest req)
+        public async Task RegisterAsync(RegisterRequest req)
         {
             var emailLower = req.Email.Trim().ToLower();
             
@@ -70,7 +70,7 @@ namespace API_v2.Services
                 throw ApiException.BadRequest("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.");
             }
 
-            var existingUser = _db.Users.FirstOrDefault(u => u.Email.ToLower() == emailLower);
+            var existingUser = await _userRepo.GetByEmailAsync(emailLower);
             if (existingUser is not null)
             {
                 if (existingUser.IsActive)
@@ -83,7 +83,6 @@ namespace API_v2.Services
                     // Update password for inactive user (re-registering)
                     existingUser.PasswordHash = PasswordHelper.HashPassword(req.Password);
                     existingUser.CreatedAt = DateTime.UtcNow;
-                    _db.Users.Update(existingUser);
                 }
             }
             else
@@ -96,21 +95,21 @@ namespace API_v2.Services
                     IsActive = false, // Must verify OTP to activate
                     CreatedAt = DateTime.UtcNow
                 };
-                _db.Users.Add(user);
+                _userRepo.Create(user);
             }
 
-            // Generate OTP
-            var otp = Random.Shared.Next(100000, 999999).ToString();
+            // Generate secure OTP
+            var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
             
             // Save to memory cache (valid for 5 minutes)
             _memoryCache.Set($"OTP_{emailLower}", otp, TimeSpan.FromMinutes(5));
-            _db.SaveChanges();
+            await _userRepo.SaveAsync();
 
             // Send Email
-            var subject = "TaskFlow Pro - Verification Code";
+            var subject = "TutaFlow - Verification Code";
             var body = $@"
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;'>
-                    <h2 style='color: #4f46e5; text-align: center;'>Welcome to TaskFlow Pro</h2>
+                    <h2 style='color: #4f46e5; text-align: center;'>Welcome to TutaFlow</h2>
                     <p>Thank you for registering. Please use the following One-Time Password (OTP) to verify your account. This code is valid for 5 minutes.</p>
                     <div style='background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; text-align: center; margin: 20px 0;'>
                         <span style='font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #1e293b;'>{otp}</span>
@@ -122,7 +121,7 @@ namespace API_v2.Services
             _logger.LogInformation("AUDIT [Register Initialized] OTP queued for Email: {Email}", emailLower);
         }
 
-        public void VerifyOtp(VerifyOtpRequest req)
+        public async Task VerifyOtpAsync(VerifyOtpRequest req)
         {
             var emailLower = req.Email.Trim().ToLower();
 
@@ -131,7 +130,7 @@ namespace API_v2.Services
                 throw ApiException.BadRequest("Invalid or expired OTP code.");
             }
 
-            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == emailLower);
+            var user = await _userRepo.GetByEmailAsync(emailLower);
             if (user == null)
             {
                 throw ApiException.NotFound("User not found.");
@@ -139,15 +138,15 @@ namespace API_v2.Services
 
             user.IsActive = true;
             _memoryCache.Remove($"OTP_{emailLower}");
-            _db.SaveChanges();
+            await _userRepo.SaveAsync();
 
             _logger.LogInformation("AUDIT [Email Verified] User ID: {UserId}, Email: {Email} has been activated.", user.Id, emailLower);
         }
 
-        public void ResendOtp(string email)
+        public async Task ResendOtpAsync(string email)
         {
             var emailLower = email.Trim().ToLower();
-            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == emailLower);
+            var user = await _userRepo.GetByEmailAsync(emailLower);
 
             if (user == null)
             {
@@ -159,15 +158,15 @@ namespace API_v2.Services
                 throw ApiException.BadRequest("Account is already active.");
             }
 
-            var otp = Random.Shared.Next(100000, 999999).ToString();
+            var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
 
             // Save to memory cache (valid for 5 minutes)
             _memoryCache.Set($"OTP_{emailLower}", otp, TimeSpan.FromMinutes(5));
 
-            var subject = "TaskFlow Pro - Verification Code";
+            var subject = "TutaFlow - Verification Code";
             var body = $@"
                 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;'>
-                    <h2 style='color: #4f46e5; text-align: center;'>Welcome to TaskFlow Pro</h2>
+                    <h2 style='color: #4f46e5; text-align: center;'>Welcome to TutaFlow</h2>
                     <p>Please use the following One-Time Password (OTP) to verify your account. This code is valid for 5 minutes.</p>
                     <div style='background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; text-align: center; margin: 20px 0;'>
                         <span style='font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #1e293b;'>{otp}</span>
@@ -179,10 +178,10 @@ namespace API_v2.Services
             _logger.LogInformation("AUDIT [OTP Resent] Email queue request submitted for: {Email}", emailLower);
         }
 
-        public LoginResponse Login(LoginRequest req)
+        public async Task<LoginResponse> LoginAsync(LoginRequest req)
         {
             var emailLower = req.Email?.Trim().ToLower() ?? string.Empty;
-            var user = _userRepo.GetByEmail(emailLower);
+            var user = await _userRepo.GetByEmailAsync(emailLower);
             
             if (user is null)
             {
@@ -202,7 +201,8 @@ namespace API_v2.Services
                 throw ApiException.Unauthorized("Invalid email or password.");
             }
 
-            foreach (var token in _refreshTokenRepo.GetActiveTokensByUserId(user.Id))
+            var activeTokens = await _refreshTokenRepo.GetActiveTokensByUserIdAsync(user.Id);
+            foreach (var token in activeTokens)
             {
                 token.RevokedAt = DateTime.UtcNow;
             }
@@ -218,7 +218,7 @@ namespace API_v2.Services
                 CreatedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddDays(7)
             });
-            _refreshTokenRepo.Save();
+            await _refreshTokenRepo.SaveAsync();
 
             _logger.LogInformation("AUDIT [Login Success] User logged in: {Email} (ID: {UserId})", emailLower, user.Id);
 
@@ -229,9 +229,9 @@ namespace API_v2.Services
             };
         }
 
-        public LoginResponse Refresh(string refreshToken)
+        public async Task<LoginResponse> RefreshAsync(string refreshToken)
         {
-            var token = _refreshTokenRepo.GetByToken(refreshToken);
+            var token = await _refreshTokenRepo.GetByTokenAsync(refreshToken);
             if (token is null)
             {
                 _logger.LogWarning("SECURITY AUDIT [Refresh Failed] Refresh token was not found on database.");
@@ -250,7 +250,7 @@ namespace API_v2.Services
                 throw ApiException.Unauthorized("Refresh token has expired. Please sign in again.");
             }
 
-            var user = _userRepo.GetById(token.UserId);
+            var user = await _userRepo.GetByIdAsync(token.UserId);
             if (user is null || !user.IsActive)
             {
                 _logger.LogWarning("SECURITY AUDIT [Refresh Failed] Inactive user refresh attempt: User ID: {UserId}.", token.UserId);
@@ -265,9 +265,9 @@ namespace API_v2.Services
             };
         }
 
-        public void Logout(string refreshToken)
+        public async Task LogoutAsync(string refreshToken)
         {
-            var token = _refreshTokenRepo.GetByToken(refreshToken);
+            var token = await _refreshTokenRepo.GetByTokenAsync(refreshToken);
             if (token is null)
             {
                 _logger.LogWarning("AUDIT [Logout Attempt] Refresh token not found on database for revocation.");
@@ -275,19 +275,43 @@ namespace API_v2.Services
             }
 
             token.RevokedAt = DateTime.UtcNow;
-            _refreshTokenRepo.Save();
+            await _refreshTokenRepo.SaveAsync();
 
             _logger.LogInformation("AUDIT [Logout Success] Revoked token ID: {TokenId} for User ID: {UserId}", token.Id, token.UserId);
         }
 
-        public List<UserSearchResponse> SearchUsers(string keyword)
+        public async Task<List<UserSearchResponse>> SearchUsersAsync(string keyword)
         {
             if (string.IsNullOrWhiteSpace(keyword))
             {
                 return new List<UserSearchResponse>();
             }
 
-            return _userRepo.SearchUsers(keyword);
+            return await _userRepo.SearchUsersAsync(keyword);
+        }
+
+        public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest req)
+        {
+            var user = await _userRepo.GetByIdAsync(userId);
+            if (user == null)
+            {
+                throw ApiException.NotFound("User not found.");
+            }
+
+            if (!PasswordHelper.VerifyPassword(req.CurrentPassword, user.PasswordHash))
+            {
+                throw ApiException.BadRequest("Current password is incorrect.");
+            }
+
+            if (!IsStrongPassword(req.NewPassword))
+            {
+                throw ApiException.BadRequest("New password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.");
+            }
+
+            user.PasswordHash = PasswordHelper.HashPassword(req.NewPassword);
+            await _userRepo.SaveAsync();
+
+            _logger.LogInformation("AUDIT [Password Changed] User ID: {UserId} successfully changed password.", userId);
         }
     }
 }

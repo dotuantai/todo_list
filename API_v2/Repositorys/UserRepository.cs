@@ -15,14 +15,15 @@ namespace API_v2.Repositorys
             _db = db;
         }
 
-        public User? GetByEmail(string email)
+        public async Task<User?> GetByEmailAsync(string email)
         {
-            return _db.Users.AsNoTracking().FirstOrDefault(u => u.Email.ToLower() == email.ToLower());
+            var lower = email.Trim().ToLower();
+            return await _db.Users.FirstOrDefaultAsync(u => u.Email == lower);
         }
 
-        public User? GetById(Guid id)
+        public async Task<User?> GetByIdAsync(Guid id)
         {
-            return _db.Users.Find(id);
+            return await _db.Users.FindAsync(id);
         }
 
         public void Create(User user)
@@ -30,16 +31,16 @@ namespace API_v2.Repositorys
             _db.Users.Add(user);
         }
 
-        public void Save()
+        public async Task SaveAsync()
         {
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
         }
 
-        public List<UserSearchResponse> SearchUsers(string keyword)
+        public async Task<List<UserSearchResponse>> SearchUsersAsync(string keyword)
         {
             var lower = keyword.Trim().ToLower();
-            return _db.Users
-                .Where(u => u.IsActive && u.Email.ToLower().Contains(lower))
+            return await _db.Users
+                .Where(u => u.IsActive && u.Email.Contains(lower))
                 .OrderBy(u => u.Email)
                 .Take(10)
                 .Select(u => new UserSearchResponse
@@ -47,7 +48,7 @@ namespace API_v2.Repositorys
                     UserId = u.Id,
                     Email = u.Email
                 })
-                .ToList();
+                .ToListAsync();
         }
     }
 }

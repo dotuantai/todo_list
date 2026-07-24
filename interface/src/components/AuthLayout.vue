@@ -5,9 +5,9 @@
         <!-- Hero Column -->
         <div class="col-lg-6 bg-primary text-white p-4 p-md-5 d-flex flex-column justify-content-center auth-hero">
           <div class="brand-badge bg-white bg-opacity-25 rounded-3 d-flex align-items-center justify-content-center fw-bold text-white mb-3" style="width: 48px; height: 48px; font-size: 1.25rem;">
-            TF
+            TT
           </div>
-          <h1 class="fw-bold h2 mb-2 text-white">TaskFlow Pro</h1>
+          <h1 class="fw-bold h2 mb-2 text-white">TutaFlow</h1>
           <p class="text-white text-opacity-75 mb-4">
             Organize work with a calm, modern workspace that feels as polished as your tasks.
           </p>
@@ -28,7 +28,7 @@
         <div class="col-lg-6 p-4 p-md-5 bg-body d-flex flex-column justify-content-center">
           <div class="mb-4">
             <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold mb-3" style="font-size: 0.8rem;">
-              TaskFlow
+              TutaFlow
             </span>
             <h2 class="fw-bold text-dark-override h4 mb-1">{{ title }}</h2>
             <p class="text-muted small mb-0">{{ subtitle }}</p>

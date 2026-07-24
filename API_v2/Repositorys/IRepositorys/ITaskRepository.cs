@@ -1,14 +1,17 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using API_v2.Models;
 
 namespace API_v2.Repositorys.IRepositorys
 {
     public interface ITaskRepository
     {
-        TodoTask? GetById(int id);
-        TodoTask? GetByIdWithDetails(int id);
-        List<TodoTask> GetTasksByProjectId(Guid projectId);
+        Task<TodoTask?> GetByIdAsync(int id);
+        Task<TodoTask?> GetByIdWithDetailsAsync(int id);
+        Task<List<TodoTask>> GetTasksByProjectIdAsync(Guid projectId);
         void Add(TodoTask task);
         void Delete(TodoTask task);
-        void Save();
+        Task SaveAsync();
     }
 }

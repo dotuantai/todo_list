@@ -1,15 +1,18 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using API_v2.Models.DTOs;
 
 namespace API_v2.Services.Interfaces
 {
     public interface ITaskService
     {
-        string CreateTask(CreateTaskRequest req, Guid creatorId, Guid projectId);
-        string UpdateTask(UpdateTaskRequest req, Guid currentUserId);
-        string DeleteTask(int taskId, Guid currentUserId);
-        string AssignTask(AssignTaskRequest req, Guid currentUserId);
-        List<TaskDetailResponse> GetProjectTasks(Guid projectId, Guid userId);
-        string RemoveAssignment(RemoveAssignmentRequest req, Guid currentUserId);
-        void ChangeStatus(ChangeTaskStatusRequest req, Guid currentUserId);
+        Task<string> CreateTaskAsync(CreateTaskRequest req, Guid creatorId, Guid projectId);
+        Task<string> UpdateTaskAsync(UpdateTaskRequest req, Guid currentUserId);
+        Task<string> DeleteTaskAsync(int taskId, Guid currentUserId);
+        Task<string> AssignTaskAsync(AssignTaskRequest req, Guid currentUserId);
+        Task<List<TaskDetailResponse>> GetProjectTasksAsync(Guid projectId, Guid userId);
+        Task<string> RemoveAssignmentAsync(RemoveAssignmentRequest req, Guid currentUserId);
+        Task ChangeStatusAsync(ChangeTaskStatusRequest req, Guid currentUserId);
     }
 }

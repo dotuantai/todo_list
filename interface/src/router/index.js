@@ -7,6 +7,7 @@ import DashboardView from '../views/DashboardView.vue'
 import TaskView from '../views/TaskView.vue'
 import SettingsView from '../views/SettingsView.vue'
 import MembersView from '../views/MembersView.vue'
+import ChangePasswordView from '../views/ChangePasswordView.vue'
 
 const routes = [
   {
@@ -18,6 +19,12 @@ const routes = [
     path: '/register',
     name: 'register',
     component: RegisterView
+  },
+  {
+    path: '/change-password',
+    name: 'change-password',
+    component: ChangePasswordView,
+    meta: { requiresAuth: true }
   },
   {
     path: '/projects',

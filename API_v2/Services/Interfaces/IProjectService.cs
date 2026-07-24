@@ -1,17 +1,20 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using API_v2.Models.DTOs;
 
 namespace API_v2.Services.Interfaces
 {
     public interface IProjectService
     {
-        ProjectResponse CreateProject(CreateProjectRequest req, Guid currentUserId);
-        List<ProjectResponse> GetProjectsForUser(Guid currentUserId);
-        ProjectResponse GetProjectDetail(Guid projectId, Guid currentUserId);
-        ProjectResponse UpdateProject(Guid projectId, UpdateProjectRequest req, Guid currentUserId);
-        void DeleteProject(Guid projectId, Guid currentUserId);
-        List<MemberResponse> GetMembers(Guid projectId, Guid currentUserId);
-        MemberResponse AddMember(Guid projectId, AddMemberRequest req, Guid currentUserId);
-        MemberResponse UpdateMemberRole(Guid projectId, Guid userId, UpdateMemberRequest req, Guid currentUserId);
-        void RemoveMember(Guid projectId, Guid userId, Guid currentUserId);
+        Task<ProjectResponse> CreateProjectAsync(CreateProjectRequest req, Guid currentUserId);
+        Task<List<ProjectResponse>> GetProjectsForUserAsync(Guid currentUserId);
+        Task<ProjectResponse> GetProjectDetailAsync(Guid projectId, Guid currentUserId);
+        Task<ProjectResponse> UpdateProjectAsync(Guid projectId, UpdateProjectRequest req, Guid currentUserId);
+        Task DeleteProjectAsync(Guid projectId, Guid currentUserId);
+        Task<List<MemberResponse>> GetMembersAsync(Guid projectId, Guid currentUserId);
+        Task<MemberResponse> AddMemberAsync(Guid projectId, AddMemberRequest req, Guid currentUserId);
+        Task<MemberResponse> UpdateMemberRoleAsync(Guid projectId, Guid userId, UpdateMemberRequest req, Guid currentUserId);
+        Task RemoveMemberAsync(Guid projectId, Guid userId, Guid currentUserId);
     }
 }

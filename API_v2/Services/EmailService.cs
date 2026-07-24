@@ -23,12 +23,7 @@ namespace API_v2.Services
             _httpClient = httpClient;
         }
 
-        public void SendEmail(string toEmail, string subject, string body)
-        {
-            SendEmailAsync(toEmail, subject, body).GetAwaiter().GetResult();
-        }
-
-        private async Task SendEmailAsync(string toEmail, string subject, string body)
+        public async Task SendEmailAsync(string toEmail, string subject, string body)
         {
             var googleScriptUrl = _config["GoogleScriptSettings:Url"]?.Trim();
 

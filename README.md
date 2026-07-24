@@ -1,12 +1,12 @@
-# Project Context: TaskFlow Pro (Todo List Web App)
+# Project Context: TutaFlow (Todo List Web App)
 
-Tài liệu này cung cấp cái nhìn tổng quan về kiến trúc, cấu trúc thư mục, mô hình cơ sở dữ liệu, cơ chế phân quyền và cách thiết lập/khởi chạy dự án **TaskFlow Pro** (ứng dụng quản lý công việc và dự án cộng tác theo mô hình Kanban).
+Tài liệu này cung cấp cái nhìn tổng quan về kiến trúc, cấu trúc thư mục, mô hình cơ sở dữ liệu, cơ chế phân quyền và cách thiết lập/khởi chạy dự án **TutaFlow** (ứng dụng quản lý công việc và dự án cộng tác theo mô hình Kanban).
 
 ---
 
 ## 1. Tổng quan dự án (Overview)
 
-**TaskFlow Pro** là một ứng dụng web cho phép người dùng quản lý công việc cá nhân và cộng tác nhóm thông qua các dự án (Projects). 
+**TutaFlow** là một ứng dụng web cho phép người dùng quản lý công việc cá nhân và cộng tác nhóm thông qua các dự án (Projects). 
 - **Người dùng cá nhân**: Đăng ký, đăng nhập và quản lý công việc của riêng mình.
 - **Cộng tác nhóm**: Người dùng có thể tạo dự án, mời các thành viên khác tham gia dự án bằng email, gán vai trò tương ứng và giao việc cho thành viên trong dự án.
 - **Bảng Kanban**: Hiển thị trạng thái các công việc (`ToDo`, `InProgress`, `Done`, `Closed`) trực quan, hỗ trợ kéo thả hoặc thay đổi trạng thái nhanh.

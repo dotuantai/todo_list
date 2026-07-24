@@ -14,23 +14,23 @@ namespace API_v2.Repositorys
             _db = db;
         }
 
-        public bool Exists(int taskId, Guid userId)
+        public async Task<bool> ExistsAsync(int taskId, Guid userId)
         {
-            return _db.TaskAssignments.Any(x => x.TaskId == taskId && x.UserId == userId);
+            return await _db.TaskAssignments.AnyAsync(x => x.TaskId == taskId && x.UserId == userId);
         }
 
-        public TaskAssignment? GetAssignment(int taskId, Guid userId)
+        public async Task<TaskAssignment?> GetAssignmentAsync(int taskId, Guid userId)
         {
-            return _db.TaskAssignments.FirstOrDefault(x => x.TaskId == taskId && x.UserId == userId);
+            return await _db.TaskAssignments.FirstOrDefaultAsync(x => x.TaskId == taskId && x.UserId == userId);
         }
 
-        public List<TaskAssignment> GetAssignedTasks(Guid userId)
+        public async Task<List<TaskAssignment>> GetAssignedTasksAsync(Guid userId)
         {
-            return _db.TaskAssignments
+            return await _db.TaskAssignments
                 .Include(x => x.Task)
                 .Where(x => x.UserId == userId)
                 .OrderByDescending(x => x.AssignedAt)
-                .ToList();
+                .ToListAsync();
         }
 
         public void Add(TaskAssignment assignment)
@@ -43,9 +43,9 @@ namespace API_v2.Repositorys
             _db.TaskAssignments.Remove(assignment);
         }
 
-        public void Save()
+        public async Task SaveAsync()
         {
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
         }
     }
 }
