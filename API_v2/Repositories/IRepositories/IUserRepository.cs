@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using API_v2.Models;
 using API_v2.Models.DTOs;
 
-namespace API_v2.Repositorys.IRepositorys
+namespace API_v2.Repositories.IRepositories
 {
     public interface IUserRepository
     {

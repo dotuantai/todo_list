@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using API_v2.Datas;
 using API_v2.Models;
-using API_v2.Repositorys.IRepositorys;
+using API_v2.Repositories.IRepositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace API_v2.Repositorys
+namespace API_v2.Repositories
 {
     public class NotificationRepository : INotificationRepository
     {
