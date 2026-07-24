@@ -8,10 +8,41 @@
         </div>
         <div class="text-start">
           <h1 class="mb-0 fs-5 fw-bold text-body lh-1">TutaFlow</h1>
-          <p class="small text-muted mb-0 mt-1" style="font-size: 11px;">Workspaces</p>
+          <p class="small text-muted mb-0 mt-1" style="font-size: 11px;">{{ $t('sidebar.switch_workspace') }}</p>
         </div>
       </div>
       <div class="d-flex align-items-center gap-3">
+        <!-- Language Switcher -->
+        <div class="dropdown">
+          <button 
+            class="btn btn-light p-0 border rounded-3 d-flex align-items-center justify-content-center" 
+            style="width: 36px; height: 36px; outline: none; box-shadow: none;"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            title="Change Language"
+          >
+            <span class="d-flex align-items-center justify-content-center">
+              <svg v-if="locale === 'vi'" viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><circle cx="12" cy="12" r="12" fill="#da251d"/><polygon points="12,6 12.95,9.58 16.71,9.58 13.66,11.8 14.79,15.38 12,13.16 9.21,15.38 10.34,11.8 7.29,9.58 11.05,9.58" fill="#ffff00"/></svg>
+              <svg v-else viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><clipPath id="uk-circle-btn-proj"><circle cx="12" cy="12" r="12"/></clipPath><g clip-path="url(#uk-circle-btn-proj)"><rect width="24" height="24" fill="#012169"/><path d="M0,0 L24,24 M24,0 L0,24" stroke="#fff" stroke-width="4"/><path d="M0,0 L24,24 M24,0 L0,24" stroke="#C8102E" stroke-width="2"/><path d="M0,12 H24 M12,0 V24" stroke="#fff" stroke-width="6"/><path d="M0,12 H24 M12,0 V24" stroke="#C8102E" stroke-width="4"/></g></svg>
+            </span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-1 rounded-3" style="min-width: 130px; z-index: 1060;">
+            <li>
+              <button class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2" @click="changeLocale('vi')">
+                <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><circle cx="12" cy="12" r="12" fill="#da251d"/><polygon points="12,6 12.95,9.58 16.71,9.58 13.66,11.8 14.79,15.38 12,13.16 9.21,15.38 10.34,11.8 7.29,9.58 11.05,9.58" fill="#ffff00"/></svg>
+                <span style="font-size: 0.85rem;">Tiếng Việt</span>
+              </button>
+            </li>
+            <li>
+              <button class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2" @click="changeLocale('en')">
+                <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><clipPath id="uk-circle-item-proj"><circle cx="12" cy="12" r="12"/></clipPath><g clip-path="url(#uk-circle-item-proj)"><rect width="24" height="24" fill="#012169"/><path d="M0,0 L24,24 M24,0 L0,24" stroke="#fff" stroke-width="4"/><path d="M0,0 L24,24 M24,0 L0,24" stroke="#C8102E" stroke-width="2"/><path d="M0,12 H24 M12,0 V24" stroke="#fff" stroke-width="6"/><path d="M0,12 H24 M12,0 V24" stroke="#C8102E" stroke-width="4"/></g></svg>
+                <span style="font-size: 0.85rem;">English</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
         <!-- Theme Toggle -->
         <button class="btn btn-light border-0 p-2 d-flex align-items-center justify-content-center" style="border-radius: 8px; width: 36px; height: 36px;" @click="toggleTheme" title="Toggle Theme">
           <i class="bi" :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-fill'"></i>
@@ -60,35 +91,35 @@
       <!-- Section Header -->
       <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div class="text-start">
-          <h2 class="fw-bold mb-1 text-body">Select a Project</h2>
-          <p class="text-muted small mb-0">Choose a workspace to view your dashboard, tasks board, and settings.</p>
+          <h2 class="fw-bold mb-1 text-body">{{ $t('projects.title') }}</h2>
+          <p class="text-muted small mb-0">{{ $t('projects.subtitle') }}</p>
         </div>
         <button 
           class="btn btn-primary fw-semibold d-flex align-items-center gap-2 shadow-sm" 
           @click="handleCreateProject"
           style="border-radius: 8px; height: 40px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"
         >
-          <i class="bi bi-plus-lg"></i> Create Project
+          <i class="bi bi-plus-lg"></i> {{ $t('projects.create_btn') }}
         </button>
       </div>
 
       <!-- Loading State -->
       <div v-if="loading && projectsWithProgress.length === 0" class="text-center py-5 my-5">
         <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
-        <p class="text-muted mt-3">Loading your workspaces...</p>
+        <p class="text-muted mt-3">{{ $t('common.loading') }}</p>
       </div>
 
       <!-- Empty State -->
       <div v-else-if="projectsWithProgress.length === 0" class="text-center py-5 bg-body rounded-4 shadow-sm border border-dashed p-5">
         <i class="bi bi-folder2-open text-primary" style="font-size: 4.5rem;"></i>
-        <h3 class="fw-bold text-body mt-3">No workspaces found</h3>
-        <p class="text-muted mx-auto mb-4" style="max-width: 480px;">Get started by creating your first collaborative project board to manage tasks with your team.</p>
+        <h3 class="fw-bold text-body mt-3">{{ $t('projects.no_projects') }}</h3>
+        <p class="text-muted mx-auto mb-4" style="max-width: 480px;">{{ $t('projects.no_projects_desc') }}</p>
         <button 
           class="btn btn-primary fw-semibold px-4 py-2.5" 
           @click="handleCreateProject"
           style="border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"
         >
-          Create Project
+          {{ $t('projects.create_btn') }}
         </button>
       </div>
 
@@ -123,17 +154,17 @@
 
               <!-- Description -->
               <p class="text-muted small text-start mb-4 text-wrap description-text">
-                {{ proj.Description || 'No description provided for this project.' }}
+                {{ proj.Description || $t('projects.no_desc') }}
               </p>
 
               <!-- Meta Row: Members, Updated time -->
               <div class="d-flex align-items-center justify-content-between border-top pt-3 pb-3 mb-3" style="font-size: 0.8rem;">
                 <div class="d-flex align-items-center gap-1.5 text-secondary">
                   <i class="bi bi-people-fill"></i>
-                  <span>{{ proj.memberCount || 1 }} members</span>
+                  <span>{{ $t('projects.members_count', { count: proj.memberCount || 1 }) }}</span>
                 </div>
                 <div class="text-secondary small">
-                  Updated: {{ formatDateShort(proj.UpdatedAt || proj.CreatedAt) }}
+                  {{ $t('projects.updated_at', { date: formatDateShort(proj.UpdatedAt || proj.CreatedAt) }) }}
                 </div>
               </div>
             </div>
@@ -141,7 +172,7 @@
             <!-- Footer: Progress & Click indicator -->
             <div>
               <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="text-secondary small">{{ proj.completedTasks }}/{{ proj.totalTasks }} tasks completed</span>
+                <span class="text-secondary small">{{ $t('projects.tasks_completed', { completed: proj.completedTasks, total: proj.totalTasks }) }}</span>
                 <span class="fw-bold text-body small">{{ proj.percent }}%</span>
               </div>
               <div class="progress mb-3" style="height: 6px; border-radius: 3px;">
@@ -157,7 +188,7 @@
 
               <div class="d-flex align-items-center justify-content-end gap-2 mt-2 pt-2">
                 <span class="text-primary small fw-semibold enter-workspace-text">
-                  Enter workspace <i class="bi bi-arrow-right ms-1"></i>
+                  {{ $t('projects.enter_workspace') }} <i class="bi bi-arrow-right ms-1"></i>
                 </span>
               </div>
             </div>
@@ -172,6 +203,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getProjects, getProjectTasks, getMembers, createProject } from '../services/projectService.js'
 import { logout } from '../services/authService.js'
 import { useProjectStore } from '../stores/projectStore.js'
@@ -180,6 +212,12 @@ import Swal from 'sweetalert2'
 
 const router = useRouter()
 const projectStore = useProjectStore()
+const { t, locale } = useI18n()
+
+const changeLocale = (lang) => {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+}
 const loading = ref(false)
 const projectsWithProgress = ref([])
 const isDarkMode = ref(false)
@@ -237,16 +275,16 @@ const goToProject = (projectId) => {
 
 const handleCreateProject = async () => {
   const { value: formValues } = await Swal.fire({
-    title: 'Create New Project',
+    title: t('projects.create_popup_title'),
     html:
-      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Project Name</label></div>' +
-      '<input id="swal-proj-name" class="form-control mb-3" placeholder="Enter project name" style="border-radius:10px; height:42px;">' +
-      '<div class="text-start mb-2"><label class="small fw-semibold text-muted">Description (optional)</label></div>' +
-      '<textarea id="swal-proj-desc" class="form-control" placeholder="Enter description" rows="3" style="border-radius:10px;"></textarea>',
+      `<div class="text-start mb-2"><label class="small fw-semibold text-muted">${t('projects.proj_name_label')}</label></div>` +
+      `<input id="swal-proj-name" class="form-control mb-3" placeholder="${t('projects.proj_name_placeholder')}" style="border-radius:10px; height:42px;">` +
+      `<div class="text-start mb-2"><label class="small fw-semibold text-muted">${t('projects.proj_desc_label')}</label></div>` +
+      `<textarea id="swal-proj-desc" class="form-control" placeholder="${t('projects.proj_desc_placeholder')}" rows="3" style="border-radius:10px;"></textarea>`,
     focusConfirm: false,
     showCancelButton: true,
-    confirmButtonText: 'Create Project',
-    cancelButtonText: 'Cancel',
+    confirmButtonText: t('projects.create_confirm_btn'),
+    cancelButtonText: t('projects.cancel'),
     customClass: {
       popup: 'swal-popup',
       confirmButton: 'swal-btn swal-btn--confirm',
@@ -339,14 +377,15 @@ onMounted(() => {
 
 <style scoped>
 .project-card {
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
   border: 1px solid var(--bs-border-color) !important;
+  box-shadow: var(--shadow-sm) !important;
 }
 
 .project-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08) !important;
-  border-color: #6366f1 !important;
+  box-shadow: var(--shadow-card-hover) !important;
+  border-color: rgba(13, 148, 136, 0.25) !important;
 }
 
 .description-text {
@@ -362,17 +401,19 @@ onMounted(() => {
 }
 
 .enter-workspace-text {
-  opacity: 0;
+  opacity: 0.8;
   transform: translateX(-4px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease, color 0.2s ease;
 }
 
 .project-card:hover .enter-workspace-text {
   opacity: 1;
   transform: translateX(0);
+  color: var(--bs-primary) !important;
 }
 
 .border-dashed {
   border-style: dashed !important;
+  border-color: var(--bs-border-color) !important;
 }
 </style>

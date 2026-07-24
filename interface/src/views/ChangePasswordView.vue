@@ -5,18 +5,18 @@
         
         <!-- Header -->
         <div class="text-center mb-4">
-          <div class="brand-badge bg-primary text-white mx-auto rounded-3 d-flex align-items-center justify-content-center fw-bold mb-3" style="width: 48px; height: 48px; font-size: 1.25rem; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
+          <div class="brand-badge bg-primary text-white mx-auto rounded-3 d-flex align-items-center justify-content-center fw-bold mb-3" style="width: 48px; height: 48px; font-size: 1.25rem; background: linear-gradient(135deg, #0d9488, #14b8a6) !important;">
             <i class="bi bi-shield-lock-fill"></i>
           </div>
-          <h2 class="fw-bold h4 mb-1 text-body">Change Password</h2>
-          <p class="text-muted small">Update your account credentials to keep your workspace secure.</p>
+          <h2 class="fw-bold h4 mb-1 text-body">{{ $t('changePassword.title') }}</h2>
+          <p class="text-muted small">{{ $t('changePassword.subtitle') }}</p>
         </div>
 
         <!-- Form -->
         <form @submit.prevent="handleChangePassword">
           <!-- Current Password -->
           <div class="mb-3">
-            <label class="form-label fw-semibold text-secondary small text-start d-block">Current Password</label>
+            <label class="form-label fw-semibold text-secondary small text-start d-block">{{ $t('changePassword.current_password') }}</label>
             <div class="input-group">
               <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-radius: 12px 0 0 12px; border-color: var(--bs-border-color);">
                 <i class="bi bi-key-fill"></i>
@@ -25,7 +25,7 @@
                 v-model="form.currentPassword" 
                 :type="showCurrent ? 'text' : 'password'" 
                 class="form-control bg-body-secondary border-start-0 border-end-0 ps-0" 
-                placeholder="Enter current password" 
+                :placeholder="$t('changePassword.current_password_placeholder')" 
                 style="font-size: 0.95rem; height: 48px; border-color: var(--bs-border-color);" 
                 required 
               />
@@ -42,7 +42,7 @@
 
           <!-- New Password -->
           <div class="mb-3">
-            <label class="form-label fw-semibold text-secondary small text-start d-block">New Password</label>
+            <label class="form-label fw-semibold text-secondary small text-start d-block">{{ $t('changePassword.new_password') }}</label>
             <div class="input-group">
               <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-radius: 12px 0 0 12px; border-color: var(--bs-border-color);">
                 <i class="bi bi-lock-fill"></i>
@@ -51,7 +51,7 @@
                 v-model="form.newPassword" 
                 :type="showNew ? 'text' : 'password'" 
                 class="form-control bg-body-secondary border-start-0 border-end-0 ps-0" 
-                placeholder="At least 8 chars with uppercase, digit, symbol" 
+                :placeholder="$t('changePassword.new_password_placeholder')" 
                 style="font-size: 0.95rem; height: 48px; border-color: var(--bs-border-color);" 
                 required 
               />
@@ -68,7 +68,7 @@
 
           <!-- Confirm New Password -->
           <div class="mb-4">
-            <label class="form-label fw-semibold text-secondary small text-start d-block">Confirm New Password</label>
+            <label class="form-label fw-semibold text-secondary small text-start d-block">{{ $t('changePassword.confirm_password') }}</label>
             <div class="input-group">
               <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-radius: 12px 0 0 12px; border-color: var(--bs-border-color);">
                 <i class="bi bi-shield-check"></i>
@@ -77,7 +77,7 @@
                 v-model="form.confirmPassword" 
                 :type="showConfirm ? 'text' : 'password'" 
                 class="form-control bg-body-secondary border-start-0 border-end-0 ps-0" 
-                placeholder="Re-enter new password" 
+                :placeholder="$t('changePassword.confirm_password_placeholder')" 
                 style="font-size: 0.95rem; height: 48px; border-color: var(--bs-border-color);" 
                 required 
               />
@@ -98,10 +98,10 @@
               class="btn btn-primary py-2.5 fs-6 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" 
               type="submit" 
               :disabled="loading" 
-              style="border-radius: 12px; height: 48px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"
+              style="border-radius: 12px; height: 48px; background: linear-gradient(135deg, #0d9488, #14b8a6); border: none;"
             >
               <span v-if="loading" class="spinner-border spinner-border-sm" role="status"></span>
-              {{ loading ? 'Updating password...' : 'Update Password' }}
+              {{ loading ? $t('changePassword.updating') : $t('changePassword.submit_btn') }}
             </button>
             
             <button 
@@ -111,7 +111,7 @@
               @click="goBack" 
               :disabled="loading"
             >
-              Cancel
+              {{ $t('changePassword.cancel_btn') }}
             </button>
           </div>
         </form>
@@ -124,10 +124,12 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { changePassword } from '../services/authService.js'
 import { toastSuccess, toastError, extractMessage } from '../utils/swal.js'
 
 const router = useRouter()
+const { t } = useI18n()
 const loading = ref(false)
 
 const form = reactive({
@@ -146,7 +148,7 @@ const goBack = () => {
 
 const handleChangePassword = async () => {
   if (form.newPassword !== form.confirmPassword) {
-    toastError("Passwords do not match!")
+    toastError(t('errors.Passwords do not match'))
     return
   }
 
@@ -156,10 +158,10 @@ const handleChangePassword = async () => {
       CurrentPassword: form.currentPassword,
       NewPassword: form.newPassword
     })
-    toastSuccess("Password updated successfully!")
+    toastSuccess(t('changePassword.success'))
     router.push('/projects')
   } catch (error) {
-    toastError(extractMessage(error, "Failed to update password."))
+    toastError(extractMessage(error, t('errors.default')))
   } finally {
     loading.value = false
   }
@@ -168,11 +170,8 @@ const handleChangePassword = async () => {
 
 <style scoped>
 .auth-shell {
-  background: radial-gradient(circle at top left, rgba(99,102,241,0.15), transparent 40%),
-              linear-gradient(135deg, #f8faff 0%, #eef2ff 100%);
-}
-[data-bs-theme="dark"] .auth-shell {
-  background: radial-gradient(circle at top left, rgba(99,102,241,0.08), transparent 40%),
-              linear-gradient(135deg, #0b0f19 0%, #111827 100%);
+  background: radial-gradient(circle at top right, rgba(13, 148, 136, 0.08), transparent 40%),
+              radial-gradient(circle at bottom left, rgba(13, 148, 136, 0.05), transparent 40%),
+              var(--bs-body-bg);
 }
 </style>
