@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using API_v2.Exceptions;
 using API_v2.Models;
 using API_v2.Models.DTOs;
-using API_v2.Repositorys.IRepositorys;
+using API_v2.Repositories.IRepositories;
 using API_v2.Services.Interfaces;
 
 namespace API_v2.Services

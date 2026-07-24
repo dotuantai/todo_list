@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using API_v2.Repositorys.IRepositorys;
+using API_v2.Repositories.IRepositories;
 
 namespace API_v2.Services
 {

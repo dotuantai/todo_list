@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using API_v2.Repositorys.IRepositorys;
+using API_v2.Repositories.IRepositories;
 
 namespace API_v2.Hubs
 {
