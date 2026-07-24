@@ -6,8 +6,8 @@
     <div class="card border-0 shadow-sm p-4 rounded-3 bg-body">
       <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div class="text-start">
-          <h4 class="fw-bold mb-1 text-body h5">Project Members</h4>
-          <p class="text-muted small mb-0">List of team members participating in this workspace.</p>
+          <h4 class="fw-bold mb-1 text-body h5">{{ $t('members.title') }}</h4>
+          <p class="text-muted small mb-0">{{ $t('members.subtitle') }}</p>
         </div>
         
         <!-- Add member form (only visible to Owner) -->
@@ -15,26 +15,26 @@
           <input 
             v-model="memberEmail" 
             type="email" 
-            class="form-control form-control-sm" 
-            placeholder="Enter member email..."
-            style="width: 250px; border-radius: 8px; height: 38px;"
+            class="form-control form-control-sm rounded-2" 
+            :placeholder="$t('members.add_member_email')"
+            style="width: 250px; height: 38px;"
           />
           <select 
             v-model="memberRole" 
-            class="form-select form-select-sm" 
-            style="width: 120px; border-radius: 8px; height: 38px;"
+            class="form-select form-select-sm rounded-2" 
+            style="width: 120px; height: 38px;"
           >
             <option value="Owner">Owner</option>
             <option value="Manager">Manager</option>
             <option value="Member">Member</option>
           </select>
           <button 
-            class="btn btn-sm btn-primary fw-semibold d-flex align-items-center justify-content-center" 
+            class="btn btn-sm btn-primary fw-semibold rounded-2 d-flex align-items-center justify-content-center" 
             @click="addProjectMember"
             :disabled="!memberEmail"
-            style="border-radius: 8px; height: 38px; padding: 0 16px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"
+            style="height: 38px; padding: 0 16px;"
           >
-            Add Member
+            {{ $t('members.add_btn') }}
           </button>
         </div>
       </div>
@@ -49,10 +49,10 @@
         <table class="table table-hover align-middle border-0 mb-0">
           <thead class="table-light">
             <tr>
-              <th scope="col" class="border-0 rounded-start text-start" style="padding: 12px 16px;">Member</th>
-              <th scope="col" class="border-0 text-start" style="padding: 12px 16px;">Role</th>
-              <th scope="col" class="border-0 text-start" style="padding: 12px 16px;">Joined Date</th>
-              <th scope="col" class="border-0 rounded-end text-end" style="padding: 12px 16px; width: 120px;" v-if="projectStore.userRole === 'Owner'">Actions</th>
+              <th scope="col" class="border-0 rounded-start text-start px-3 py-3">{{ $t('members.member_col') }}</th>
+              <th scope="col" class="border-0 text-start px-3 py-3">{{ $t('members.role_col') }}</th>
+              <th scope="col" class="border-0 text-start px-3 py-3">{{ $t('members.joined_col') }}</th>
+              <th scope="col" class="border-0 rounded-end text-end px-3 py-3" style="width: 120px;" v-if="projectStore.userRole === 'Owner'">{{ $t('members.actions_col') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -62,7 +62,7 @@
               class="border-bottom"
               :class="{ 'current-user-row': user.Email?.toLowerCase() === projectStore.currentUserEmail?.toLowerCase() }"
             >
-              <td style="padding: 16px;" class="text-start">
+              <td class="text-start p-3">
                 <div class="d-flex align-items-center gap-3">
                   <div class="user-avatar text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" :style="{ background: getUserColor(user.Email) }" style="width:38px; height:38px;">
                     {{ userInitial(user.Email) }}
@@ -70,19 +70,19 @@
                   <div class="text-start">
                     <div class="fw-semibold text-body">
                       {{ user.Email }}
-                      <span v-if="user.Email?.toLowerCase() === projectStore.currentUserEmail?.toLowerCase()" class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-0.5 ms-1.5" style="font-size:0.65rem; text-transform: none; font-weight: 600;">You</span>
+                      <span v-if="user.Email?.toLowerCase() === projectStore.currentUserEmail?.toLowerCase()" class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-0.5 ms-1.5" style="font-size:0.65rem; text-transform: none; font-weight: 600;">{{ $t('members.you_badge') }}</span>
                     </div>
                     <div class="text-muted font-monospace" style="font-size:10px;">ID: {{ user.UserId }}</div>
                   </div>
                 </div>
               </td>
-              <td style="padding: 16px;" class="text-start">
+              <td class="text-start p-3">
                 <select 
                   v-if="projectStore.userRole === 'Owner' && projectStore.currentProject?.OwnerId !== user.UserId"
                   :value="user.Role"
                   @change="changeMemberRole(user, $event.target.value)"
-                  class="form-select form-select-sm"
-                  style="width: 110px; border-radius: 8px;"
+                  class="form-select form-select-sm rounded-2"
+                  style="width: 110px;"
                 >
                   <option value="Owner">Owner</option>
                   <option value="Manager">Manager</option>
@@ -92,17 +92,16 @@
                   {{ user.Role }}
                 </span>
               </td>
-              <td class="text-muted small text-start" style="padding: 16px;">
+              <td class="text-muted small text-start p-3">
                 {{ formatDate(user.JoinedAt) }}
               </td>
-              <td class="text-end" style="padding: 16px;" v-if="projectStore.userRole === 'Owner'">
+              <td class="text-end p-3" v-if="projectStore.userRole === 'Owner'">
                 <button 
                   v-if="projectStore.currentProject?.OwnerId !== user.UserId"
-                  class="btn btn-sm btn-outline-danger" 
+                  class="btn btn-sm btn-outline-danger rounded-2 px-2 py-1" 
                   @click="removeProjectMember(user)"
-                  style="border-radius: 8px; padding: 4px 10px;"
                 >
-                  Remove
+                  {{ $t('members.remove_btn') }}
                 </button>
               </td>
             </tr>
@@ -116,12 +115,14 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getMembers, addMember, updateMemberRole, removeMember } from '../services/projectService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 import { toastSuccess, toastError, confirm, extractMessage } from '../utils/swal.js'
 
 const route = useRoute()
 const projectStore = useProjectStore()
+const { t } = useI18n()
 const members = ref([])
 const loadingMembers = ref(false)
 const memberEmail = ref('')
@@ -169,9 +170,9 @@ const changeMemberRole = async (user, newRole) => {
 const removeProjectMember = async (user) => {
   if (!projectId.value) return
   const ok = await confirm(
-    'Remove member?',
-    `Are you sure you want to remove <strong>${user.Email}</strong> from the project?`,
-    'Remove'
+    t('members.remove_confirm_title'),
+    t('members.remove_confirm_desc', { email: user.Email }),
+    t('members.remove_confirm_btn')
   )
   if (!ok) return
   try {
@@ -223,8 +224,10 @@ onMounted(() => {
 .page-title {
   font-size: 1.68rem;
   letter-spacing: -0.02em;
+  font-weight: 700;
+  color: var(--bs-heading-color) !important;
 }
 .current-user-row td {
-  background-color: rgba(99, 102, 241, 0.08) !important;
+  background-color: rgba(99, 102, 241, 0.05) !important;
 }
 </style>

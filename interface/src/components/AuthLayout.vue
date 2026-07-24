@@ -58,15 +58,15 @@ defineProps({
 
 <style scoped>
 .auth-shell {
-  background: radial-gradient(circle at top left, rgba(99,102,241,0.15), transparent 40%),
+  background: radial-gradient(circle at top left, rgba(16,185,129,0.15), transparent 40%),
               linear-gradient(135deg, #f8faff 0%, #eef2ff 100%);
 }
 [data-bs-theme="dark"] .auth-shell {
-  background: radial-gradient(circle at top left, rgba(99,102,241,0.08), transparent 40%),
+  background: radial-gradient(circle at top left, rgba(16,185,129,0.08), transparent 40%),
               linear-gradient(135deg, #0b0f19 0%, #111827 100%);
 }
 .auth-hero {
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
 }
 .hover-underline:hover {
   text-decoration: underline !important;

@@ -30,27 +30,34 @@ import Swal from 'sweetalert2'
       align-items: center;
       justify-content: center;
       gap: 6px;
-      padding: 9px 22px;
-      border-radius: 9px;
+      padding: 8px 20px;
+      border-radius: 8px !important;
       font-size: 0.9rem;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
-      border: none;
-      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      border: 1px solid transparent !important;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm) !important;
     }
-    .swal-btn:active { transform: scale(0.97); }
+    .swal-btn:active {
+      transform: scale(0.97);
+    }
     .swal-btn--confirm {
-      background: #6366f1;
-      color: #fff;
-      box-shadow: 0 2px 8px rgba(99,102,241,.35);
+      background: linear-gradient(135deg, #0d9488, #14b8a6) !important;
+      color: #ffffff !important;
     }
-    .swal-btn--confirm:hover { background: #4f46e5; }
+    .swal-btn--confirm:hover { 
+      background: linear-gradient(135deg, #0f766e, #0d9488) !important; 
+    }
     .swal-btn--cancel {
-      background: var(--bs-secondary-bg, #f1f5f9);
-      color: var(--bs-secondary-color, #475569);
+      background: var(--bs-secondary-bg, #f1f5f9) !important;
+      color: var(--bs-body-color, #0f172a) !important;
+      border: 1px solid var(--bs-border-color, #e2e8f0) !important;
       margin-right: 8px;
     }
-    .swal-btn--cancel:hover { background: var(--bs-tertiary-bg, #e2e8f0); }
+    .swal-btn--cancel:hover { 
+      background: var(--bs-tertiary-bg, #e2e8f0) !important; 
+    }
     .swal2-toast.swal-popup {
       padding: 14px 20px !important;
       border-radius: 12px !important;

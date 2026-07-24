@@ -18,7 +18,7 @@
             <h1 class="mb-0 fs-6 fw-bold text-body lh-1 text-truncate" style="max-width: 140px;" id="sidebarMenuLabel">
               {{ projectStore.currentProject?.Name || 'Project' }}
             </h1>
-            <p class="small text-muted mb-0 mt-1" style="font-size: 10px;">Switch Workspace</p>
+            <p class="small text-muted mb-0 mt-1" style="font-size: 10px;">{{ $t('sidebar.switch_workspace') }}</p>
           </div>
         </router-link>
         <!-- Close button visible only on mobile/tablet -->
@@ -26,8 +26,8 @@
       </div>
 
       <div class="px-3 py-3" v-if="projectStore.currentProjectId && projectStore.userRole !== 'Member'">
-        <button class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2 shadow-sm" style="border-radius: 10px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;" @click="openCreateTaskModal">
-          <i class="bi bi-plus-lg"></i> Create Task
+        <button class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2 shadow-sm" style="border-radius: 10px; background: linear-gradient(135deg, #059669, #10b981); border: none;" @click="openCreateTaskModal">
+          <i class="bi bi-plus-lg"></i> {{ $t('sidebar.create_task') }}
         </button>
       </div>
 
@@ -38,28 +38,28 @@
           <li class="nav-item">
             <router-link :to="`/projects/${projectStore.currentProjectId}/dashboard`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
               <i class="bi bi-grid-1x2-fill fs-6"></i>
-              <span class="small fw-medium">Dashboard</span>
+              <span class="small fw-medium">{{ $t('sidebar.dashboard') }}</span>
             </router-link>
           </li>
           <!-- Task Board link -->
           <li class="nav-item">
             <router-link :to="`/projects/${projectStore.currentProjectId}/tasks`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
               <i class="bi bi-kanban fs-6"></i>
-              <span class="small fw-medium">Task Board</span>
+              <span class="small fw-medium">{{ $t('sidebar.task_board') }}</span>
             </router-link>
           </li>
           <!-- Members link -->
           <li class="nav-item">
             <router-link :to="`/projects/${projectStore.currentProjectId}/members`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
               <i class="bi bi-people-fill fs-6"></i>
-              <span class="small fw-medium">Members</span>
+              <span class="small fw-medium">{{ $t('sidebar.members') }}</span>
             </router-link>
           </li>
           <!-- Settings link -->
           <li class="nav-item">
             <router-link :to="`/projects/${projectStore.currentProjectId}/settings`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
               <i class="bi bi-gear-fill fs-6"></i>
-              <span class="small fw-medium">Settings</span>
+              <span class="small fw-medium">{{ $t('sidebar.settings') }}</span>
             </router-link>
           </li>
         </ul>
@@ -73,7 +73,7 @@
               @click="handleLogout"
               class="btn btn-link nav-link sidebar-link-danger d-flex align-items-center gap-2 px-3 py-2 rounded-3 w-100 text-start text-decoration-none border-0 bg-transparent">
               <i class="bi bi-box-arrow-right fs-6"></i>
-              <span class="small fw-medium">Sign out</span>
+              <span class="small fw-medium">{{ $t('sidebar.sign_out') }}</span>
             </button>
           </li>
         </ul>
@@ -88,12 +88,11 @@
         <!-- Toggle button and logo on mobile -->
         <div class="d-flex align-items-center">
           <button 
-            class="btn btn-light border-0 p-2 d-lg-none me-2" 
+            class="btn btn-light border-0 p-2 d-lg-none me-2 rounded-2" 
             type="button" 
             data-bs-toggle="offcanvas" 
             data-bs-target="#sidebarMenu" 
             aria-controls="sidebarMenu"
-            style="border-radius: 8px;"
           >
             <i class="bi bi-list fs-4"></i>
           </button>
@@ -105,8 +104,39 @@
           </div>
         </div>
 
-        <!-- Right Side: Profile & notification -->
+        <!-- Right Side: Profile & notification & language -->
         <div class="d-flex align-items-center gap-2 ms-auto">
+          <!-- Language Switcher -->
+          <div class="dropdown">
+            <button 
+              class="btn btn-light p-0 border rounded-3 d-flex align-items-center justify-content-center" 
+              style="width: 36px; height: 36px; outline: none; box-shadow: none;"
+              type="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+              title="Change Language"
+            >
+              <span class="d-flex align-items-center justify-content-center">
+                <svg v-if="locale === 'vi'" viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><circle cx="12" cy="12" r="12" fill="#da251d"/><polygon points="12,6 12.95,9.58 16.71,9.58 13.66,11.8 14.79,15.38 12,13.16 9.21,15.38 10.34,11.8 7.29,9.58 11.05,9.58" fill="#ffff00"/></svg>
+                <svg v-else viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><clipPath id="uk-circle-btn-app"><circle cx="12" cy="12" r="12"/></clipPath><g clip-path="url(#uk-circle-btn-app)"><rect width="24" height="24" fill="#012169"/><path d="M0,0 L24,24 M24,0 L0,24" stroke="#fff" stroke-width="4"/><path d="M0,0 L24,24 M24,0 L0,24" stroke="#C8102E" stroke-width="2"/><path d="M0,12 H24 M12,0 V24" stroke="#fff" stroke-width="6"/><path d="M0,12 H24 M12,0 V24" stroke="#C8102E" stroke-width="4"/></g></svg>
+              </span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-1 rounded-3" style="min-width: 130px; z-index: 1060;">
+              <li>
+                <button class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2" @click="changeLocale('vi')">
+                  <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><circle cx="12" cy="12" r="12" fill="#da251d"/><polygon points="12,6 12.95,9.58 16.71,9.58 13.66,11.8 14.79,15.38 12,13.16 9.21,15.38 10.34,11.8 7.29,9.58 11.05,9.58" fill="#ffff00"/></svg>
+                  <span style="font-size: 0.85rem;">Tiếng Việt</span>
+                </button>
+              </li>
+              <li>
+                <button class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2" @click="changeLocale('en')">
+                  <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><clipPath id="uk-circle-item-app"><circle cx="12" cy="12" r="12"/></clipPath><g clip-path="url(#uk-circle-item-app)"><rect width="24" height="24" fill="#012169"/><path d="M0,0 L24,24 M24,0 L0,24" stroke="#fff" stroke-width="4"/><path d="M0,0 L24,24 M24,0 L0,24" stroke="#C8102E" stroke-width="2"/><path d="M0,12 H24 M12,0 V24" stroke="#fff" stroke-width="6"/><path d="M0,12 H24 M12,0 V24" stroke="#C8102E" stroke-width="4"/></g></svg>
+                  <span style="font-size: 0.85rem;">English</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+
           <!-- Notification system -->
           <div class="position-relative notification-wrapper">
             <button 
@@ -173,11 +203,11 @@
               aria-expanded="false"
               style="outline: none; box-shadow: none;"
             >
-              <div class="user-avatar-small bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width: 36px; height: 36px; font-size: 14px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
+              <div class="user-avatar-small bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width: 36px; height: 36px; font-size: 14px; background: linear-gradient(135deg, #059669, #10b981) !important;">
                 {{ projectStore.currentInitial }}
               </div>
               
-              <div class="d-none d-md-block text-start" style="line-height: 1.2;">
+              <div class="d-none d-md-block text-start lh-sm">
                 <div class="fw-semibold small text-body text-truncate" style="max-width: 150px;" :title="projectStore.currentUserEmail">{{ projectStore.currentUserEmail }}</div>
                 <div class="text-muted" style="font-size:10px; margin-top:2px" v-if="projectStore.currentProject">
                   <span class="badge text-uppercase font-monospace" :class="getRoleBadgeClass(projectStore.userRole)" style="font-size: 8px; padding: 2px 4px;">{{ projectStore.userRole }}</span>
@@ -198,7 +228,7 @@
               <li>
                 <button @click="handleLogout" class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2 text-danger">
                   <i class="bi bi-box-arrow-right"></i>
-                  <span>Sign out</span>
+                  <span>{{ $t('sidebar.sign_out') }}</span>
                 </button>
               </li>
             </ul>
@@ -221,6 +251,7 @@
 <script setup>
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import TaskModal from './components/TaskModal.vue'
 import { logout } from './services/authService.js'
 import { useProjectStore } from './stores/projectStore.js'
@@ -229,6 +260,12 @@ import { HubConnectionBuilder } from '@microsoft/signalr'
 import { getNotifications, markAsRead, markAllAsRead } from './services/notificationService.js'
 
 const router = useRouter()
+const { locale } = useI18n()
+
+const changeLocale = (lang) => {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+}
 const route = router.currentRoute
 const createTaskModal = ref(null)
 const projectStore = useProjectStore()
@@ -404,9 +441,9 @@ const getRoleBadgeClass = (role) => {
 }
 
 const getProjectColor = (name) => {
-  if (!name) return 'linear-gradient(135deg, #4f46e5, #6366f1)'
+  if (!name) return 'linear-gradient(135deg, #059669, #10b981)'
   const colors = [
-    'linear-gradient(135deg, #4f46e5, #6366f1)',
+    'linear-gradient(135deg, #059669, #10b981)',
     'linear-gradient(135deg, #10b981, #059669)',
     'linear-gradient(135deg, #f59e0b, #d97706)',
     'linear-gradient(135deg, #ef4444, #dc2626)',
@@ -498,33 +535,63 @@ const handleLogout = async () => {
 
 <style scoped>
 .sidebar-link {
-  transition: background 0.15s, color 0.15s;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   color: var(--bs-secondary-color) !important;
+  border-left: 3px solid transparent;
+  border-radius: 0 8px 8px 0 !important;
 }
 .sidebar-link:hover {
   background: var(--bs-secondary-bg) !important;
-  color: var(--bs-heading-color) !important;
+  color: var(--bs-primary) !important;
+  border-left-color: var(--bs-border-color);
+  padding-left: 18px !important;
+}
+.active-project {
+  background: rgba(13, 148, 136, 0.08) !important;
+  color: var(--bs-primary) !important;
+  border-left-color: var(--bs-primary) !important;
+  font-weight: 600 !important;
+}
+.active-project i,
+.active-project span {
+  color: var(--bs-primary) !important;
 }
 .notification-dropdown {
   background: var(--bs-card-bg);
   border-color: var(--bs-border-color) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+.notification-dropdown .list-group-item {
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid var(--bs-border-color) !important;
 }
 .notification-dropdown .list-group-item:hover {
   background-color: var(--bs-secondary-bg) !important;
 }
-.active-project {
-  background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
-  color: #fff !important;
-}
-.active-project i,
-.active-project span {
-  color: #fff !important;
-}
 .sidebar-link-danger {
   color: var(--bs-danger) !important;
+  border-left: 3px solid transparent;
+  border-radius: 0 8px 8px 0 !important;
+  transition: all 0.2s ease;
 }
 .sidebar-link-danger:hover {
-  background: rgba(var(--bs-danger-rgb), 0.12) !important;
+  background: rgba(239, 68, 68, 0.08) !important;
   color: var(--bs-danger) !important;
+  border-left-color: var(--bs-danger) !important;
+  padding-left: 18px !important;
+}
+.logo-box {
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease;
+}
+.logo-box:hover {
+  transform: scale(1.05);
+}
+.user-avatar-small {
+  box-shadow: var(--shadow-sm);
+  transition: opacity 0.2s ease;
+}
+.user-avatar-small:hover {
+  opacity: 0.9;
 }
 </style>

@@ -19,7 +19,7 @@
     <!-- Loading State -->
     <div v-if="loading && projectTasks.length === 0" class="text-center py-5 my-5">
       <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
-      <p class="text-muted mt-3">Loading workspace data...</p>
+      <p class="text-muted mt-3">{{ $t('dashboard.loading') }}</p>
     </div>
 
     <!-- Dashboard Content -->
@@ -31,10 +31,10 @@
           <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-body">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-muted small fw-bold text-uppercase tracking-wider">Total Tasks</span>
+                <span class="text-muted small fw-bold text-uppercase tracking-wider">{{ $t('dashboard.total_tasks') }}</span>
                 <h3 class="fw-bold text-body mt-2 mb-0">{{ stats.totalTasks }}</h3>
               </div>
-              <div class="bg-indigo-light text-indigo rounded-3 p-2.5 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+              <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
                 <i class="bi bi-list-task fs-4"></i>
               </div>
             </div>
@@ -46,7 +46,7 @@
           <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-body">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-muted small fw-bold text-uppercase tracking-wider">In Progress</span>
+                <span class="text-muted small fw-bold text-uppercase tracking-wider">{{ $t('dashboard.in_progress') }}</span>
                 <h3 class="fw-bold text-body mt-2 mb-0">{{ stats.inProgressTasks }}</h3>
               </div>
               <div class="bg-warning bg-opacity-10 text-warning rounded-3 p-2.5 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
@@ -61,7 +61,7 @@
           <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-body">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-muted small fw-bold text-uppercase tracking-wider">Completed</span>
+                <span class="text-muted small fw-bold text-uppercase tracking-wider">{{ $t('dashboard.completed') }}</span>
                 <h3 class="fw-bold text-body mt-2 mb-0">{{ stats.completedTasks }}</h3>
               </div>
               <div class="bg-success bg-opacity-10 text-success rounded-3 p-2.5 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
@@ -76,7 +76,7 @@
           <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-body">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-muted small fw-bold text-uppercase tracking-wider">Team Members</span>
+                <span class="text-muted small fw-bold text-uppercase tracking-wider">{{ $t('dashboard.team_members') }}</span>
                 <h3 class="fw-bold text-body mt-2 mb-0">{{ stats.memberCount }}</h3>
               </div>
               <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-2.5 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
@@ -93,22 +93,22 @@
         <div class="col-12 col-lg-8">
           <div class="card border-0 shadow-sm p-4 rounded-3 h-100 bg-body">
             <div class="d-flex align-items-center justify-content-between mb-3">
-              <h4 class="fw-bold text-body h5 mb-0">Recent Tasks</h4>
-              <router-link :to="`/projects/${projectId}/tasks`" class="btn btn-sm btn-link text-primary fw-semibold text-decoration-none p-0">View all</router-link>
+              <h4 class="fw-bold text-body h5 mb-0">{{ $t('dashboard.recent_tasks') }}</h4>
+              <router-link :to="`/projects/${projectId}/tasks`" class="btn btn-sm btn-link text-primary fw-semibold text-decoration-none p-0">{{ $t('dashboard.view_all') }}</router-link>
             </div>
             
             <div v-if="projectTasks.length === 0" class="text-center py-5 border border-dashed rounded-3 text-muted">
               <i class="bi bi-clipboard-x fs-2 opacity-50"></i>
-              <p class="small mt-2 mb-0">No tasks have been created yet.</p>
+              <p class="small mt-2 mb-0">{{ $t('dashboard.no_tasks') }}</p>
             </div>
 
             <div v-else class="table-responsive">
               <table class="table table-hover align-middle border-0 mb-0">
                 <thead class="table-light">
                   <tr>
-                    <th scope="col" class="border-0 rounded-start">Title</th>
-                    <th scope="col" class="border-0">Deadline</th>
-                    <th scope="col" class="border-0 rounded-end">Status</th>
+                    <th scope="col" class="border-0 rounded-start">{{ $t('dashboard.title_col') }}</th>
+                    <th scope="col" class="border-0">{{ $t('dashboard.deadline_col') }}</th>
+                    <th scope="col" class="border-0 rounded-end">{{ $t('dashboard.status_col') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -137,7 +137,7 @@
         <div class="col-12 col-lg-4 d-flex flex-column gap-4">
           <!-- Tasks Breakdown Card -->
           <div class="card border-0 shadow-sm p-4 rounded-3 bg-body">
-            <h4 class="fw-bold text-body h5 mb-3">Tasks Breakdown</h4>
+            <h4 class="fw-bold text-body h5 mb-3">{{ $t('dashboard.breakdown') }}</h4>
             <div class="d-flex flex-column gap-3">
               <div v-for="col in statusCounts" :key="col.status" class="border rounded-3 p-2.5">
                 <div class="d-flex align-items-center justify-content-between mb-1.5">
@@ -163,7 +163,7 @@
 
           <!-- Members Quick List Card -->
           <div class="card border-0 shadow-sm p-4 rounded-3 bg-body">
-            <h4 class="fw-bold text-body h5 mb-3">Team Members</h4>
+            <h4 class="fw-bold text-body h5 mb-3">{{ $t('dashboard.team_members') }}</h4>
             <div class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
               <div 
                 v-for="member in projectMembers" 
@@ -191,12 +191,14 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getProjectTasks, getMembers } from '../services/projectService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 import { toastError } from '../utils/swal.js'
 
 const route = useRoute()
 const projectStore = useProjectStore()
+const { t } = useI18n()
 const loading = ref(false)
 const projectTasks = ref([])
 const projectMembers = ref([])
@@ -243,10 +245,10 @@ const statusCounts = computed(() => {
   })
   const total = projectTasks.value.length || 1
   return [
-    { label: 'To Do', status: 'ToDo', count: counts.ToDo, percent: Math.round((counts.ToDo / total) * 100), color: '#64748b' },
-    { label: 'In Progress', status: 'InProgress', count: counts.InProgress, percent: Math.round((counts.InProgress / total) * 100), color: '#6366f1' },
-    { label: 'Done', status: 'Done', count: counts.Done, percent: Math.round((counts.Done / total) * 100), color: '#10b981' },
-    { label: 'Closed', status: 'Closed', count: counts.Closed, percent: Math.round((counts.Closed / total) * 100), color: '#f59e0b' }
+    { label: t('dashboard.todo'), status: 'ToDo', count: counts.ToDo, percent: Math.round((counts.ToDo / total) * 100), color: '#64748b' },
+    { label: t('dashboard.in_progress'), status: 'InProgress', count: counts.InProgress, percent: Math.round((counts.InProgress / total) * 100), color: '#6366f1' },
+    { label: t('dashboard.done'), status: 'Done', count: counts.Done, percent: Math.round((counts.Done / total) * 100), color: '#10b981' },
+    { label: t('dashboard.closed'), status: 'Closed', count: counts.Closed, percent: Math.round((counts.Closed / total) * 100), color: '#f59e0b' }
   ]
 })
 
@@ -272,10 +274,10 @@ const getStatusBadgeClass = (status) => {
 
 const getStatusLabel = (status) => {
   switch (status) {
-    case 'ToDo': return 'To Do'
-    case 'InProgress': return 'In Progress'
-    case 'Done': return 'Done'
-    case 'Closed': return 'Closed'
+    case 'ToDo': return t('dashboard.todo')
+    case 'InProgress': return t('dashboard.in_progress')
+    case 'Done': return t('dashboard.done')
+    case 'Closed': return t('dashboard.closed')
     default: return status
   }
 }
@@ -309,17 +311,28 @@ onMounted(() => {
 .page-title {
   font-size: 1.68rem;
   letter-spacing: -0.02em;
-}
-.bg-indigo-light {
-  background-color: rgba(99, 102, 241, 0.1);
-}
-.text-indigo {
-  color: #6366f1;
+  font-weight: 700;
 }
 .border-dashed {
   border-style: dashed !important;
+  border-color: var(--bs-border-color) !important;
 }
 .last-border-0:last-child {
   border-bottom: 0 !important;
+}
+.card {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md) !important;
+  border-color: rgba(13, 148, 136, 0.2) !important;
+}
+.progress {
+  background-color: var(--bs-secondary-bg);
+  border-radius: 4px;
+}
+.table > :not(caption) > * > * {
+  padding: 12px 16px;
 }
 </style>

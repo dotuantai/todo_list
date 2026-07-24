@@ -11,8 +11,8 @@
               <i class="bi bi-sliders fs-5"></i>
             </div>
             <div>
-              <h4 class="fw-bold text-body h5 mb-0">Project Details</h4>
-              <p class="text-muted small mb-0">Modify workspace names, description details, or delete this project.</p>
+              <h4 class="fw-bold text-body h5 mb-0">{{ $t('settings.title') }}</h4>
+              <p class="text-muted small mb-0">{{ $t('settings.desc_subtitle') }}</p>
             </div>
           </div>
           
@@ -20,20 +20,20 @@
 
           <form @submit.prevent="handleUpdateProject">
             <div class="mb-3">
-              <label class="form-label small fw-semibold text-muted">Project Name</label>
+              <label class="form-label small fw-semibold text-muted">{{ $t('settings.proj_name') }}</label>
               <input v-model="editForm.name" type="text" class="form-control" required style="border-radius: 8px; height: 40px;" />
             </div>
             <div class="mb-3">
-              <label class="form-label small fw-semibold text-muted">Description (optional)</label>
+              <label class="form-label small fw-semibold text-muted">{{ $t('settings.proj_desc') }}</label>
               <textarea v-model="editForm.description" class="form-control" rows="3" style="border-radius: 8px;"></textarea>
             </div>
             <div class="d-flex align-items-center justify-content-between pt-2">
               <button type="submit" class="btn btn-primary fw-semibold" style="border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">
-                Save Changes
+                {{ $t('settings.save_changes') }}
               </button>
               
               <button type="button" class="btn btn-outline-danger fw-semibold" @click="handleDeleteProject" style="border-radius: 8px;">
-                <i class="bi bi-trash me-1"></i> Delete Project
+                <i class="bi bi-trash me-1"></i> {{ $t('settings.delete_proj') }}
               </button>
             </div>
           </form>
@@ -46,8 +46,8 @@
               <i class="bi bi-palette-fill fs-5"></i>
             </div>
             <div>
-              <h4 class="fw-bold text-body h5 mb-0">Application Theme</h4>
-              <p class="text-muted small mb-0">Customize light/dark theme to suit your working environment.</p>
+              <h4 class="fw-bold text-body h5 mb-0">{{ $t('settings.app_theme') }}</h4>
+              <p class="text-muted small mb-0">{{ $t('settings.theme_subtitle') }}</p>
             </div>
           </div>
           
@@ -55,8 +55,8 @@
 
           <div class="d-flex align-items-center justify-content-between py-2">
             <div>
-              <div class="fw-semibold text-body">Dark Mode</div>
-              <p class="text-muted small mb-0">Switch the entire system to dark theme to protect your eyes.</p>
+              <div class="fw-semibold text-body">{{ $t('settings.dark_mode') }}</div>
+              <p class="text-muted small mb-0">{{ $t('settings.dark_mode_desc') }}</p>
             </div>
             <div class="form-check form-switch fs-4">
               <input 
@@ -79,8 +79,8 @@
               <i class="bi bi-bell-fill fs-5"></i>
             </div>
             <div>
-              <h4 class="fw-bold text-body h5 mb-0">Notification Settings</h4>
-              <p class="text-muted small mb-0">Configure how you receive notifications from the system.</p>
+              <h4 class="fw-bold text-body h5 mb-0">{{ $t('settings.notif_settings') }}</h4>
+              <p class="text-muted small mb-0">{{ $t('settings.notif_subtitle') }}</p>
             </div>
           </div>
           
@@ -88,8 +88,8 @@
 
           <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
             <div>
-              <div class="fw-semibold text-body">Email Notifications</div>
-              <p class="text-muted small mb-0">Send summary emails when new tasks are assigned.</p>
+              <div class="fw-semibold text-body">{{ $t('settings.email_notif') }}</div>
+              <p class="text-muted small mb-0">{{ $t('settings.email_notif_desc') }}</p>
             </div>
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" role="switch" checked disabled />
@@ -98,8 +98,8 @@
 
           <div class="d-flex align-items-center justify-content-between py-2">
             <div>
-              <div class="fw-semibold text-body">Browser Push Notifications</div>
-              <p class="text-muted small mb-0">Show small notifications on the screen corner for real-time updates.</p>
+              <div class="fw-semibold text-body">{{ $t('settings.push_notif') }}</div>
+              <p class="text-muted small mb-0">{{ $t('settings.push_notif_desc') }}</p>
             </div>
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" role="switch" />
@@ -117,23 +117,23 @@
           </div>
           <h4 class="fw-bold text-body mb-1 text-truncate" :title="userEmail">{{ userEmail }}</h4>
           <span class="badge text-uppercase font-monospace bg-light text-secondary border rounded-pill px-3 py-1.5" style="font-size: 10px;">
-            {{ projectStore.userRole }} Role
+            {{ $t('dashboard.member_role', { role: projectStore.userRole }) }}
           </span>
 
           <hr class="my-4" />
 
           <div class="text-start">
             <div class="mb-3">
-              <span class="text-secondary small d-block">Account Name:</span>
+              <span class="text-secondary small d-block">{{ $t('settings.account_name') }}</span>
               <span class="text-body fw-medium">{{ userEmail.split('@')[0] }}</span>
             </div>
             <div class="mb-3">
-              <span class="text-secondary small d-block">Active Workspace:</span>
+              <span class="text-secondary small d-block">{{ $t('settings.active_workspace') }}</span>
               <span class="text-body fw-medium">{{ projectStore.currentProject?.Name || 'None' }}</span>
             </div>
             <div>
-              <span class="text-secondary small d-block">Connection Status:</span>
-              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Active</span>
+              <span class="text-secondary small d-block">{{ $t('settings.connection_status') }}</span>
+              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">{{ $t('common.active') }}</span>
             </div>
           </div>
         </div>
@@ -146,12 +146,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useProjectStore } from '../stores/projectStore.js'
 import { updateProject, deleteProject } from '../services/projectService.js'
 import { toastSuccess, toastError, confirm, extractMessage } from '../utils/swal.js'
 
 const router = useRouter()
 const projectStore = useProjectStore()
+const { t } = useI18n()
 const isDarkMode = ref(false)
 
 const userEmail = computed(() => projectStore.currentUserEmail || 'User@example.com')
@@ -201,9 +203,9 @@ const handleDeleteProject = async () => {
   const currentProj = projectStore.currentProject
 
   const ok = await confirm(
-    'Delete project?',
-    `Are you sure you want to delete project <strong>${currentProj.Name}</strong>? This will remove all tasks and members from this project and cannot be undone.`,
-    'Delete Project'
+    t('settings.delete_confirm_title'),
+    t('settings.delete_confirm_desc', { name: currentProj.Name }),
+    t('settings.delete_confirm_btn')
   )
   if (!ok) return
 
@@ -230,5 +232,7 @@ onMounted(() => {
 .page-title {
   font-size: 1.68rem;
   letter-spacing: -0.02em;
+  font-weight: 700;
+  color: var(--bs-heading-color) !important;
 }
 </style>

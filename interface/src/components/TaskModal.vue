@@ -18,8 +18,8 @@
           <!-- Modal Header -->
           <div class="modal-header border-bottom p-4">
             <div class="text-start">
-              <h1 class="modal-title h4 fw-bold mb-1 text-dark">Create New Task</h1>
-              <p class="text-muted small mb-0">Draft a new objective and assign it to your team.</p>
+              <h1 class="modal-title h4 fw-bold mb-1 text-body">{{ $t('taskModal.create_title') }}</h1>
+              <p class="text-muted small mb-0">{{ $t('taskModal.btn_create') }}</p>
             </div>
             <button type="button" class="btn-close" @click="closeModal" aria-label="Close"></button>
           </div>
@@ -29,7 +29,7 @@
 
               <!-- Task Title -->
               <div class="mb-4">
-                <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Task Title <span class="text-danger">*</span></label>
+                <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.task_name') }} <span class="text-danger">*</span></label>
                 <input 
                   v-model="form.title"
                   type="text" 
@@ -42,28 +42,28 @@
               <!-- Deadline + Status -->
               <div class="row g-3 mb-4">
                 <div class="col-md-6 text-start">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Deadline</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.deadline') }}</label>
                   <div class="input-group">
-                    <span class="input-group-text bg-light text-muted"><i class="bi bi-calendar3"></i></span>
-                    <input v-model="form.deadline" type="date" class="form-control text-dark" />
+                    <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-calendar3"></i></span>
+                    <input v-model="form.deadline" type="date" class="form-control text-body" style="border-color: var(--bs-border-color);" />
                   </div>
                 </div>
                 <div class="col-md-6 text-start">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Status</label>
-                  <select v-model="form.status" class="form-select text-dark">
-                    <option value="ToDo">To Do</option>
-                    <option value="InProgress">In Progress</option>
-                    <option value="Done">Done</option>
-                    <option value="Closed">Closed</option>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.status') }}</label>
+                  <select v-model="form.status" class="form-select text-body">
+                    <option value="ToDo">{{ $t('dashboard.todo') }}</option>
+                    <option value="InProgress">{{ $t('dashboard.in_progress') }}</option>
+                    <option value="Done">{{ $t('dashboard.done') }}</option>
+                    <option value="Closed">{{ $t('dashboard.closed') }}</option>
                   </select>
                 </div>
               </div>
 
               <!-- Description -->
               <div class="mb-4">
-                <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Description</label>
-                <div class="border rounded-3 overflow-hidden bg-white">
-                  <div class="bg-light border-bottom p-2 d-flex gap-1">
+                <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.description') }}</label>
+                <div class="border rounded-3 overflow-hidden bg-body" style="border-color: var(--bs-border-color) !important;">
+                  <div class="bg-body-secondary border-bottom p-2 d-flex gap-1" style="border-color: var(--bs-border-color) !important;">
                     <button type="button" class="btn btn-sm btn-light border-0"><i class="bi bi-type-bold"></i></button>
                     <button type="button" class="btn btn-sm btn-light border-0"><i class="bi bi-type-italic"></i></button>
                     <button type="button" class="btn btn-sm btn-light border-0"><i class="bi bi-list-ul"></i></button>
@@ -71,7 +71,7 @@
                   </div>
                   <textarea 
                     v-model="form.description"
-                    class="form-control border-0 shadow-none rounded-0" 
+                    class="form-control border-0 shadow-none rounded-0 bg-transparent" 
                     rows="5"
                     placeholder="Describe the task details here..."
                   ></textarea>
@@ -87,7 +87,7 @@
                   :disabled="loading"
                   style="border-radius: 8px;"
                 >
-                  Cancel
+                  {{ $t('taskModal.btn_cancel') }}
                 </button>
                 <button 
                   type="submit" 
@@ -96,7 +96,7 @@
                   style="border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"
                 >
                   <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                  {{ loading ? 'Creating...' : 'Create Task' }}
+                  {{ loading ? $t('common.loading') : $t('taskModal.btn_create') }}
                 </button>
               </div>
             </form>
@@ -109,10 +109,13 @@
 
 <script setup>
 import { ref, defineExpose } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { createProjectTask } from '../services/projectService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 const projectStore = useProjectStore()
 import { toastSuccess, toastError, toastWarning, extractMessage } from '../utils/swal.js'
+
+const { t } = useI18n()
 
 const show = ref(false)
 const loading = ref(false)
@@ -143,12 +146,12 @@ const closeModal = () => {
 
 const handleSubmit = async () => {
   if (!form.value.title.trim()) {
-    toastWarning('Please enter a task title!')
+    toastWarning(t('errors.Please complete all fields'))
     return
   }
 
   if (!projectStore.currentProjectId) {
-    toastWarning('Please select a project first!')
+    toastWarning(t('tasks.welcome_desc'))
     return
   }
 
@@ -164,7 +167,7 @@ const handleSubmit = async () => {
 
     await createProjectTask(projectStore.currentProjectId, payload)
 
-    toastSuccess('Task created successfully!')
+    toastSuccess(t('common.success'))
     closeModal()
 
     // Notify TaskView to reload the list
@@ -172,7 +175,7 @@ const handleSubmit = async () => {
 
   } catch (error) {
     console.error('Create task failed:', error)
-    toastError(extractMessage(error, 'Failed to create task.'))
+    toastError(extractMessage(error, t('errors.default')))
   } finally {
     loading.value = false
   }
