@@ -38,7 +38,9 @@
     "feature_notif_desc": "Luôn nắm bắt thông tin giao việc và cập nhật tiến độ.",
     "feature_roles_title": "Phân quyền theo vai trò",
     "feature_roles_desc": "Chủ sở hữu, Quản lý, Thành viên — kiểm soát ai được làm gì.",
-    "quote": "\"TutaFlow đã thay đổi hoàn toàn cách nhóm chúng tôi bàn giao dự án.\""
+    "quote": "\"TutaFlow đã thay đổi hoàn toàn cách nhóm chúng tôi bàn giao dự án.\"",
+    "google_login_failed": "Đăng nhập bằng Google thất bại.",
+    "google_register_failed": "Đăng ký bằng Google thất bại."
   },
   "sidebar": {
     "dashboard": "Bảng điều khiển",
