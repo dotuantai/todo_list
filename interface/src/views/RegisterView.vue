@@ -193,6 +193,11 @@
               <svg v-if="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
 
+            <!-- Google Sign-In Button -->
+            <div class="d-flex justify-content-center mb-3">
+              <div id="google-login-btn"></div>
+            </div>
+
             <div class="text-center text-muted small">
               {{ $t('auth.already_have_account') }}
               <router-link to="/login" class="text-primary fw-semibold text-decoration-none ms-1 hover-underline">{{ $t('auth.login') }}</router-link>
@@ -258,10 +263,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { loginn, register, verifyOtp, resendOtp } from '../services/authService.js'
+import { loginn, register, verifyOtp, resendOtp, googleLogin } from '../services/authService.js'
 import { toastError, toastSuccess, extractMessage } from '../utils/swal.js'
 
 const router = useRouter()
@@ -281,6 +286,46 @@ const resending = ref(false)
 const showOtpVerification = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
+
+onMounted(() => {
+  if (window.google) {
+    window.google.accounts.id.initialize({
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      callback: handleGoogleCredentialResponse,
+      auto_select: false,
+      cancel_on_tap_outside: true
+    });
+
+    window.google.accounts.id.renderButton(
+      document.getElementById("google-login-btn"),
+      { 
+        theme: "outline", 
+        size: "large", 
+        width: "360", 
+        text: "signup_with", 
+        shape: "rectangular" 
+      }
+    );
+  }
+})
+
+const handleGoogleCredentialResponse = async (response) => {
+  try {
+    loading.value = true
+    const idToken = response.credential
+
+    const res = await googleLogin(idToken)
+
+    if (res?.data?.AccessToken) {
+      localStorage.setItem('token', res.data.AccessToken)
+      router.push('/projects')
+    }
+  } catch (error) {
+    toastError(extractMessage(error, 'Đăng ký bằng Google thất bại.'))
+  } finally {
+    loading.value = false
+  }
+}
 
 const handleRegister = async () => {
   if (!email.value.trim() || !password.value || !confirmPassword.value) {

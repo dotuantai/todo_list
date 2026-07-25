@@ -232,6 +232,11 @@
           </button>
         </form>
 
+        <!-- Google Login Button -->
+        <div class="d-flex justify-content-center mt-3">
+          <div id="google-login-btn"></div>
+        </div>
+
         <!-- Divider -->
         <div class="divider-row my-4">
           <span class="divider-line"></span>
@@ -250,10 +255,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { loginn } from '../services/authService.js'
+import { loginn, googleLogin } from '../services/authService.js'
 import { toastError, extractMessage } from '../utils/swal.js'
 
 const router = useRouter()
@@ -268,6 +273,46 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const showPassword = ref(false)
+
+onMounted(() => {
+  if (window.google) {
+    window.google.accounts.id.initialize({
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      callback: handleGoogleCredentialResponse,
+      auto_select: false,
+      cancel_on_tap_outside: true
+    });
+
+    window.google.accounts.id.renderButton(
+      document.getElementById("google-login-btn"),
+      { 
+        theme: "outline", 
+        size: "large", 
+        width: "360", 
+        text: "signin_with", 
+        shape: "rectangular" 
+      }
+    );
+  }
+})
+
+const handleGoogleCredentialResponse = async (response) => {
+  try {
+    loading.value = true
+    const idToken = response.credential
+
+    const res = await googleLogin(idToken)
+
+    if (res?.data?.AccessToken) {
+      localStorage.setItem('token', res.data.AccessToken)
+      router.push('/projects')
+    }
+  } catch (error) {
+    toastError(extractMessage(error, 'Đăng nhập bằng Google thất bại.'))
+  } finally {
+    loading.value = false
+  }
+}
 
 const login = async () => {
   try {

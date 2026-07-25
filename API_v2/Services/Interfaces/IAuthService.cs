@@ -11,6 +11,7 @@ namespace API_v2.Services.Interfaces
         Task VerifyOtpAsync(VerifyOtpRequest req);
         Task ResendOtpAsync(string email);
         Task<LoginResponse> LoginAsync(LoginRequest req);
+        Task<LoginResponse> LoginWithGoogleAsync(GoogleLoginRequest req);
         Task<LoginResponse> RefreshAsync(string refreshToken);
         Task LogoutAsync(string refreshToken);
         Task<List<UserSearchResponse>> SearchUsersAsync(string keyword);

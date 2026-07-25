@@ -33,3 +33,7 @@ export const resendOtp = (email) => {
 export const changePassword = (data) => {
   return api.post('/auth/change-password', data)
 }
+
+export const googleLogin = (idToken) => {
+  return api.post('/auth/google-login', { idToken })
+}
