@@ -11,8 +11,11 @@ using API_v2.Repositories.IRepositories;
 using API_v2.Services;
 using API_v2.Services.Interfaces;
 using Scalar.AspNetCore;
+using System.Linq;
+using API_v2.Models.DTOs;
 using Serilog;
 using API_v2.Hubs;
+
 
 // Enable Serilog self-logging to standard error to capture internal errors
 Serilog.Debugging.SelfLog.Enable(Console.Error);
@@ -50,6 +53,18 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
+    })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage);
+            var errorMessage = string.Join(" | ", errors);
+            var response = new ApiResponse<object>(false, errorMessage, null);
+            return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(response);
+        };
     });
 
 builder.Services.AddMemoryCache();

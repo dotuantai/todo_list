@@ -71,42 +71,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Notifications Card -->
-        <div class="card border-0 shadow-sm rounded-3 p-4 mb-4 bg-body">
-          <div class="d-flex align-items-center gap-3 mb-3">
-            <div class="bg-warning bg-opacity-10 text-warning rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
-              <i class="bi bi-bell-fill fs-5"></i>
-            </div>
-            <div>
-              <h4 class="fw-bold text-body h5 mb-0">{{ $t('settings.notif_settings') }}</h4>
-              <p class="text-muted small mb-0">{{ $t('settings.notif_subtitle') }}</p>
-            </div>
-          </div>
-          
-          <hr />
-
-          <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
-            <div>
-              <div class="fw-semibold text-body">{{ $t('settings.email_notif') }}</div>
-              <p class="text-muted small mb-0">{{ $t('settings.email_notif_desc') }}</p>
-            </div>
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" role="switch" checked disabled />
-            </div>
-          </div>
-
-          <div class="d-flex align-items-center justify-content-between py-2">
-            <div>
-              <div class="fw-semibold text-body">{{ $t('settings.push_notif') }}</div>
-              <p class="text-muted small mb-0">{{ $t('settings.push_notif_desc') }}</p>
-            </div>
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" role="switch" />
-            </div>
-          </div>
-        </div>
-
       </div>
 
       <!-- Right Column: Account Quick Card -->

@@ -191,7 +191,8 @@
     "default": "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.",
     "Passwords do not match": "Mật khẩu xác nhận không khớp.",
     "Please complete all fields": "Vui lòng nhập đầy đủ các trường thông tin.",
-    "Verification code sent": "Mã xác thực đã được gửi! Vui lòng kiểm tra email."
+    "Verification code sent": "Mã xác thực đã được gửi! Vui lòng kiểm tra email.",
+    "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.": "Mật khẩu phải dài ít nhất 8 ký tự và chứa ít nhất một chữ cái viết hoa, một chữ cái viết thường, một chữ số và một ký tự đặc biệt."
   },
   "changePassword": {
     "title": "Đổi mật khẩu",

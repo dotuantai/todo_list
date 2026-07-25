@@ -170,11 +170,6 @@ namespace API_v2.Services
                 }
             }
 
-            if (req.UserId == currentUserId)
-            {
-                throw ApiException.BadRequest("Cannot assign a task to yourself.");
-            }
-
             if (await _assignRepo.ExistsAsync(req.TaskId, req.UserId))
             {
                 throw ApiException.Conflict("This user has already been assigned to this task.");
