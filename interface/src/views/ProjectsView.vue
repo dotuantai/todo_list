@@ -67,18 +67,18 @@
           <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-2 rounded-3" style="min-width: 200px; font-size: 0.9rem; z-index: 1060;">
             <li class="px-3 py-2 border-bottom mb-1">
               <span class="d-block fw-bold text-truncate text-body" :title="projectStore.currentUserEmail">{{ projectStore.currentUserEmail }}</span>
-              <span class="text-muted small">Active Account</span>
+              <span class="text-muted small">{{ $t('settings.account_card') }}</span>
             </li>
             <li>
               <router-link to="/change-password" class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2">
                 <i class="bi bi-shield-lock-fill text-primary"></i>
-                <span>Change Password</span>
+                <span>{{ $t('changePassword.title') }}</span>
               </router-link>
             </li>
             <li>
               <button @click="handleLogout" class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2 text-danger">
                 <i class="bi bi-box-arrow-right"></i>
-                <span>Sign out</span>
+                <span>{{ $t('sidebar.sign_out') }}</span>
               </button>
             </li>
           </ul>

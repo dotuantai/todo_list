@@ -1,4 +1,20 @@
 import Swal from 'sweetalert2'
+import vi from '../locales/vi.json'
+import en from '../locales/en.json'
+
+const localeMap = { vi, en }
+
+const translateError = (message) => {
+  if (!message) return message
+  const currentLocale = localStorage.getItem('locale') || 'vi'
+  const errorsDict = localeMap[currentLocale]?.errors || {}
+  
+  return message
+    .split(' | ')
+    .map(msg => errorsDict[msg] || msg)
+    .join(' | ')
+}
+
 
 // ── Inject CSS into <head> once when the module is loaded ─────────────────
 ;(function injectSwalStyles() {
@@ -133,9 +149,29 @@ export const confirm = async (title, message = '', confirmText = 'Confirm') => {
   return result.isConfirmed
 }
 
-/**
- * Extract message from axios/API error
- * Backend always returns { Success, Message, Data }
- */
-export const extractMessage = (error, fallback = 'An error occurred.') =>
-  error?.response?.data?.Message || error?.message || fallback
+export const extractMessage = (error, fallback = 'An error occurred.') => {
+  let message = ''
+  const data = error?.response?.data
+  if (data) {
+    if (data.Message) {
+      message = data.Message
+    } else if (data.errors && typeof data.errors === 'object') {
+      const messages = []
+      for (const key in data.errors) {
+        if (Array.isArray(data.errors[key])) {
+          messages.push(...data.errors[key])
+        } else if (typeof data.errors[key] === 'string') {
+          messages.push(data.errors[key])
+        }
+      }
+      if (messages.length > 0) {
+        message = messages.join(' | ')
+      }
+    }
+  }
+  if (!message) {
+    message = error?.message || fallback
+  }
+  return translateError(message)
+}
+

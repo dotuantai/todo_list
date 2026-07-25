@@ -193,7 +193,8 @@
     "default": "A system error occurred. Please try again later.",
     "Passwords do not match": "Passwords do not match.",
     "Please complete all fields": "Please fill in all fields.",
-    "Verification code sent": "Verification code sent! Please check your email inbox."
+    "Verification code sent": "Verification code sent! Please check your email inbox.",
+    "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.": "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character."
   },
   "changePassword": {
     "title": "Change Password",
