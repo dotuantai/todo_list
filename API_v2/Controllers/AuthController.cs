@@ -85,6 +85,30 @@ namespace API_v2.Controllers
             return Ok(new ApiResponse<object>(true, "Sign-in successful.", new { AccessToken = result.AccessToken }));
         }
 
+        [HttpPost("google-login")]
+        [AllowAnonymous]
+        public async Task<ActionResult> GoogleLogin([FromBody] GoogleLoginRequest req)
+        {
+            if (req is null || string.IsNullOrWhiteSpace(req.IdToken))
+            {
+                return BadRequest(new ApiResponse<object>(false, "Google IdToken is required.", null));
+            }
+
+            var result = await _authService.LoginWithGoogleAsync(req);
+
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                Path = "/",
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.AddDays(7)
+            };
+            Response.Cookies.Append("refreshToken", result.RefreshToken ?? string.Empty, cookieOptions);
+
+            return Ok(new ApiResponse<object>(true, "Google sign-in successful.", new { AccessToken = result.AccessToken }));
+        }
+
         [HttpGet("search")]
         [Authorize]
         public async Task<ActionResult> SearchUsers([FromQuery] string q)

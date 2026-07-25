@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
+using Google.Apis.Auth;
 
 namespace API_v2.Services
 {
@@ -22,6 +24,7 @@ namespace API_v2.Services
         private readonly ILogger<AuthService> _logger;
         private readonly IEmailQueue _emailQueue;
         private readonly IMemoryCache _memoryCache;
+        private readonly string _googleClientId;
 
         public AuthService(
             IUserRepository userRepo, 
@@ -29,7 +32,8 @@ namespace API_v2.Services
             JwtHelper jwtHelper,
             ILogger<AuthService> logger,
             IEmailQueue emailQueue,
-            IMemoryCache memoryCache)
+            IMemoryCache memoryCache,
+            IConfiguration configuration)
         {
             _userRepo = userRepo;
             _refreshTokenRepo = refreshTokenRepo;
@@ -37,6 +41,7 @@ namespace API_v2.Services
             _logger = logger;
             _emailQueue = emailQueue;
             _memoryCache = memoryCache;
+            _googleClientId = configuration["Google:ClientId"] ?? string.Empty;
         }
 
         private bool IsStrongPassword(string password)
@@ -312,6 +317,80 @@ namespace API_v2.Services
             await _userRepo.SaveAsync();
 
             _logger.LogInformation("AUDIT [Password Changed] User ID: {UserId} successfully changed password.", userId);
+        }
+
+        public async Task<LoginResponse> LoginWithGoogleAsync(GoogleLoginRequest req)
+        {
+            GoogleJsonWebSignature.Payload payload;
+            try
+            {
+                var settings = new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new List<string> { _googleClientId }
+                };
+                payload = await GoogleJsonWebSignature.ValidateAsync(req.IdToken, settings);
+            }
+            catch (InvalidJwtException ex)
+            {
+                _logger.LogWarning("SECURITY AUDIT [Google Login Failed] Invalid Google JWT: {Message}", ex.Message);
+                throw ApiException.Unauthorized("Invalid or expired Google Token.");
+            }
+
+            var emailLower = payload.Email.Trim().ToLower();
+            var user = await _userRepo.GetByEmailAsync(emailLower);
+
+            if (user == null)
+            {
+                user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = emailLower,
+                    PasswordHash = PasswordHelper.HashPassword(Guid.NewGuid().ToString("N")),
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _userRepo.Create(user);
+                await _userRepo.SaveAsync();
+
+                _logger.LogInformation("AUDIT [Google Register Success] New user created: {Email} (ID: {UserId})", emailLower, user.Id);
+            }
+            else
+            {
+                if (!user.IsActive)
+                {
+                    user.IsActive = true;
+                    await _userRepo.SaveAsync();
+                    _logger.LogInformation("AUDIT [Google Activation] Activated existing user: {Email}", emailLower);
+                }
+            }
+
+            var activeTokens = await _refreshTokenRepo.GetActiveTokensByUserIdAsync(user.Id);
+            foreach (var token in activeTokens)
+            {
+                token.RevokedAt = DateTime.UtcNow;
+            }
+
+            var accessToken = _jwtHelper.GenerateAccessToken(user);
+            var refreshToken = _jwtHelper.GenerateRefreshToken();
+
+            _refreshTokenRepo.Add(new RefreshToken
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Token = refreshToken,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddDays(7)
+            });
+            await _refreshTokenRepo.SaveAsync();
+
+            _logger.LogInformation("AUDIT [Google Login Success] User logged in: {Email} (ID: {UserId})", emailLower, user.Id);
+
+            return new LoginResponse
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
+            };
         }
     }
 }
