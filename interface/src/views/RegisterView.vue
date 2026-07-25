@@ -183,19 +183,19 @@
               </div>
             </div>
 
-            <button
-              class="btn btn-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2 btn-sign mb-3"
-              type="submit"
-              :disabled="loading"
-            >
-              <span v-if="loading" class="spinner-border spinner-border-sm" role="status"></span>
-              <span>{{ loading ? $t('auth.creating_acc') : $t('auth.create_account_btn') }}</span>
-              <svg v-if="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <button
+                class="btn btn-primary flex-grow-1 py-2 d-flex align-items-center justify-content-center gap-2 btn-sign"
+                type="submit"
+                :disabled="loading"
+              >
+                <span v-if="loading" class="spinner-border spinner-border-sm" role="status"></span>
+                <span>{{ loading ? $t('auth.creating_acc') : $t('auth.create_account_btn') }}</span>
+                <svg v-if="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
 
-            <!-- Google Sign-In Button -->
-            <div class="d-flex justify-content-center mb-3">
-              <div id="google-login-btn"></div>
+              <!-- Google Sign-In Icon Button -->
+              <div id="google-login-btn" class="flex-shrink-0" style="width: 46px; height: 46px;"></div>
             </div>
 
             <div class="text-center text-muted small">
@@ -263,14 +263,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { loginn, register, verifyOtp, resendOtp, googleLogin } from '../services/authService.js'
 import { toastError, toastSuccess, extractMessage } from '../utils/swal.js'
 
 const router = useRouter()
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 
 const changeLocale = (lang) => {
   locale.value = lang
@@ -287,26 +287,38 @@ const showOtpVerification = ref(false)
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 
-onMounted(() => {
+const renderGoogleButton = () => {
   if (window.google) {
     window.google.accounts.id.initialize({
       client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
       callback: handleGoogleCredentialResponse,
       auto_select: false,
-      cancel_on_tap_outside: true
+      cancel_on_tap_outside: true,
+      locale: locale.value
     });
 
-    window.google.accounts.id.renderButton(
-      document.getElementById("google-login-btn"),
-      { 
-        theme: "outline", 
-        size: "large", 
-        width: "360", 
-        text: "signup_with", 
-        shape: "rectangular" 
-      }
-    );
+    const btnContainer = document.getElementById("google-login-btn");
+    if (btnContainer) {
+      btnContainer.innerHTML = ""; // Clear old button
+      window.google.accounts.id.renderButton(
+        btnContainer,
+        { 
+          type: "icon", 
+          theme: "filled_blue", 
+          size: "large", 
+          shape: "circle"
+        }
+      );
+    }
   }
+}
+
+onMounted(() => {
+  renderGoogleButton();
+})
+
+watch(locale, () => {
+  renderGoogleButton();
 })
 
 const handleGoogleCredentialResponse = async (response) => {
@@ -321,7 +333,7 @@ const handleGoogleCredentialResponse = async (response) => {
       router.push('/projects')
     }
   } catch (error) {
-    toastError(extractMessage(error, 'Đăng ký bằng Google thất bại.'))
+    toastError(extractMessage(error, t('auth.google_register_failed')))
   } finally {
     loading.value = false
   }

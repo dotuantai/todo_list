@@ -38,7 +38,9 @@
     "feature_notif_desc": "Stay in the loop with task assignments and updates.",
     "feature_roles_title": "Role-based Access",
     "feature_roles_desc": "Owner, Manager, Member — control who can do what.",
-    "quote": "\"TutaFlow transformed how our team ships projects.\""
+    "quote": "\"TutaFlow transformed how our team ships projects.\"",
+    "google_login_failed": "Google sign-in failed.",
+    "google_register_failed": "Google sign-up failed."
   },
   "sidebar": {
     "dashboard": "Dashboard",
