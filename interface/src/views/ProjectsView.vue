@@ -204,7 +204,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { getProjects, getProjectTasks, getMembers, createProject } from '../services/projectService.js'
+import { getProjects, getProjectTaskStats, getMembers, createProject } from '../services/projectService.js'
 import { logout } from '../services/authService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 import { toastSuccess, toastError, extractMessage } from '../utils/swal.js'
@@ -231,15 +231,15 @@ const loadProjectsWithProgress = async () => {
 
     const promises = list.map(async (proj) => {
       try {
-        const [tasksRes, membersRes] = await Promise.all([
-          getProjectTasks(proj.Id),
+        const [statsRes, membersRes] = await Promise.all([
+          getProjectTaskStats(proj.Id),
           getMembers(proj.Id)
         ])
         
-        const tasks = tasksRes?.data || []
+        const stats = statsRes?.data || { TotalTasks: 0, CompletedTasks: 0 }
         const members = membersRes?.data || []
-        const completed = tasks.filter(t => t.Status === 'Done' || t.Status === 'Closed').length
-        const total = tasks.length
+        const completed = stats.CompletedTasks || stats.completedTasks || 0
+        const total = stats.TotalTasks || stats.totalTasks || 0
         const percent = total > 0 ? Math.round((completed / total) * 100) : 0
         
         return {
@@ -310,7 +310,7 @@ const handleCreateProject = async () => {
         goToProject(res.data.Id)
       }
     } catch (err) {
-      toastError(extractMessage(err, 'Failed to create project.'))
+      toastError(extractMessage(err, t('errors.default')))
     }
   }
 }

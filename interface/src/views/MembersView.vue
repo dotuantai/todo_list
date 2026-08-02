@@ -15,24 +15,23 @@
           <input 
             v-model="memberEmail" 
             type="email" 
-            class="form-control form-control-sm rounded-2" 
+            class="form-control rounded-2" 
             :placeholder="$t('members.add_member_email')"
-            style="width: 250px; height: 38px;"
+            style="width: 250px;"
           />
           <select 
             v-model="memberRole" 
-            class="form-select form-select-sm rounded-2" 
-            style="width: 120px; height: 38px;"
+            class="form-select rounded-2" 
+            style="width: 120px;"
           >
             <option value="Owner">Owner</option>
             <option value="Manager">Manager</option>
             <option value="Member">Member</option>
           </select>
           <button 
-            class="btn btn-sm btn-primary fw-semibold rounded-2 d-flex align-items-center justify-content-center" 
+            class="btn btn-primary fw-semibold rounded-2 d-flex align-items-center justify-content-center px-3" 
             @click="addProjectMember"
             :disabled="!memberEmail"
-            style="height: 38px; padding: 0 16px;"
           >
             {{ $t('members.add_btn') }}
           </button>
@@ -152,7 +151,7 @@ const addProjectMember = async () => {
     await loadMembers()
     window.dispatchEvent(new CustomEvent('project-members-changed'))
   } catch (err) {
-    toastError(extractMessage(err, 'Failed to add member.'))
+    toastError(extractMessage(err, t('errors.default')))
   }
 }
 
@@ -163,7 +162,7 @@ const changeMemberRole = async (user, newRole) => {
     toastSuccess('Member role updated successfully!')
     await loadMembers()
   } catch (err) {
-    toastError(extractMessage(err, 'Failed to update role.'))
+    toastError(extractMessage(err, t('errors.default')))
   }
 }
 
@@ -181,7 +180,7 @@ const removeProjectMember = async (user) => {
     await loadMembers()
     window.dispatchEvent(new CustomEvent('project-members-changed'))
   } catch (err) {
-    toastError(extractMessage(err, 'Failed to remove member.'))
+    toastError(extractMessage(err, t('errors.default')))
   }
 }
 

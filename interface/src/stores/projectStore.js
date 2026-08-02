@@ -112,6 +112,7 @@ export const useProjectStore = defineStore('project', {
       this.currentUserEmail = null
       this.currentUserId = null
       this.token = null
+      localStorage.removeItem('token')
       localStorage.removeItem('currentProjectId')
       localStorage.removeItem('userEmail')
       localStorage.removeItem('userId')

@@ -15,7 +15,8 @@ using System.Linq;
 using API_v2.Models.DTOs;
 using Serilog;
 using API_v2.Hubs;
-
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 // Enable Serilog self-logging to standard error to capture internal errors
 Serilog.Debugging.SelfLog.Enable(Console.Error);
@@ -69,6 +70,43 @@ builder.Services.AddControllers()
 
 builder.Services.AddMemoryCache();
 
+// Configure Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    // Policy for Login: 5 requests per minute
+    options.AddPolicy("login", context =>
+    {
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
+    });
+
+    // Policy for OTP: 3 requests per 5 minutes
+    options.AddPolicy("otp", context =>
+    {
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 3,
+            Window = TimeSpan.FromMinutes(5),
+            QueueLimit = 0
+        });
+    });
+
+    // Custom response when rate limited
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = 429;
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new ApiResponse<object>(false, "Too many requests. Please try again later.", null), 
+            token);
+    };
+});
+
 // Configure EF Core with PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgresConnection")));
@@ -80,12 +118,14 @@ builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<ITaskAssignmentRepository, TaskAssignmentRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<IProjectColumnRepository, ProjectColumnRepository>();
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IProjectColumnService, ProjectColumnService>();
 builder.Services.AddHttpClient<IEmailService, EmailService>()
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
 builder.Services.AddSingleton<IEmailQueue, EmailQueue>();
@@ -152,9 +192,9 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 Log.Information("========== Application Started ==========");
 // Configure HTTP request pipeline middlewares in the correct order
-app.UseMiddleware<CorrelationIdMiddleware>(); // 1. Establish Correlation ID context
-app.UseMiddleware<RequestResponseLoggingMiddleware>(); // 2. Log request entry & response exit details (wrapping exception handling)
-app.UseMiddleware<GlobalExceptionHandlerMiddleware>(); // 3. Catch and sanitize errors
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>(); 
+app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -165,6 +205,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("CorsPolicy");
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();

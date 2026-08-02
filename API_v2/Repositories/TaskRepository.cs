@@ -1,5 +1,6 @@
 using API_v2.Datas;
 using API_v2.Models;
+using API_v2.Models.DTOs;
 using API_v2.Repositories.IRepositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,14 +28,53 @@ namespace API_v2.Repositories
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<List<TodoTask>> GetTasksByProjectIdAsync(Guid projectId)
+        public async Task<(List<TodoTask> items, int totalCount)> GetTasksByProjectIdAsync(Guid projectId, int? columnId, int page, int pageSize)
         {
-            return await _db.Tasks
+            var query = _db.Tasks
+                .AsNoTracking()
                 .Include(x => x.Assignments)
                 .ThenInclude(a => a.User)
-                .Where(x => x.ProjectId == projectId)
-                .OrderByDescending(x => x.CreatedAt)
+                .Where(x => x.ProjectId == projectId);
+
+            if (columnId.HasValue)
+            {
+                query = query.Where(x => x.ColumnId == columnId.Value);
+            }
+
+            query = query.OrderByDescending(x => x.CreatedAt);
+
+            var totalCount = await query.CountAsync();
+            var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            return (items, totalCount);
+        }
+
+        public async Task<TaskStatsResponse> GetTaskStatsByProjectIdAsync(Guid projectId)
+        {
+            var columns = await _db.ProjectColumns
+                .Where(c => c.ProjectId == projectId)
+                .OrderBy(c => c.Order)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Name,
+                    c.IsCompletedStage,
+                    TaskCount = c.Tasks.Count()
+                })
                 .ToListAsync();
+
+            var response = new TaskStatsResponse
+            {
+                TotalTasks = columns.Sum(c => c.TaskCount),
+                CompletedTasks = columns.Where(c => c.IsCompletedStage).Sum(c => c.TaskCount),
+                ColumnStats = columns.Select(c => new ColumnStat
+                {
+                    ColumnId = c.Id,
+                    ColumnName = c.Name,
+                    TaskCount = c.TaskCount
+                }).ToList()
+            };
+            return response;
         }
 
         public void Add(TodoTask task)

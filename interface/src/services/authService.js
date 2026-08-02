@@ -1,6 +1,6 @@
 import api from '../api/axios'
 
-export const loginn = (data) => {
+export const login = (data) => {
   return api.post('/auth/login', data)
 }
 

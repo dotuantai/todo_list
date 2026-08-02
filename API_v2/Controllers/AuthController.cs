@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using API_v2.Models.DTOs;
 using API_v2.Services.Interfaces;
 
@@ -25,11 +26,6 @@ namespace API_v2.Controllers
                 return BadRequest(new ApiResponse<object>(false, "Invalid data.", null));
             }
 
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-                return BadRequest(new ApiResponse<object>(false, string.Join(" | ", errors), null));
-            }
 
             await _authService.RegisterAsync(req);
             return Ok(new ApiResponse<object>(true, "Registration successful. Please check your email for the OTP verification code.", null));
@@ -37,6 +33,7 @@ namespace API_v2.Controllers
 
         [HttpPost("verify-otp")]
         [AllowAnonymous]
+        [EnableRateLimiting("otp")]
         public async Task<ActionResult> VerifyOtp([FromBody] VerifyOtpRequest req)
         {
             if (req is null || string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Otp))
@@ -50,6 +47,7 @@ namespace API_v2.Controllers
 
         [HttpPost("resend-otp")]
         [AllowAnonymous]
+        [EnableRateLimiting("otp")]
         public async Task<ActionResult> ResendOtp([FromQuery] string email)
         {
             if (string.IsNullOrWhiteSpace(email))
@@ -63,6 +61,7 @@ namespace API_v2.Controllers
 
         [HttpPost("login")]
         [AllowAnonymous]
+        [EnableRateLimiting("login")]
         public async Task<ActionResult> Login([FromBody] LoginRequest req)
         {
             if (req is null || string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
@@ -160,11 +159,6 @@ namespace API_v2.Controllers
                 return BadRequest(new ApiResponse<object>(false, "Invalid data.", null));
             }
 
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
-                return BadRequest(new ApiResponse<object>(false, string.Join(" | ", errors), null));
-            }
 
             await _authService.ChangePasswordAsync(CurrentUserId, req);
             return Ok(new ApiResponse<object>(true, "Password changed successfully.", null));

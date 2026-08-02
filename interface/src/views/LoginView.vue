@@ -258,7 +258,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { loginn, googleLogin } from '../services/authService.js'
+import { login as apiLogin, googleLogin } from '../services/authService.js'
 import { toastError, extractMessage } from '../utils/swal.js'
 
 const router = useRouter()
@@ -331,7 +331,7 @@ const login = async () => {
   try {
     loading.value = true
 
-    const response = await loginn({
+    const response = await apiLogin({
       Email: email.value,
       Password: password.value
     })
@@ -342,7 +342,7 @@ const login = async () => {
 
     router.push('/projects')
   } catch (error) {
-    toastError(extractMessage(error, 'Login failed.'))
+    toastError(extractMessage(error, t('errors.default')))
   } finally {
     loading.value = false
   }

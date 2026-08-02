@@ -11,7 +11,10 @@ const translateError = (message) => {
   
   return message
     .split(' | ')
-    .map(msg => errorsDict[msg] || msg)
+    .map(msg => {
+      const trimDot = msg.endsWith('.') ? msg.slice(0, -1) : msg
+      return errorsDict[msg] || errorsDict[trimDot] || msg
+    })
     .join(' | ')
 }
 

@@ -1,13 +1,14 @@
 using System;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API_v2.Exceptions;
 using API_v2.Models;
 using API_v2.Models.DTOs;
+using API_v2.Models.Constants;
 using API_v2.Repositories.IRepositories;
 using API_v2.Services.Interfaces;
-using TaskStatusModel = API_v2.Models.TaskStatus;
 
 namespace API_v2.Services
 {
@@ -17,17 +18,20 @@ namespace API_v2.Services
         private readonly ITaskAssignmentRepository _assignRepo;
         private readonly IProjectRepository _projectRepo;
         private readonly INotificationService _notificationService;
+        private readonly ILogger<TaskService> _logger;
 
         public TaskService(
             ITaskRepository taskRepo, 
             ITaskAssignmentRepository assignRepo, 
             IProjectRepository projectRepo,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            ILogger<TaskService> logger)
         {
             _taskRepo = taskRepo;
             _assignRepo = assignRepo;
             _projectRepo = projectRepo;
             _notificationService = notificationService;
+            _logger = logger;
         }
 
         public async Task<string> CreateTaskAsync(CreateTaskRequest req, Guid creatorId, Guid projectId)
@@ -39,7 +43,6 @@ namespace API_v2.Services
                 throw ApiException.BadRequest("Task title cannot be empty.");
             }
 
-            var status = ParseTaskStatus(req.Status, TaskStatusModel.ToDo);
             var task = new TodoTask
             {
                 Title = req.Title.Trim(),
@@ -47,7 +50,7 @@ namespace API_v2.Services
                 CreatedAt = DateTime.UtcNow,
                 CreatorId = creatorId,
                 Deadline = NormalizeToUtc(req.Deadline),
-                Status = status,
+                ColumnId = req.ColumnId,
                 ProjectId = projectId
             };
             _taskRepo.Add(task);
@@ -61,17 +64,17 @@ namespace API_v2.Services
                     await _notificationService.SendTaskCreatedAsync(projectId, MapToTaskDetailResponse(taskWithDetails));
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Soft fail on signalr error so it doesn't break API response
+                _logger.LogWarning(ex, "Failed to send task created notification.");
             }
 
             return "Task created successfully.";
         }
 
-        public async Task<string> UpdateTaskAsync(UpdateTaskRequest req, Guid currentUserId)
+        public async Task<string> UpdateTaskAsync(int taskId, UpdateTaskRequest req, Guid currentUserId)
         {
-            var task = await GetTaskOrThrowAsync(req.TaskId);
+            var task = await GetTaskOrThrowAsync(taskId);
 
             if (task.ProjectId.HasValue)
             {
@@ -81,7 +84,7 @@ namespace API_v2.Services
             {
                 if (task.CreatorId != currentUserId)
                 {
-                    var assignment = await _assignRepo.GetAssignmentAsync(req.TaskId, currentUserId);
+                    var assignment = await _assignRepo.GetAssignmentAsync(taskId, currentUserId);
                     if (assignment is null)
                     {
                         throw ApiException.Forbidden("You do not have permission to edit this task.");
@@ -97,7 +100,7 @@ namespace API_v2.Services
             task.Title = req.Title.Trim();
             task.Description = req.Description?.Trim();
             task.Deadline = NormalizeToUtc(req.Deadline);
-            task.Status = ParseTaskStatus(req.Status, task.Status);
+            task.ColumnId = req.ColumnId;
             await _taskRepo.SaveAsync();
 
             if (task.ProjectId.HasValue)
@@ -110,7 +113,7 @@ namespace API_v2.Services
                         await _notificationService.SendTaskUpdatedAsync(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
                     }
                 }
-                catch (Exception) { }
+                catch (Exception ex) { _logger.LogWarning(ex, "Failed to send task updated notification."); }
             }
 
             return "Task updated successfully.";
@@ -142,7 +145,7 @@ namespace API_v2.Services
                 {
                     await _notificationService.SendTaskDeletedAsync(projectId.Value, taskId);
                 }
-                catch (Exception) { }
+                catch (Exception ex) { _logger.LogWarning(ex, "Failed to send task deleted notification."); }
             }
 
             return "Task deleted successfully.";
@@ -202,9 +205,9 @@ namespace API_v2.Services
                     task.Id.ToString()
                 );
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Soft fail
+                _logger.LogWarning(ex, "Failed to send task assigned notification.");
             }
 
             if (task.ProjectId.HasValue)
@@ -217,13 +220,13 @@ namespace API_v2.Services
                         await _notificationService.SendTaskUpdatedAsync(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
                     }
                 }
-                catch (Exception) { }
+                catch (Exception ex) { _logger.LogWarning(ex, "Failed to send task updated notification."); }
             }
 
             return "Task assigned successfully.";
         }
 
-        public async Task<List<TaskDetailResponse>> GetProjectTasksAsync(Guid projectId, Guid userId)
+        public async Task<PagedResponse<TaskDetailResponse>> GetProjectTasksAsync(Guid projectId, Guid userId, int? columnId, int page, int pageSize)
         {
             var member = await _projectRepo.GetMemberAsync(projectId, userId);
             if (member is null)
@@ -231,16 +234,32 @@ namespace API_v2.Services
                 throw ApiException.Forbidden("You are not a member of this project.");
             }
 
-            var tasks = await _taskRepo.GetTasksByProjectIdAsync(projectId);
-            return tasks
-                .Select(MapToTaskDetailResponse)
-                .ToList();
+            var (items, totalCount) = await _taskRepo.GetTasksByProjectIdAsync(projectId, columnId, page, pageSize);
+            
+            return new PagedResponse<TaskDetailResponse>
+            {
+                Items = items.Select(MapToTaskDetailResponse).ToList(),
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
+
+        public async Task<TaskStatsResponse> GetTaskStatsAsync(Guid projectId, Guid userId)
+        {
+            var member = await _projectRepo.GetMemberAsync(projectId, userId);
+            if (member is null)
+            {
+                throw ApiException.Forbidden("You are not a member of this project.");
+            }
+
+            return await _taskRepo.GetTaskStatsByProjectIdAsync(projectId);
         }
 
 
-        public async Task<string> RemoveAssignmentAsync(RemoveAssignmentRequest req, Guid currentUserId)
+        public async Task<string> RemoveAssignmentAsync(int taskId, Guid userId, Guid currentUserId)
         {
-            var task = await GetTaskOrThrowAsync(req.TaskId);
+            var task = await GetTaskOrThrowAsync(taskId);
 
             if (task.ProjectId.HasValue)
             {
@@ -254,7 +273,7 @@ namespace API_v2.Services
                 }
             }
 
-            var assignment = await _assignRepo.GetAssignmentAsync(req.TaskId, req.UserId);
+            var assignment = await _assignRepo.GetAssignmentAsync(taskId, userId);
             if (assignment is null)
             {
                 throw ApiException.NotFound("This user has not been assigned to this task.");
@@ -273,13 +292,13 @@ namespace API_v2.Services
                         await _notificationService.SendTaskUpdatedAsync(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
                     }
                 }
-                catch (Exception) { }
+                catch (Exception ex) { _logger.LogWarning(ex, "Failed to send task updated notification."); }
             }
 
             return "Assignment revoked successfully.";
         }
 
-        public async Task ChangeStatusAsync(ChangeTaskStatusRequest req, Guid currentUserId)
+        public async Task ChangeColumnAsync(ChangeTaskColumnRequest req, Guid currentUserId)
         {
             var task = await GetTaskOrThrowAsync(req.TaskId);
 
@@ -308,7 +327,7 @@ namespace API_v2.Services
                 }
             }
 
-            task.Status = ParseTaskStatus(req.Status, task.Status);
+            task.ColumnId = req.ColumnId;
             await _taskRepo.SaveAsync();
 
             if (task.ProjectId.HasValue)
@@ -321,7 +340,7 @@ namespace API_v2.Services
                         await _notificationService.SendTaskUpdatedAsync(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
                     }
                 }
-                catch (Exception) { }
+                catch (Exception ex) { _logger.LogWarning(ex, "Failed to send task updated notification."); }
             }
         }
 
@@ -350,21 +369,7 @@ namespace API_v2.Services
             };
         }
 
-        private TaskStatusModel ParseTaskStatus(string? status, TaskStatusModel defaultValue)
-        {
-            if (string.IsNullOrWhiteSpace(status))
-            {
-                return defaultValue;
-            }
 
-            if (!Enum.TryParse(status, true, out TaskStatusModel parsed))
-            {
-                var validValues = string.Join(", ", Enum.GetNames(typeof(TaskStatusModel)));
-                throw ApiException.BadRequest($"Status '{status}' is invalid. Valid values: {validValues}.");
-            }
-
-            return parsed;
-        }
 
         private TaskDetailResponse MapToTaskDetailResponse(TodoTask task)
         {
@@ -376,7 +381,7 @@ namespace API_v2.Services
                 CreatedAt = task.CreatedAt,
                 CreatorId = task.CreatorId,
                 Deadline = task.Deadline,
-                Status = task.Status.ToString(),
+                ColumnId = task.ColumnId,
                 AssignedUsers = task.Assignments?
                     .Select(a => new AssignedUserResponse
                     {
@@ -412,8 +417,7 @@ namespace API_v2.Services
 
         private bool IsOwnerOrManager(ProjectMember member)
         {
-            return member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) ||
-                   member.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase);
+            return ProjectRoles.IsOwnerOrManager(member.Role);
         }
     }
 }

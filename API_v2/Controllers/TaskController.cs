@@ -17,15 +17,15 @@ namespace API_v2.Controllers
             _taskService = taskService;
         }
 
-        [HttpPut]
-        public async Task<ActionResult> Update([FromBody] UpdateTaskRequest req)
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult> Update(int id, [FromBody] UpdateTaskRequest req)
         {
             if (req is null || !ModelState.IsValid)
             {
                 return BadRequest(new ApiResponse<object>(false, "Invalid task data.", null));
             }
 
-            var result = await _taskService.UpdateTaskAsync(req, CurrentUserId);
+            var result = await _taskService.UpdateTaskAsync(id, req, CurrentUserId);
             return Ok(new ApiResponse<string>(true, result, null));
         }
 
@@ -49,28 +49,23 @@ namespace API_v2.Controllers
         }
 
 
-        [HttpDelete("assign")]
-        public async Task<ActionResult> RemoveAssignment([FromBody] RemoveAssignmentRequest req)
+        [HttpDelete("{taskId}/assignments/{userId}")]
+        public async Task<ActionResult> RemoveAssignment(int taskId, Guid userId)
         {
-            if (req is null || !ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse<object>(false, "Invalid assignment data.", null));
-            }
-
-            var result = await _taskService.RemoveAssignmentAsync(req, CurrentUserId);
+            var result = await _taskService.RemoveAssignmentAsync(taskId, userId, CurrentUserId);
             return Ok(new ApiResponse<string>(true, result, null));
         }
 
         [HttpPut("status")]
-        public async Task<ActionResult> ChangeStatus([FromBody] ChangeTaskStatusRequest req)
+        public async Task<ActionResult> ChangeColumn([FromBody] ChangeTaskColumnRequest req)
         {
             if (req is null || !ModelState.IsValid)
             {
                 return BadRequest(new ApiResponse<object>(false, "Invalid status data.", null));
             }
 
-            await _taskService.ChangeStatusAsync(req, CurrentUserId);
-            return Ok(new ApiResponse<object>(true, "Task status updated successfully.", null));
+            await _taskService.ChangeColumnAsync(req, CurrentUserId);
+            return Ok(new ApiResponse<object>(true, "Task column updated successfully.", null));
         }
     }
 }

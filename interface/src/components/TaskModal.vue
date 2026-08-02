@@ -39,7 +39,7 @@
                 />
               </div>
 
-              <!-- Deadline + Status -->
+              <!-- Deadline + Column -->
               <div class="row g-3 mb-4">
                 <div class="col-md-6 text-start">
                   <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.deadline') }}</label>
@@ -50,11 +50,12 @@
                 </div>
                 <div class="col-md-6 text-start">
                   <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.status') }}</label>
-                  <select v-model="form.status" class="form-select text-body">
-                    <option value="ToDo">{{ $t('dashboard.todo') }}</option>
-                    <option value="InProgress">{{ $t('dashboard.in_progress') }}</option>
-                    <option value="Done">{{ $t('dashboard.done') }}</option>
-                    <option value="Closed">{{ $t('dashboard.closed') }}</option>
+                  <div v-if="loadingColumns" class="d-flex align-items-center gap-2 py-2">
+                    <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                    <span class="text-muted small">{{ $t('common.loading') }}</span>
+                  </div>
+                  <select v-else v-model="form.columnId" class="form-select text-body">
+                    <option v-for="col in columns" :key="col.Id" :value="col.Id">{{ col.Name }}</option>
                   </select>
                 </div>
               </div>
@@ -110,7 +111,7 @@
 <script setup>
 import { ref, defineExpose } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { createProjectTask } from '../services/projectService.js'
+import { createProjectTask, getProjectColumns } from '../services/projectService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 const projectStore = useProjectStore()
 import { toastSuccess, toastError, toastWarning, extractMessage } from '../utils/swal.js'
@@ -119,23 +120,43 @@ const { t } = useI18n()
 
 const show = ref(false)
 const loading = ref(false)
+const loadingColumns = ref(false)
+const columns = ref([])
 
 const form = ref({
   title: '',
   description: '',
   deadline: '',
-  status: 'ToDo'
+  columnId: null
 })
+
+const loadColumns = async () => {
+  if (!projectStore.currentProjectId) return
+  loadingColumns.value = true
+  try {
+    const res = await getProjectColumns(projectStore.currentProjectId)
+    columns.value = res?.data || []
+    // Default to first column (lowest order)
+    if (columns.value.length > 0 && !form.value.columnId) {
+      form.value.columnId = columns.value[0].Id
+    }
+  } catch (e) {
+    console.error('Failed to load columns', e)
+  } finally {
+    loadingColumns.value = false
+  }
+}
 
 const openModal = () => {
   form.value = {
     title: '',
     description: '',
     deadline: '',
-    status: 'ToDo'
+    columnId: null
   }
   show.value = true
   document.body.style.overflow = 'hidden'
+  loadColumns()
 }
 
 const closeModal = () => {
@@ -155,6 +176,11 @@ const handleSubmit = async () => {
     return
   }
 
+  if (!form.value.columnId) {
+    toastWarning(t('errors.Please complete all fields'))
+    return
+  }
+
   loading.value = true
 
   try {
@@ -162,7 +188,7 @@ const handleSubmit = async () => {
       title: form.value.title,
       description: form.value.description,
       deadline: form.value.deadline || null,
-      Status: form.value.status
+      columnId: form.value.columnId
     }
 
     await createProjectTask(projectStore.currentProjectId, payload)

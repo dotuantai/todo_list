@@ -16,6 +16,7 @@ namespace API_v2.Datas
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectMember> ProjectMembers { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<ProjectColumn> ProjectColumns { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -68,6 +69,47 @@ namespace API_v2.Datas
                 .WithMany(p => p.Tasks)
                 .HasForeignKey(t => t.ProjectId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TodoTask>()
+                .HasOne(t => t.Column)
+                .WithMany(c => c.Tasks)
+                .HasForeignKey(t => t.ColumnId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProjectColumn>()
+                .HasOne(c => c.Project)
+                .WithMany(p => p.Columns)
+                .HasForeignKey(c => c.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Add missing indexes for performance optimization
+            modelBuilder.Entity<TodoTask>()
+                .HasIndex(t => t.ProjectId)
+                .HasDatabaseName("IX_Tasks_ProjectId");
+
+            modelBuilder.Entity<TodoTask>()
+                .HasIndex(t => t.CreatorId)
+                .HasDatabaseName("IX_Tasks_CreatorId");
+
+            modelBuilder.Entity<Notification>()
+                .HasIndex(n => n.UserId)
+                .HasDatabaseName("IX_Notifications_UserId");
+
+            modelBuilder.Entity<Notification>()
+                .HasIndex(n => new { n.UserId, n.IsRead })
+                .HasDatabaseName("IX_Notifications_UserId_IsRead");
+
+            modelBuilder.Entity<ProjectMember>()
+                .HasIndex(pm => pm.ProjectId)
+                .HasDatabaseName("IX_ProjectMembers_ProjectId");
+
+            modelBuilder.Entity<ProjectMember>()
+                .HasIndex(pm => pm.UserId)
+                .HasDatabaseName("IX_ProjectMembers_UserId");
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasIndex(rt => rt.UserId)
+                .HasDatabaseName("IX_RefreshTokens_UserId");
 
             base.OnModelCreating(modelBuilder);
         }

@@ -1,4 +1,6 @@
 import axios from 'axios'
+import { useProjectStore } from '../stores/projectStore.js'
+import { alertError } from '../utils/swal.js'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -61,6 +63,15 @@ api.interceptors.response.use(
           window.location.href = '/login'
         }
         return Promise.reject(refreshError)
+      }
+    }
+
+    if (error.response?.status === 403) {
+      if (window.location.pathname.includes('/projects/')) {
+        const store = useProjectStore()
+        store.setCurrentProjectId(null)
+        await alertError('Access denied', 'You no longer have access to this project.')
+        window.location.href = '/projects'
       }
     }
 

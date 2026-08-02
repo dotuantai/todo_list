@@ -1,13 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useProjectStore } from '../stores/projectStore.js'
-import LoginView from '../views/LoginView.vue'
-import RegisterView from '../views/RegisterView.vue'
-import ProjectsView from '../views/ProjectsView.vue'
-import DashboardView from '../views/DashboardView.vue'
-import TaskView from '../views/TaskView.vue'
-import SettingsView from '../views/SettingsView.vue'
-import MembersView from '../views/MembersView.vue'
-import ChangePasswordView from '../views/ChangePasswordView.vue'
+const LoginView = () => import('../views/LoginView.vue')
+const RegisterView = () => import('../views/RegisterView.vue')
+const ProjectsView = () => import('../views/ProjectsView.vue')
+const DashboardView = () => import('../views/DashboardView.vue')
+const TaskView = () => import('../views/TaskView.vue')
+const SettingsView = () => import('../views/SettingsView.vue')
+const MembersView = () => import('../views/MembersView.vue')
+const ChangePasswordView = () => import('../views/ChangePasswordView.vue')
 
 const routes = [
   {

@@ -16,5 +16,6 @@ namespace API_v2.Models
         public virtual User Owner { get; set; } = null!;
         public virtual ICollection<TodoTask> Tasks { get; set; } = new List<TodoTask>();
         public virtual ICollection<ProjectMember> ProjectMembers { get; set; } = new List<ProjectMember>();
+        public virtual ICollection<ProjectColumn> Columns { get; set; } = new List<ProjectColumn>();
     }
 }

@@ -39,6 +39,46 @@
           </form>
         </div>
 
+        <!-- Column Management Card (Owner/Manager Only) -->
+        <div v-if="(isOwner || projectStore.userRole === 'Manager') && projectStore.currentProject" class="card border-0 shadow-sm rounded-3 p-4 mb-4 bg-body">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center gap-3">
+              <div class="bg-info bg-opacity-10 text-info rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                <i class="bi bi-layout-three-columns fs-5"></i>
+              </div>
+              <div>
+                <h4 class="fw-bold text-body h5 mb-0">{{ $t('settings.columns_title') }}</h4>
+                <p class="text-muted small mb-0">{{ $t('settings.columns_desc') }}</p>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary fw-semibold" style="border-radius: 8px;" @click="openColModal()">
+              <i class="bi bi-plus-lg me-1"></i> {{ $t('settings.add_column') }}
+            </button>
+          </div>
+          
+          <hr />
+
+          <div v-if="loadingColumns" class="text-center py-4">
+            <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+          </div>
+          <div v-else class="list-group list-group-flush">
+            <div v-for="col in columns" :key="col.Id" class="list-group-item d-flex justify-content-between align-items-center border-0 border-bottom px-0 py-3">
+              <div>
+                <h6 class="mb-1 fw-bold text-body">{{ col.Name }}</h6>
+                <small class="text-muted">{{ $t('settings.order') }}: {{ col.Order }} <span v-if="col.IsCompletedStage" class="badge bg-success-subtle text-success ms-2">{{ $t('settings.completed_stage') }}</span></small>
+              </div>
+              <div class="btn-group gap-2">
+                <button class="btn btn-sm btn-light border" style="border-radius: 6px;" @click="openColModal(col)">
+                  <i class="bi bi-pencil"></i>
+                 </button>
+                <button class="btn btn-sm btn-light border text-danger" style="border-radius: 6px;" @click="handleDeleteColumn(col.Id)" :disabled="columns.length <= 1">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Theme Switcher Card -->
         <div class="card border-0 shadow-sm rounded-3 p-4 mb-4 bg-body">
           <div class="d-flex align-items-center gap-3 mb-3">
@@ -104,6 +144,44 @@
       </div>
     </div>
 
+    <!-- Column Modal -->
+    <Teleport to="body">
+      <div v-if="colModal.open" class="modal-backdrop show" style="background: rgba(0,0,0,0.5);"></div>
+      <div v-if="colModal.open" class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom p-4">
+              <h5 class="modal-title fw-bold text-body">{{ colModal.isEdit ? $t('settings.edit_column') : $t('settings.add_column') }}</h5>
+              <button type="button" class="btn-close" @click="closeColModal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+              <form @submit.prevent="saveColumn">
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold text-muted">{{ $t('settings.col_name') }}</label>
+                  <input v-model="colForm.Name" type="text" class="form-control" required style="border-radius: 8px;" />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small fw-semibold text-muted">{{ $t('settings.col_order') }}</label>
+                  <input v-model.number="colForm.Order" type="number" min="0" class="form-control" required style="border-radius: 8px;" />
+                </div>
+                <div class="mb-3 form-check">
+                  <input v-model="colForm.IsCompletedStage" type="checkbox" class="form-check-input" id="isCompletedStage" />
+                  <label class="form-check-label small fw-semibold text-muted" for="isCompletedStage">{{ $t('settings.is_completed_stage') }}</label>
+                  <div class="form-text small">{{ $t('settings.completed_stage_desc') }}</div>
+                </div>
+                <div class="d-flex justify-content-end gap-2 mt-4 pt-2">
+                  <button type="button" class="btn btn-outline-secondary" @click="closeColModal" style="border-radius: 8px;">{{ $t('settings.cancel') }}</button>
+                  <button type="submit" class="btn btn-primary" :disabled="colSaving" style="border-radius: 8px;">
+                    <span v-if="colSaving" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    {{ $t('settings.save') }}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -112,7 +190,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useProjectStore } from '../stores/projectStore.js'
-import { updateProject, deleteProject } from '../services/projectService.js'
+import { updateProject, deleteProject, getProjectColumns, createProjectColumn, updateProjectColumn, deleteProjectColumn } from '../services/projectService.js'
 import { toastSuccess, toastError, confirm, extractMessage } from '../utils/swal.js'
 
 const router = useRouter()
@@ -135,6 +213,72 @@ const initProjectForm = () => {
   if (projectStore.currentProject) {
     editForm.value.name = projectStore.currentProject.Name || ''
     editForm.value.description = projectStore.currentProject.Description || ''
+    loadColumns()
+  }
+}
+
+// Columns state
+const columns = ref([])
+const loadingColumns = ref(false)
+const colModal = ref({ open: false, isEdit: false, colId: null })
+const colForm = ref({ Name: '', Order: 0, IsCompletedStage: false })
+const colSaving = ref(false)
+
+const loadColumns = async () => {
+  if (!projectStore.currentProjectId) return
+  loadingColumns.value = true
+  try {
+    const res = await getProjectColumns(projectStore.currentProjectId)
+    columns.value = (res?.data || []).sort((a, b) => a.Order - b.Order)
+  } catch(e) {
+    console.error(e)
+  } finally {
+    loadingColumns.value = false
+  }
+}
+
+const openColModal = (col = null) => {
+  if (col) {
+    colModal.value = { open: true, isEdit: true, colId: col.Id }
+    colForm.value = { Name: col.Name, Order: col.Order, IsCompletedStage: col.IsCompletedStage }
+  } else {
+    colModal.value = { open: true, isEdit: false, colId: null }
+    colForm.value = { Name: '', Order: columns.value.length, IsCompletedStage: false }
+  }
+}
+
+const closeColModal = () => {
+  colModal.value.open = false
+}
+
+const saveColumn = async () => {
+  colSaving.value = true
+  try {
+    if (colModal.value.isEdit) {
+      await updateProjectColumn(projectStore.currentProjectId, colModal.value.colId, colForm.value)
+      toastSuccess(t('settings.col_updated'))
+    } else {
+      await createProjectColumn(projectStore.currentProjectId, colForm.value)
+      toastSuccess(t('settings.col_added'))
+    }
+    closeColModal()
+    await loadColumns()
+  } catch(e) {
+    toastError(extractMessage(e, t('errors.default')))
+  } finally {
+    colSaving.value = false
+  }
+}
+
+const handleDeleteColumn = async (colId) => {
+  const ok = await confirm(t('settings.del_col_title'), t('settings.del_col_desc'), t('settings.del_col_btn'))
+  if (!ok) return
+  try {
+    await deleteProjectColumn(projectStore.currentProjectId, colId)
+    toastSuccess(t('settings.col_deleted'))
+    await loadColumns()
+  } catch(e) {
+    toastError(extractMessage(e, t('errors.default')))
   }
 }
 
@@ -158,7 +302,7 @@ const handleUpdateProject = async () => {
     toastSuccess('Project updated successfully!')
     await projectStore.fetchProjects()
   } catch (err) {
-    toastError(extractMessage(err, 'Failed to update project.'))
+    toastError(extractMessage(err, t('errors.default')))
   }
 }
 
@@ -181,7 +325,7 @@ const handleDeleteProject = async () => {
     router.push('/projects')
   } catch (err) {
     console.error(err)
-    toastError(extractMessage(err, 'Failed to delete project.'))
+    toastError(extractMessage(err, t('errors.default')))
   }
 }
 
