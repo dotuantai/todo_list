@@ -305,7 +305,15 @@ const draggingTask       = ref(null)
 const draggingFromStatus = ref(null)
 const dragOverCol        = ref(null)
 
-const getTasksByColumnId   = (colId) => tasks.value.filter(t => t.ColumnId === colId)
+const tasksByColumnId = computed(() => {
+  const map = {}
+  tasks.value.forEach(t => {
+    if (!map[t.ColumnId]) map[t.ColumnId] = []
+    map[t.ColumnId].push(t)
+  })
+  return map
+})
+const getTasksByColumnId = (colId) => tasksByColumnId.value[colId] || []
 const getColById     = (colId) => {
   const col = columns.value.find(c => c.Id === colId)
   if (!col) return null
@@ -523,7 +531,6 @@ const changeTaskColumnFromSelect = async (newColumnId) => {
       taskId: modal.task.Id,
       columnId: parseInt(newColumnId)
     })
-    await loadData()
     toastSuccess('Task column updated successfully!')
   } catch (err) {
     modal.task.ColumnId = oldColumnId

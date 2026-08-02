@@ -32,6 +32,9 @@ namespace API_v2.Models.DTOs
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public string? UserRole { get; set; }
+        public int MemberCount { get; set; }
+        public int CompletedTasks { get; set; }
+        public int TotalTasks { get; set; }
     }
 
     public class AddMemberRequest

@@ -17,6 +17,7 @@ namespace API_v2.Services
         private readonly ITaskRepository _taskRepo;
         private readonly ITaskAssignmentRepository _assignRepo;
         private readonly IProjectRepository _projectRepo;
+        private readonly IProjectColumnRepository _projectColumnRepo;
         private readonly INotificationService _notificationService;
         private readonly ILogger<TaskService> _logger;
 
@@ -24,12 +25,14 @@ namespace API_v2.Services
             ITaskRepository taskRepo, 
             ITaskAssignmentRepository assignRepo, 
             IProjectRepository projectRepo,
+            IProjectColumnRepository projectColumnRepo,
             INotificationService notificationService,
             ILogger<TaskService> logger)
         {
             _taskRepo = taskRepo;
             _assignRepo = assignRepo;
             _projectRepo = projectRepo;
+            _projectColumnRepo = projectColumnRepo;
             _notificationService = notificationService;
             _logger = logger;
         }
@@ -42,6 +45,8 @@ namespace API_v2.Services
             {
                 throw ApiException.BadRequest("Task title cannot be empty.");
             }
+
+            await VerifyColumnBelongsToProjectAsync(req.ColumnId, projectId);
 
             var task = new TodoTask
             {
@@ -96,6 +101,8 @@ namespace API_v2.Services
             {
                 throw ApiException.BadRequest("Task title cannot be empty.");
             }
+
+            await VerifyColumnBelongsToProjectAsync(req.ColumnId, task.ProjectId);
 
             task.Title = req.Title.Trim();
             task.Description = req.Description?.Trim();
@@ -327,6 +334,7 @@ namespace API_v2.Services
                 }
             }
 
+            await VerifyColumnBelongsToProjectAsync(req.ColumnId, task.ProjectId);
             task.ColumnId = req.ColumnId;
             await _taskRepo.SaveAsync();
 
@@ -418,6 +426,17 @@ namespace API_v2.Services
         private bool IsOwnerOrManager(ProjectMember member)
         {
             return ProjectRoles.IsOwnerOrManager(member.Role);
+        }
+
+        private async Task VerifyColumnBelongsToProjectAsync(int columnId, Guid? projectId)
+        {
+            if (!projectId.HasValue) return;
+            
+            var column = await _projectColumnRepo.GetByIdAsync(columnId);
+            if (column == null || column.ProjectId != projectId.Value)
+            {
+                throw ApiException.BadRequest("The specified column does not belong to this project.");
+            }
         }
     }
 }

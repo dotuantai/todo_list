@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using API_v2.Models;
+using API_v2.Models.DTOs;
 
 namespace API_v2.Repositories.IRepositories
 {
@@ -17,5 +18,6 @@ namespace API_v2.Repositories.IRepositories
         void RemoveMember(ProjectMember member);
         Task SaveAsync();
         Task<List<ProjectMember>> GetProjectMembersWithProjectsByUserIdAsync(Guid userId);
+        Task<List<ProjectResponse>> GetProjectDashboardsAsync(Guid userId);
     }
 }

@@ -1,5 +1,6 @@
 using API_v2.Datas;
 using API_v2.Models;
+using API_v2.Models.DTOs;
 using API_v2.Repositories.IRepositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -77,6 +78,28 @@ namespace API_v2.Repositories
                 .Where(pm => pm.UserId == userId)
                 .Include(pm => pm.Project)
                     .ThenInclude(p => p.Owner)
+                .ToListAsync();
+        }
+
+        public async Task<List<ProjectResponse>> GetProjectDashboardsAsync(Guid userId)
+        {
+            return await _dbContext.ProjectMembers
+                .AsNoTracking()
+                .Where(pm => pm.UserId == userId)
+                .Select(pm => new ProjectResponse
+                {
+                    Id = pm.Project.Id,
+                    Name = pm.Project.Name,
+                    Description = pm.Project.Description,
+                    OwnerId = pm.Project.OwnerId,
+                    OwnerEmail = pm.Project.Owner.Email,
+                    CreatedAt = pm.Project.CreatedAt,
+                    UpdatedAt = pm.Project.UpdatedAt,
+                    UserRole = pm.Role,
+                    MemberCount = pm.Project.ProjectMembers.Count(),
+                    TotalTasks = pm.Project.Tasks.Count(),
+                    CompletedTasks = pm.Project.Tasks.Count(t => t.Column != null && t.Column.IsCompletedStage)
+                })
                 .ToListAsync();
         }
     }
