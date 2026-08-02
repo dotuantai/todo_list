@@ -3,6 +3,7 @@ using System;
 using API_v2.Datas;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API_v2.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260802124439_AddMissingIndexes")]
+    partial class AddMissingIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -89,38 +92,6 @@ namespace API_v2.Migrations
                     b.HasIndex("OwnerId");
 
                     b.ToTable("Projects");
-                });
-
-            modelBuilder.Entity("API_v2.Models.ProjectColumn", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsCompletedStage")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int>("Order")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectId");
-
-                    b.ToTable("ProjectColumns");
                 });
 
             modelBuilder.Entity("API_v2.Models.ProjectMember", b =>
@@ -215,9 +186,6 @@ namespace API_v2.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("ColumnId")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -233,13 +201,14 @@ namespace API_v2.Migrations
                     b.Property<Guid?>("ProjectId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ColumnId");
 
                     b.HasIndex("CreatorId")
                         .HasDatabaseName("IX_Tasks_CreatorId");
@@ -300,17 +269,6 @@ namespace API_v2.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("API_v2.Models.ProjectColumn", b =>
-                {
-                    b.HasOne("API_v2.Models.Project", "Project")
-                        .WithMany("Columns")
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Project");
-                });
-
             modelBuilder.Entity("API_v2.Models.ProjectMember", b =>
                 {
                     b.HasOne("API_v2.Models.Project", "Project")
@@ -362,12 +320,6 @@ namespace API_v2.Migrations
 
             modelBuilder.Entity("API_v2.Models.TodoTask", b =>
                 {
-                    b.HasOne("API_v2.Models.ProjectColumn", "Column")
-                        .WithMany("Tasks")
-                        .HasForeignKey("ColumnId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("API_v2.Models.User", "Creator")
                         .WithMany("CreatedTasks")
                         .HasForeignKey("CreatorId")
@@ -379,8 +331,6 @@ namespace API_v2.Migrations
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("Column");
-
                     b.Navigation("Creator");
 
                     b.Navigation("Project");
@@ -388,15 +338,8 @@ namespace API_v2.Migrations
 
             modelBuilder.Entity("API_v2.Models.Project", b =>
                 {
-                    b.Navigation("Columns");
-
                     b.Navigation("ProjectMembers");
 
-                    b.Navigation("Tasks");
-                });
-
-            modelBuilder.Entity("API_v2.Models.ProjectColumn", b =>
-                {
                     b.Navigation("Tasks");
                 });
 

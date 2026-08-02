@@ -5,16 +5,20 @@ namespace API_v2.Models.DTOs
     public class CreateProjectRequest
     {
         [Required(ErrorMessage = "Project name is required")]
+        [MaxLength(200, ErrorMessage = "Project name must not exceed 200 characters")]
         public string Name { get; set; } = string.Empty;
 
+        [MaxLength(2000, ErrorMessage = "Description must not exceed 2000 characters")]
         public string? Description { get; set; }
     }
 
     public class UpdateProjectRequest
     {
         [Required(ErrorMessage = "Project name is required")]
+        [MaxLength(200, ErrorMessage = "Project name must not exceed 200 characters")]
         public string Name { get; set; } = string.Empty;
 
+        [MaxLength(2000, ErrorMessage = "Description must not exceed 2000 characters")]
         public string? Description { get; set; }
     }
 
@@ -37,12 +41,14 @@ namespace API_v2.Models.DTOs
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Role is required")]
+        [AllowedValues("Owner", "Manager", "Member", ErrorMessage = "Role must be one of: Owner, Manager, Member")]
         public string Role { get; set; } = string.Empty;
     }
 
     public class UpdateMemberRequest
     {
         [Required(ErrorMessage = "Role is required")]
+        [AllowedValues("Owner", "Manager", "Member", ErrorMessage = "Role must be one of: Owner, Manager, Member")]
         public string Role { get; set; } = string.Empty;
     }
 

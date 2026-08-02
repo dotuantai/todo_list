@@ -122,8 +122,8 @@
                       </span>
                     </td>
                     <td>
-                      <span class="badge text-uppercase font-monospace" :class="getStatusBadgeClass(task.Status)" style="font-size: 9px; padding: 4px 8px;">
-                        {{ getStatusLabel(task.Status) }}
+                      <span class="badge text-uppercase font-monospace" :class="getStatusBadgeClass(task.ColumnId)" style="font-size: 9px; padding: 4px 8px;">
+                        {{ getStatusLabel(task.ColumnId) }}
                       </span>
                     </td>
                   </tr>
@@ -192,7 +192,7 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { getProjectTasks, getMembers } from '../services/projectService.js'
+import { getProjectTasks, getProjectTaskStats, getMembers, getProjectColumns } from '../services/projectService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 import { toastError } from '../utils/swal.js'
 
@@ -201,7 +201,9 @@ const projectStore = useProjectStore()
 const { t } = useI18n()
 const loading = ref(false)
 const projectTasks = ref([])
+const taskStats = ref(null)
 const projectMembers = ref([])
+const projectColumns = ref([])
 
 const projectId = computed(() => route.params.projectId)
 
@@ -209,12 +211,16 @@ const loadDashboardData = async () => {
   if (!projectId.value) return
   loading.value = true
   try {
-    const [tasksRes, membersRes] = await Promise.all([
+    const [tasksRes, statsRes, membersRes, columnsRes] = await Promise.all([
       getProjectTasks(projectId.value),
-      getMembers(projectId.value)
+      getProjectTaskStats(projectId.value),
+      getMembers(projectId.value),
+      getProjectColumns(projectId.value)
     ])
-    projectTasks.value = tasksRes?.data || []
+    projectTasks.value = tasksRes?.data?.Items || []
+    taskStats.value = statsRes?.data || null
     projectMembers.value = membersRes?.data || []
+    projectColumns.value = columnsRes?.data || []
   } catch (error) {
     console.error('Error loading dashboard data', error)
     toastError('Failed to load dashboard data.')
@@ -224,9 +230,9 @@ const loadDashboardData = async () => {
 }
 
 const stats = reactive({
-  totalTasks: computed(() => projectTasks.value.length),
-  inProgressTasks: computed(() => projectTasks.value.filter(t => t.Status === 'InProgress').length),
-  completedTasks: computed(() => projectTasks.value.filter(t => t.Status === 'Done' || t.Status === 'Closed').length),
+  totalTasks: computed(() => taskStats.value?.TotalTasks || 0),
+  inProgressTasks: computed(() => Math.max(0, (taskStats.value?.TotalTasks || 0) - (taskStats.value?.CompletedTasks || 0))),
+  completedTasks: computed(() => taskStats.value?.CompletedTasks || 0),
   memberCount: computed(() => projectMembers.value.length)
 })
 
@@ -237,49 +243,45 @@ const recentTasks = computed(() => {
 })
 
 const statusCounts = computed(() => {
-  const counts = { ToDo: 0, InProgress: 0, Done: 0, Closed: 0 }
-  projectTasks.value.forEach(t => {
-    if (counts[t.Status] !== undefined) {
-      counts[t.Status]++
+  const total = taskStats.value?.TotalTasks || 1
+  const cols = taskStats.value?.ColumnStats || []
+  const colors = ['#64748b', '#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
+  return cols.map((c, i) => {
+    return { 
+      label: c.ColumnName, 
+      status: c.ColumnId, 
+      count: c.TaskCount, 
+      percent: Math.round((c.TaskCount / total) * 100), 
+      color: colors[i % colors.length] 
     }
   })
-  const total = projectTasks.value.length || 1
-  return [
-    { label: t('dashboard.todo'), status: 'ToDo', count: counts.ToDo, percent: Math.round((counts.ToDo / total) * 100), color: '#64748b' },
-    { label: t('dashboard.in_progress'), status: 'InProgress', count: counts.InProgress, percent: Math.round((counts.InProgress / total) * 100), color: '#6366f1' },
-    { label: t('dashboard.done'), status: 'Done', count: counts.Done, percent: Math.round((counts.Done / total) * 100), color: '#10b981' },
-    { label: t('dashboard.closed'), status: 'Closed', count: counts.Closed, percent: Math.round((counts.Closed / total) * 100), color: '#f59e0b' }
-  ]
 })
 
 const isOverdue = (task) => {
-  if (!task.Deadline || task.Status === 'Done' || task.Status === 'Closed') return false
+  if (!task.Deadline) return false
+  const col = projectColumns.value.find(c => c.Id === task.ColumnId)
+  if (col && col.IsCompletedStage) return false
   return new Date(task.Deadline) < new Date()
 }
 
-const getStatusBadgeClass = (status) => {
-  switch (status) {
-    case 'ToDo':
-      return 'bg-secondary-subtle text-secondary border border-secondary-subtle'
-    case 'InProgress':
-      return 'bg-primary-subtle text-primary border border-primary-subtle'
-    case 'Done':
-      return 'bg-success-subtle text-success border border-success-subtle'
-    case 'Closed':
-      return 'bg-warning-subtle text-warning border border-warning-subtle'
-    default:
-      return 'bg-body-secondary text-body border'
-  }
+const getStatusBadgeClass = (columnId) => {
+  const index = projectColumns.value.findIndex(c => c.Id === columnId)
+  if (index === -1) return 'bg-secondary-subtle text-secondary border border-secondary-subtle'
+  
+  const classes = [
+    'bg-secondary-subtle text-secondary border border-secondary-subtle',
+    'bg-primary-subtle text-primary border border-primary-subtle',
+    'bg-success-subtle text-success border border-success-subtle',
+    'bg-warning-subtle text-warning border border-warning-subtle',
+    'bg-info-subtle text-info border border-info-subtle',
+    'bg-danger-subtle text-danger border border-danger-subtle'
+  ]
+  return classes[index % classes.length]
 }
 
-const getStatusLabel = (status) => {
-  switch (status) {
-    case 'ToDo': return t('dashboard.todo')
-    case 'InProgress': return t('dashboard.in_progress')
-    case 'Done': return t('dashboard.done')
-    case 'Closed': return t('dashboard.closed')
-    default: return status
-  }
+const getStatusLabel = (columnId) => {
+  const col = projectColumns.value.find(c => c.Id === columnId)
+  return col ? col.Name : 'Unknown'
 }
 
 const userInitial = (email) => email ? email[0].toUpperCase() : '?'

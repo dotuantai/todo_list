@@ -103,10 +103,21 @@ namespace API_v2.Controllers
         }
 
         [HttpGet("{projectId:guid}/tasks")]
-        public async Task<ActionResult> GetProjectTasks(Guid projectId)
+        public async Task<ActionResult> GetProjectTasks(Guid projectId, [FromQuery] int? columnId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            var result = await _taskService.GetProjectTasksAsync(projectId, CurrentUserId);
-            return Ok(new ApiResponse<List<TaskDetailResponse>>(true, "Success", result));
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+            if (pageSize > 200) pageSize = 200;
+
+            var result = await _taskService.GetProjectTasksAsync(projectId, CurrentUserId, columnId, page, pageSize);
+            return Ok(new ApiResponse<PagedResponse<TaskDetailResponse>>(true, "Success", result));
+        }
+
+        [HttpGet("{projectId:guid}/tasks/stats")]
+        public async Task<ActionResult> GetTaskStats(Guid projectId)
+        {
+            var result = await _taskService.GetTaskStatsAsync(projectId, CurrentUserId);
+            return Ok(new ApiResponse<TaskStatsResponse>(true, "Success", result));
         }
 
         [HttpPost("{projectId:guid}/tasks")]

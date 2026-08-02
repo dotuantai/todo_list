@@ -36,10 +36,32 @@ export const removeMember = (projectId, userId) => {
   return api.delete(`/projects/${projectId}/members/${userId}`)
 }
 
-export const getProjectTasks = (projectId) => {
-  return api.get(`/projects/${projectId}/tasks`)
+export const getProjectTasks = (projectId, columnId = null, page = 1, pageSize = 20) => {
+  let url = `/projects/${projectId}/tasks?page=${page}&pageSize=${pageSize}`
+  if (columnId !== null && columnId !== undefined) url += `&columnId=${columnId}`
+  return api.get(url)
+}
+
+export const getProjectTaskStats = (projectId) => {
+  return api.get(`/projects/${projectId}/tasks/stats`)
 }
 
 export const createProjectTask = (projectId, data) => {
   return api.post(`/projects/${projectId}/tasks`, data)
+}
+
+export const getProjectColumns = (projectId) => {
+  return api.get(`/projects/${projectId}/columns`)
+}
+
+export const createProjectColumn = (projectId, data) => {
+  return api.post(`/projects/${projectId}/columns`, data)
+}
+
+export const updateProjectColumn = (projectId, columnId, data) => {
+  return api.put(`/projects/${projectId}/columns/${columnId}`, data)
+}
+
+export const deleteProjectColumn = (projectId, columnId) => {
+  return api.delete(`/projects/${projectId}/columns/${columnId}`)
 }

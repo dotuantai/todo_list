@@ -20,24 +20,24 @@
     </div>
 
     <!-- Kanban Board -->
-    <div v-else class="row g-3 text-start align-items-start">
+    <div v-else class="d-flex gap-3 text-start align-items-start" style="overflow-x: auto; padding-bottom: 1rem; min-height: 70vh;">
       <div v-for="col in columns"
-          :key="col.status"
-          class="col-12 col-md-6 col-lg-3"
+          :key="col.Id"
+          style="min-width: 290px; width: 290px;"
         >
         <div 
           class="card bg-body-tertiary border-0 shadow-sm rounded-3 p-3 kanban-col"
-          :class="{ 'kanban-col--dragover': dragOverCol === col.status }"
-          @dragover="onDragOver($event, col.status)"
+          :class="{ 'kanban-col--dragover': dragOverCol === col.Id }"
+          @dragover="onDragOver($event, col.Id)"
           @dragleave="onDragLeave"
-          @drop="onDrop($event, col.status)"
+          @drop="onDrop($event, col.Id)"
         >
           <!-- Column Header -->
           <div class="d-flex align-items-center gap-2 mb-3">
             <span class="col-dot rounded-circle" :style="{ background: col.color, width: '10px', height: '10px', display: 'inline-block' }"></span>
-            <span class="fw-bold text-uppercase text-secondary" style="font-size: 0.8rem; letter-spacing: 0.05em;">{{ getColLabel(col.status) }}</span>
+            <span class="fw-bold text-uppercase text-secondary" style="font-size: 0.8rem; letter-spacing: 0.05em;">{{ col.Name }}</span>
             <span class="badge rounded-pill ms-auto" :style="{ background: col.bgMid, color: col.color }">
-              {{ getTasksByStatus(col.status).length }}
+              {{ getTasksByColumnId(col.Id).length }}
             </span>
           </div>
 
@@ -46,14 +46,14 @@
             <div v-for="n in 3" :key="n" class="skeleton-card bg-body rounded-3 shadow-sm w-100" style="height: 100px;"></div>
           </div>
 
-          <div v-else-if="getTasksByStatus(col.status).length === 0" class="text-center py-4 border border-dashed rounded-3 bg-body text-muted">
+          <div v-else-if="getTasksByColumnId(col.Id).length === 0" class="text-center py-4 border border-dashed rounded-3 bg-body text-muted">
             <i class="bi bi-inbox d-block mb-1 fs-4 text-secondary opacity-50"></i>
             <span class="small" style="font-size: 0.85rem;">{{ $t('tasks.no_tasks_col') }}</span>
           </div>
 
           <div v-else class="d-flex flex-column gap-2">
             <div
-              v-for="task in getTasksByStatus(col.status)"
+              v-for="task in getTasksByColumnId(col.Id)"
               :key="task.Id"
               class="card border-0 border-top border-4 shadow-sm task-tag-card p-3"
               :class="{ 'task-tag-card--dragging': draggingTask?.Id === task.Id }"
@@ -76,12 +76,18 @@
                 </span>
               </div>
             </div>
+            
+            <!-- Column Load More -->
+            <div v-if="columnStates[col.Id]?.hasMore" class="mt-2 text-center pb-2">
+              <button class="btn btn-sm w-100 fw-semibold btn-outline-secondary" style="border-radius: 6px;" @click="loadMore(col.Id)" :disabled="columnStates[col.Id]?.loading">
+                <span v-if="columnStates[col.Id]?.loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                {{ $t('tasks.load_more', 'Load More') }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
-
-
 
     <!-- ── Task Detail Modal ── -->
     <Teleport to="body">
@@ -91,11 +97,11 @@
           <div class="modal-content border-0 shadow-lg rounded-4">
             
             <!-- Modal Header -->
-            <div class="modal-header border-bottom p-4" :style="{ background: getColByStatus(modal.task?.Status)?.bgLight }">
+            <div class="modal-header border-bottom p-4" :style="{ background: getColById(modal.task?.ColumnId)?.bgLight }">
               <div class="text-start flex-grow-1">
                 <div class="d-flex gap-2 flex-wrap mb-2">
-                  <span class="badge text-uppercase font-monospace" :style="{ background: getColByStatus(modal.task?.Status)?.bgMid, color: getColByStatus(modal.task?.Status)?.color }">
-                    {{ getColByStatus(modal.task?.Status)?.label }}
+                  <span class="badge text-uppercase font-monospace" :style="{ background: getColById(modal.task?.ColumnId)?.bgMid, color: getColById(modal.task?.ColumnId)?.color }">
+                    {{ getColById(modal.task?.ColumnId)?.Name }}
                   </span>
                   <span v-if="modal.task && isOverdue(modal.task)" class="badge bg-danger bg-opacity-10 text-danger rounded-pill">
                     {{ $t('tasks.overdue') }}
@@ -136,15 +142,15 @@
                   <div class="text-muted font-monospace">#{{ modal.task?.Id }}</div>
                 </div>
                 <div class="col-6 col-md-3">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.status') }}</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Column</label>
                   <div v-if="projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager' || isAssignedToCurrentUser(modal.task)">
-                    <select :value="modal.task?.Status" @change="changeTaskStatusFromSelect($event.target.value)" class="form-select form-select-sm" style="border-radius: 8px;">
-                      <option v-for="col in columns" :key="col.status" :value="col.status">{{ getColLabel(col.status) }}</option>
+                    <select :value="modal.task?.ColumnId" @change="changeTaskColumnFromSelect($event.target.value)" class="form-select form-select-sm" style="border-radius: 8px;">
+                      <option v-for="col in columns" :key="col.Id" :value="col.Id">{{ col.Name }}</option>
                     </select>
                   </div>
                   <div v-else>
-                    <span class="badge" :style="{ background: getColByStatus(modal.task?.Status)?.bgMid, color: getColByStatus(modal.task?.Status)?.color }">
-                      {{ getColByStatus(modal.task?.Status)?.label }}
+                    <span class="badge" :style="{ background: getColById(modal.task?.ColumnId)?.bgMid, color: getColById(modal.task?.ColumnId)?.color }">
+                      {{ getColById(modal.task?.ColumnId)?.Name }}
                     </span>
                   </div>
                 </div>
@@ -205,9 +211,9 @@
                   <input id="edit-deadline" v-model="editForm.deadline" type="datetime-local" class="form-control" />
                 </div>
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.status') }}</label>
-                  <select id="edit-status" v-model="editForm.status" class="form-select">
-                    <option v-for="col in columns" :key="col.status" :value="col.status">{{ getColLabel(col.status) }}</option>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">Column</label>
+                  <select id="edit-status" v-model="editForm.columnId" class="form-select">
+                    <option v-for="col in columns" :key="col.Id" :value="col.Id">{{ col.Name }}</option>
                   </select>
                 </div>
               </div>
@@ -222,7 +228,7 @@
             <!-- ── FOOTER — View mode, Assign Users (Only for Owner/Manager) ── -->
             <div v-if="!editMode && (projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager')" class="modal-footer p-4 border-top bg-body-secondary d-flex align-items-center gap-3 flex-wrap">
               <div class="flex-grow-1 text-start" style="min-width: 250px;">
-                <select v-model="selectedAssigneeId" class="form-select form-select-sm" style="border-radius: 8px; height: 38px;">
+                <select v-model="selectedAssigneeId" class="form-select" style="border-radius: 8px;">
                   <option :value="null">-- {{ $t('taskModal.select_assignee') }} --</option>
                   <option v-for="m in projectMembersNotAssigned" :key="m.UserId" :value="m.UserId">
                     {{ m.Email }} ({{ m.Role }})
@@ -231,10 +237,10 @@
               </div>
 
               <div class="ms-auto d-flex gap-2">
-                <button class="btn btn-sm btn-primary fw-semibold" @click="assignUser" :disabled="!selectedAssigneeId" style="height: 38px; border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none; padding: 0 16px;">
+                <button class="btn btn-primary fw-semibold px-3" @click="assignUser" :disabled="!selectedAssigneeId" style="border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">
                   <i class="bi bi-person-plus-fill me-1"></i> {{ $t('members.add_btn') }}
                 </button>
-                <button class="btn btn-sm btn-outline-secondary" @click="closeModal" style="height: 38px; border-radius: 8px; padding: 0 16px;">{{ $t('tasks.cancel') }}</button>
+                <button class="btn btn-outline-secondary px-3" @click="closeModal" style="border-radius: 8px;">{{ $t('tasks.cancel') }}</button>
               </div>
             </div>
 
@@ -266,8 +272,8 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { assignTask, updateTask, removeAssignment, updateStatusTask, deleteTask } from '../services/taskService.js'
-import { getMembers, addMember, updateMemberRole, removeMember, getProjectTasks, updateProject, deleteProject } from '../services/projectService.js'
+import { assignTask, updateTask, removeAssignment, updateTaskColumn, deleteTask } from '../services/taskService.js'
+import { getMembers, addMember, updateMemberRole, removeMember, getProjectTasks, getProjectColumns } from '../services/projectService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 const projectStore = useProjectStore()
 import { toastSuccess, toastError, confirm, extractMessage } from '../utils/swal.js'
@@ -280,7 +286,12 @@ const loading       = ref(false)
 const saving        = ref(false)
 const modal         = reactive({ open: false, task: null })
 const editMode      = ref(false)
-const editForm      = reactive({ title: '', description: '', deadline: '', status: '' })
+const editForm      = reactive({ title: '', description: '', deadline: '', columnId: null })
+
+// Pagination states
+const columnStates = reactive({})
+const columns = ref([])
+const pageSize = 15
 
 // Project members states
 const members        = ref([])
@@ -294,35 +305,17 @@ const draggingTask       = ref(null)
 const draggingFromStatus = ref(null)
 const dragOverCol        = ref(null)
 
-const columns = [
-  { status: 'ToDo',       label: 'To Do',       color: 'var(--status-todo-color)', bgLight: 'var(--status-todo-bg-light)', bgMid: 'var(--status-todo-bg-mid)' },
-  { status: 'InProgress', label: 'In Progress',  color: 'var(--status-inprogress-color)', bgLight: 'var(--status-inprogress-bg-light)', bgMid: 'var(--status-inprogress-bg-mid)' },
-  { status: 'Done',       label: 'Done',         color: 'var(--status-done-color)', bgLight: 'var(--status-done-bg-light)', bgMid: 'var(--status-done-bg-mid)' },
-  { status: 'Closed',     label: 'Closed',       color: 'var(--status-closed-color)', bgLight: 'var(--status-closed-bg-light)', bgMid: 'var(--status-closed-bg-mid)' },
-]
-
-const getColLabel = (status) => {
-  switch (status) {
-    case 'ToDo': return t('dashboard.todo')
-    case 'InProgress': return t('dashboard.in_progress')
-    case 'Done': return t('dashboard.done')
-    case 'Closed': return t('dashboard.closed')
-    default: return status
-  }
-}
-
-const getTasksByStatus   = (status) => tasks.value.filter(t => t.Status === status)
-const getColByStatus     = (status) => {
-  const col = columns.find(c => c.status === status)
+const getTasksByColumnId   = (colId) => tasks.value.filter(t => t.ColumnId === colId)
+const getColById     = (colId) => {
+  const col = columns.value.find(c => c.Id === colId)
   if (!col) return null
-  return {
-    ...col,
-    label: getColLabel(status)
-  }
+  return col
 }
 
 const isOverdue = (task) => {
-  if (!task.Deadline || task.Status === 'Done' || task.Status === 'Closed') return false
+  if (!task.Deadline) return false
+  const col = getColById(task.ColumnId)
+  if (col && col.IsCompletedStage) return false
   return new Date(task.Deadline) < new Date()
 }
 
@@ -350,7 +343,7 @@ const toggleEdit = () => {
     editForm.title       = modal.task?.Title || ''
     editForm.description = modal.task?.Description || ''
     editForm.deadline    = toDatetimeLocal(modal.task?.Deadline)
-    editForm.status      = modal.task?.Status || 'ToDo'
+    editForm.columnId    = modal.task?.ColumnId || (columns.value.length > 0 ? columns.value[0].Id : null)
   }
   editMode.value = !editMode.value
 }
@@ -361,13 +354,12 @@ const saveEdit = async () => {
   saving.value = true
   try {
     const payload = {
-      taskId:      modal.task.Id,
       title:       editForm.title,
       description: editForm.description,
       Deadline:    editForm.deadline ? new Date(editForm.deadline).toISOString() : null,
-      Status:      editForm.status,
+      ColumnId:    editForm.columnId,
     }
-    await updateTask(payload)
+    await updateTask(modal.task.Id, payload)
     await loadData()
     const updated = tasks.value.find(t => t.Id === modal.task.Id)
     if (updated) modal.task = updated
@@ -375,7 +367,7 @@ const saveEdit = async () => {
     toastSuccess('Task updated successfully!')
   } catch (err) {
     console.error(err)
-    toastError(extractMessage(err, 'Failed to update task.'))
+    toastError(extractMessage(err, t('errors.default')))
   } finally {
     saving.value = false
   }
@@ -397,7 +389,7 @@ const handleDeleteTask = async () => {
     await loadData()
   } catch (err) {
     console.error(err)
-    toastError(extractMessage(err, 'Failed to delete task.'))
+    toastError(extractMessage(err, t('errors.default')))
   } finally {
     saving.value = false
   }
@@ -410,21 +402,87 @@ const projectMembersNotAssigned = computed(() => {
   return members.value.filter(m => !assignedIds.includes(m.UserId))
 })
 
+const loadColumnData = async (colId, append = false) => {
+  if (!projectStore.currentProjectId) return
+  
+  const colState = columnStates[colId]
+  if (!colState) return
+  
+  colState.loading = true
+  try {
+    const res = await getProjectTasks(projectStore.currentProjectId, colId, colState.page, pageSize)
+    const pageData = res?.data
+    if (pageData) {
+      if (append) {
+        const newItems = (pageData.Items || []).filter(item => !tasks.value.some(t => t.Id === item.Id))
+        tasks.value = [...tasks.value, ...newItems]
+      } else {
+        const otherTasks = tasks.value.filter(t => t.ColumnId !== colId)
+        tasks.value = [...otherTasks, ...(pageData.Items || [])]
+      }
+      colState.hasMore = pageData.Page < pageData.TotalPages
+    } else {
+      if (!append) tasks.value = tasks.value.filter(t => t.ColumnId !== colId)
+      colState.hasMore = false
+    }
+  } catch (e) {
+    console.error(e)
+    toastError(extractMessage(e, t('errors.default')))
+  } finally {
+    colState.loading = false
+  }
+}
+
+const loadMore = async (colId) => {
+  const colState = columnStates[colId]
+  if (!colState || !colState.hasMore || colState.loading) return
+  colState.page++
+  await loadColumnData(colId, true)
+}
+
+const loadColumns = async () => {
+  if (!projectStore.currentProjectId) {
+    columns.value = []
+    return
+  }
+  try {
+    const res = await getProjectColumns(projectStore.currentProjectId)
+    columns.value = res?.data || []
+    
+    // Initialize states
+    Object.keys(columnStates).forEach(k => delete columnStates[k])
+    columns.value.forEach(col => {
+      // Generate standard colors
+      if (col.IsCompletedStage) {
+         col.color = 'var(--status-done-color)'
+         col.bgLight = 'var(--status-done-bg-light)'
+         col.bgMid = 'var(--status-done-bg-mid)'
+      } else if (col.Order === 0) {
+         col.color = 'var(--status-todo-color)'
+         col.bgLight = 'var(--status-todo-bg-light)'
+         col.bgMid = 'var(--status-todo-bg-mid)'
+      } else {
+         col.color = 'var(--status-inprogress-color)'
+         col.bgLight = 'var(--status-inprogress-bg-light)'
+         col.bgMid = 'var(--status-inprogress-bg-mid)'
+      }
+      
+      columnStates[col.Id] = { page: 1, hasMore: true, loading: false }
+    })
+  } catch(e) {
+    console.error(e)
+  }
+}
+
 const loadData = async () => {
   if (!projectStore.currentProjectId) {
     tasks.value = []
     return
   }
   loading.value = true
-  try {
-    const res = await getProjectTasks(projectStore.currentProjectId)
-    tasks.value = res?.data || []
-  } catch (e) {
-    console.error(e)
-    toastError(extractMessage(e, 'Failed to load task list.'))
-  } finally {
-    loading.value = false
-  }
+  await loadColumns()
+  await Promise.all(columns.value.map(col => loadColumnData(col.Id)))
+  loading.value = false
 }
 
 const loadMembers = async () => {
@@ -444,6 +502,7 @@ const loadMembers = async () => {
 }
 
 const refreshAll = async () => {
+  Object.values(columnStates).forEach(col => { col.page = 1; col.hasMore = true })
   await Promise.all([loadData(), loadMembers()])
 }
 
@@ -455,21 +514,21 @@ const isAssignedToCurrentUser = (task) => {
   return task.AssignedUsers.some(u => u.Email === projectStore.currentUserEmail)
 }
 
-const changeTaskStatusFromSelect = async (newStatus) => {
+const changeTaskColumnFromSelect = async (newColumnId) => {
   if (!modal.task) return
-  const oldStatus = modal.task.Status
-  modal.task.Status = newStatus
+  const oldColumnId = modal.task.ColumnId
+  modal.task.ColumnId = parseInt(newColumnId)
   try {
-    await updateStatusTask({
+    await updateTaskColumn({
       taskId: modal.task.Id,
-      status: newStatus
+      columnId: parseInt(newColumnId)
     })
     await loadData()
-    toastSuccess('Task status updated successfully!')
+    toastSuccess('Task column updated successfully!')
   } catch (err) {
-    modal.task.Status = oldStatus
+    modal.task.ColumnId = oldColumnId
     console.error(err)
-    toastError(extractMessage(err, 'Failed to update task status.'))
+    toastError(extractMessage(err, t('errors.default')))
   }
 }
 
@@ -488,7 +547,7 @@ const assignUser = async () => {
     toastSuccess('Task assigned successfully!')
   } catch (err) {
     console.error(err)
-    toastError(extractMessage(err, 'Failed to assign task.'))
+    toastError(extractMessage(err, t('errors.default')))
   }
 }
 
@@ -500,21 +559,21 @@ const removeUser = async (user) => {
   )
   if (!ok) return
   try {
-    await removeAssignment({ taskId: modal.task.Id, userId: user.UserId })
+    await removeAssignment(modal.task.Id, user.UserId)
     await loadData()
     const updated = tasks.value.find(t => t.Id === modal.task.Id)
     if (updated) modal.task = updated
     toastSuccess('Assignment revoked successfully!')
   } catch (err) {
     console.error(err)
-    toastError(extractMessage(err, 'Failed to revoke assignment.'))
+    toastError(extractMessage(err, t('errors.default')))
   }
 }
 
 // Drag & drop
 const onDragStart = (task) => {
   draggingTask.value = task
-  draggingFromStatus.value = task.Status
+  draggingFromStatus.value = task.ColumnId
 }
 
 const onDragEnd = () => {
@@ -523,32 +582,32 @@ const onDragEnd = () => {
   dragOverCol.value = null
 }
 
-const onDragOver = (e, status) => {
+const onDragOver = (e, colId) => {
   e.preventDefault()
-  dragOverCol.value = status
+  dragOverCol.value = colId
 }
 
 const onDragLeave = () => {
   dragOverCol.value = null
 }
 
-const onDrop = async (e, targetStatus) => {
+const onDrop = async (e, targetColId) => {
   e.preventDefault()
   dragOverCol.value = null
   const task = draggingTask.value
-  if (!task || task.Status === targetStatus) return
+  if (!task || task.ColumnId === targetColId) return
 
   // Optimistic update
-  const oldStatus = task.Status
-  task.Status = targetStatus
+  const oldColumnId = task.ColumnId
+  task.ColumnId = targetColId
 
   try {
-    await updateStatusTask({ taskId: task.Id, status: targetStatus })
+    await updateTaskColumn({ taskId: task.Id, columnId: targetColId })
     toastSuccess('Status updated!')
   } catch (err) {
-    task.Status = oldStatus
+    task.ColumnId = oldColumnId
     console.error('Failed to update status, rolled back:', err)
-    toastError(extractMessage(err, 'Failed to change status.'))
+    toastError(extractMessage(err, t('errors.default')))
   }
 }
 

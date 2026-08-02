@@ -1,10 +1,12 @@
 using System;
+using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API_v2.Exceptions;
 using API_v2.Models;
 using API_v2.Models.DTOs;
+using API_v2.Models.Constants;
 using API_v2.Repositories.IRepositories;
 using API_v2.Services.Interfaces;
 
@@ -15,15 +17,21 @@ namespace API_v2.Services
         private readonly IProjectRepository _projectRepo;
         private readonly IUserRepository _userRepo;
         private readonly INotificationService _notificationService;
+        private readonly IProjectColumnRepository _columnRepo;
+        private readonly ILogger<ProjectService> _logger;
 
         public ProjectService(
             IProjectRepository projectRepo, 
             IUserRepository userRepo,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IProjectColumnRepository columnRepo,
+            ILogger<ProjectService> logger)
         {
             _projectRepo = projectRepo;
             _userRepo = userRepo;
             _notificationService = notificationService;
+            _columnRepo = columnRepo;
+            _logger = logger;
         }
 
         public async Task<ProjectResponse> CreateProjectAsync(CreateProjectRequest req, Guid currentUserId)
@@ -56,14 +64,21 @@ namespace API_v2.Services
                 Id = Guid.NewGuid(),
                 ProjectId = project.Id,
                 UserId = currentUserId,
-                Role = "Owner",
+                Role = ProjectRoles.Owner,
                 JoinedAt = DateTime.UtcNow
             };
             _projectRepo.AddMember(member);
+
+            // Seed default columns
+            _columnRepo.Add(new ProjectColumn { ProjectId = project.Id, Name = "To Do", Order = 0, IsCompletedStage = false, CreatedAt = DateTime.UtcNow });
+            _columnRepo.Add(new ProjectColumn { ProjectId = project.Id, Name = "In Progress", Order = 1, IsCompletedStage = false, CreatedAt = DateTime.UtcNow });
+            _columnRepo.Add(new ProjectColumn { ProjectId = project.Id, Name = "Done", Order = 2, IsCompletedStage = true, CreatedAt = DateTime.UtcNow });
+            _columnRepo.Add(new ProjectColumn { ProjectId = project.Id, Name = "Closed", Order = 3, IsCompletedStage = true, CreatedAt = DateTime.UtcNow });
+
             await _projectRepo.SaveAsync();
 
             var dbProject = await _projectRepo.GetByIdAsync(project.Id);
-            return MapToProjectResponse(dbProject!, "Owner");
+            return MapToProjectResponse(dbProject!, ProjectRoles.Owner);
         }
 
         public async Task<List<ProjectResponse>> GetProjectsForUserAsync(Guid currentUserId)
@@ -98,7 +113,7 @@ namespace API_v2.Services
             }
 
             var member = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (member is null || !member.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase))
+            if (member is null || !member.Role.Equals(ProjectRoles.Owner, StringComparison.OrdinalIgnoreCase))
             {
                 throw ApiException.Forbidden("Only the Owner is allowed to edit project information.");
             }
@@ -154,15 +169,12 @@ namespace API_v2.Services
         public async Task<MemberResponse> AddMemberAsync(Guid projectId, AddMemberRequest req, Guid currentUserId)
         {
             var currentMember = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (currentMember is null || !currentMember.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase))
+            if (currentMember is null || !currentMember.Role.Equals(ProjectRoles.Owner, StringComparison.OrdinalIgnoreCase))
             {
                 throw ApiException.Forbidden("Only the project owner is allowed to manage members.");
             }
 
-            if (string.IsNullOrWhiteSpace(req.Role) ||
-                (!req.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                 !req.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase) &&
-                 !req.Role.Equals("Member", StringComparison.OrdinalIgnoreCase)))
+            if (!ProjectRoles.IsValid(req.Role))
             {
                 throw ApiException.BadRequest("Invalid role. Valid roles: Owner, Manager, Member.");
             }
@@ -207,10 +219,11 @@ namespace API_v2.Services
                     projectId.ToString()
                 );
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // Soft fail if SignalR hub or database notification logic encounters issues
                 // so that the member addition itself is not rolled back.
+                _logger.LogWarning(ex, "Failed to send new project invitation notification.");
             }
 
             return new MemberResponse
@@ -225,15 +238,12 @@ namespace API_v2.Services
         public async Task<MemberResponse> UpdateMemberRoleAsync(Guid projectId, Guid userId, UpdateMemberRequest req, Guid currentUserId)
         {
             var currentMember = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (currentMember is null || !currentMember.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase))
+            if (currentMember is null || !currentMember.Role.Equals(ProjectRoles.Owner, StringComparison.OrdinalIgnoreCase))
             {
                 throw ApiException.Forbidden("Only the project owner is allowed to manage members.");
             }
 
-            if (string.IsNullOrWhiteSpace(req.Role) ||
-                (!req.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase) &&
-                 !req.Role.Equals("Manager", StringComparison.OrdinalIgnoreCase) &&
-                 !req.Role.Equals("Member", StringComparison.OrdinalIgnoreCase)))
+            if (!ProjectRoles.IsValid(req.Role))
             {
                 throw ApiException.BadRequest("Invalid role. Valid roles: Owner, Manager, Member.");
             }
@@ -270,7 +280,7 @@ namespace API_v2.Services
         public async Task RemoveMemberAsync(Guid projectId, Guid userId, Guid currentUserId)
         {
             var currentMember = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (currentMember is null || !currentMember.Role.Equals("Owner", StringComparison.OrdinalIgnoreCase))
+            if (currentMember is null || !currentMember.Role.Equals(ProjectRoles.Owner, StringComparison.OrdinalIgnoreCase))
             {
                 throw ApiException.Forbidden("Only the project owner is allowed to manage members.");
             }

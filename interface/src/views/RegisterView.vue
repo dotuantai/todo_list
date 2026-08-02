@@ -266,7 +266,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { loginn, register, verifyOtp, resendOtp, googleLogin } from '../services/authService.js'
+import { login as apiLogin, register, verifyOtp, resendOtp, googleLogin } from '../services/authService.js'
 import { toastError, toastSuccess, extractMessage } from '../utils/swal.js'
 
 const router = useRouter()
@@ -360,7 +360,7 @@ const handleRegister = async () => {
     toastSuccess('Verification code sent! Please check your email inbox.')
     showOtpVerification.value = true
   } catch (error) {
-    toastError(extractMessage(error, 'Registration failed.'))
+    toastError(extractMessage(error, t('errors.default')))
   } finally {
     loading.value = false
   }
@@ -380,7 +380,7 @@ const handleVerifyOtp = async () => {
     })
 
     // Automatic login in the background
-    const loginRes = await loginn({
+    const loginRes = await apiLogin({
       Email: email.value,
       Password: password.value
     })
@@ -392,7 +392,7 @@ const handleVerifyOtp = async () => {
     toastSuccess('Account verified and logged in successfully!')
     router.push('/projects')
   } catch (error) {
-    toastError(extractMessage(error, 'Verification or login failed.'))
+    toastError(extractMessage(error, t('errors.default')))
   } finally {
     loading.value = false
   }
@@ -404,7 +404,7 @@ const handleResendOtp = async () => {
     await resendOtp(email.value)
     toastSuccess('A new verification code has been sent to your email.')
   } catch (error) {
-    toastError(extractMessage(error, 'Failed to resend code.'))
+    toastError(extractMessage(error, t('errors.default')))
   } finally {
     resending.value = false
   }

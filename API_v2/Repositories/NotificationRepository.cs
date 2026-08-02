@@ -21,6 +21,7 @@ namespace API_v2.Repositories
         public async Task<List<Notification>> GetNotificationsByUserIdAsync(Guid userId)
         {
             return await _db.Notifications
+                .AsNoTracking()
                 .Where(n => n.UserId == userId)
                 .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();

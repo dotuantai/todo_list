@@ -34,6 +34,7 @@ namespace API_v2.Repositories
         public async Task<List<Project>> GetProjectsByUserIdAsync(Guid userId)
         {
             return await _dbContext.Projects
+                .AsNoTracking()
                 .Include(p => p.Owner)
                 .Where(p => p.ProjectMembers.Any(pm => pm.UserId == userId))
                 .ToListAsync();
@@ -42,6 +43,7 @@ namespace API_v2.Repositories
         public async Task<List<ProjectMember>> GetProjectMembersAsync(Guid projectId)
         {
             return await _dbContext.ProjectMembers
+                .AsNoTracking()
                 .Where(pm => pm.ProjectId == projectId)
                 .Include(pm => pm.User)
                 .ToListAsync();
@@ -71,6 +73,7 @@ namespace API_v2.Repositories
         public async Task<List<ProjectMember>> GetProjectMembersWithProjectsByUserIdAsync(Guid userId)
         {
             return await _dbContext.ProjectMembers
+                .AsNoTracking()
                 .Where(pm => pm.UserId == userId)
                 .Include(pm => pm.Project)
                     .ThenInclude(p => p.Owner)
