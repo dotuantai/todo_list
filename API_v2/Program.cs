@@ -16,7 +16,7 @@ using API_v2.Models.DTOs;
 using Serilog;
 using API_v2.Hubs;
 using Microsoft.AspNetCore.RateLimiting;
-
+using System.Threading.RateLimiting;
 
 // Enable Serilog self-logging to standard error to capture internal errors
 Serilog.Debugging.SelfLog.Enable(Console.Error);
@@ -74,19 +74,27 @@ builder.Services.AddMemoryCache();
 builder.Services.AddRateLimiter(options =>
 {
     // Policy for Login: 5 requests per minute
-    options.AddFixedWindowLimiter("login", opt =>
+    options.AddPolicy("login", context =>
     {
-        opt.PermitLimit = 5;
-        opt.Window = TimeSpan.FromMinutes(1);
-        opt.QueueLimit = 0;
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
     });
 
     // Policy for OTP: 3 requests per 5 minutes
-    options.AddFixedWindowLimiter("otp", opt =>
+    options.AddPolicy("otp", context =>
     {
-        opt.PermitLimit = 3;
-        opt.Window = TimeSpan.FromMinutes(5);
-        opt.QueueLimit = 0;
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 3,
+            Window = TimeSpan.FromMinutes(5),
+            QueueLimit = 0
+        });
     });
 
     // Custom response when rate limited
