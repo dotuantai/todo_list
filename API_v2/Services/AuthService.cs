@@ -197,7 +197,7 @@ namespace API_v2.Services
             if (!user.IsActive)
             {
                 _logger.LogWarning("SECURITY AUDIT [Login Failed] Deactivated account attempt: {Email} (ID: {UserId})", emailLower, user.Id);
-                throw ApiException.Forbidden("Account has been deactivated.");
+                throw ApiException.Unauthorized("Invalid email or password.");
             }
 
             if (!PasswordHelper.VerifyPassword(req.Password, user.PasswordHash))
@@ -336,6 +336,12 @@ namespace API_v2.Services
                 throw ApiException.Unauthorized("Invalid or expired Google Token.");
             }
 
+            if (!payload.EmailVerified)
+            {
+                _logger.LogWarning("SECURITY AUDIT [Google Login Failed] Unverified Google email: {Email}", payload.Email);
+                throw ApiException.BadRequest("Google account email is not verified.");
+            }
+
             var emailLower = payload.Email.Trim().ToLower();
             var user = await _userRepo.GetByEmailAsync(emailLower);
 
@@ -359,9 +365,8 @@ namespace API_v2.Services
             {
                 if (!user.IsActive)
                 {
-                    user.IsActive = true;
-                    await _userRepo.SaveAsync();
-                    _logger.LogInformation("AUDIT [Google Activation] Activated existing user: {Email}", emailLower);
+                    _logger.LogWarning("SECURITY AUDIT [Google Login Failed] Attempt to login to an inactive account: {Email}", emailLower);
+                    throw ApiException.Unauthorized("Account is disabled or not activated.");
                 }
             }
 

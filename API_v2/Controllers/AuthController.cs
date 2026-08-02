@@ -112,6 +112,10 @@ namespace API_v2.Controllers
         [Authorize]
         public async Task<ActionResult> SearchUsers([FromQuery] string q)
         {
+            if (string.IsNullOrWhiteSpace(q) || q.Length < 3)
+            {
+                return BadRequest(new ApiResponse<object>(false, "Search query must be at least 3 characters long.", null));
+            }
             return Ok(new ApiResponse<List<UserSearchResponse>>(true, "Success", await _authService.SearchUsersAsync(q)));
         }
 

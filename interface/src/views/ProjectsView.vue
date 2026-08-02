@@ -204,7 +204,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { getProjects, getProjectTaskStats, getMembers, createProject } from '../services/projectService.js'
+import { getProjects, createProject } from '../services/projectService.js'
 import { logout } from '../services/authService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 import { toastSuccess, toastError, extractMessage } from '../utils/swal.js'
@@ -229,38 +229,19 @@ const loadProjectsWithProgress = async () => {
     const list = res?.data || []
     projectStore.setProjects(list)
 
-    const promises = list.map(async (proj) => {
-      try {
-        const [statsRes, membersRes] = await Promise.all([
-          getProjectTaskStats(proj.Id),
-          getMembers(proj.Id)
-        ])
-        
-        const stats = statsRes?.data || { TotalTasks: 0, CompletedTasks: 0 }
-        const members = membersRes?.data || []
-        const completed = stats.CompletedTasks || stats.completedTasks || 0
-        const total = stats.TotalTasks || stats.totalTasks || 0
-        const percent = total > 0 ? Math.round((completed / total) * 100) : 0
-        
-        return {
-          ...proj,
-          percent,
-          totalTasks: total,
-          completedTasks: completed,
-          memberCount: members.length
-        }
-      } catch (e) {
-        console.error('Error loading meta for project ' + proj.Id, e)
-        return {
-          ...proj,
-          percent: 0,
-          totalTasks: 0,
-          completedTasks: 0,
-          memberCount: 1
-        }
+    projectsWithProgress.value = list.map((proj) => {
+      const completed = proj.CompletedTasks || proj.completedTasks || 0
+      const total = proj.TotalTasks || proj.totalTasks || 0
+      const percent = total > 0 ? Math.round((completed / total) * 100) : 0
+      
+      return {
+        ...proj,
+        percent,
+        totalTasks: total,
+        completedTasks: completed,
+        memberCount: proj.MemberCount || proj.memberCount || 0
       }
     })
-    projectsWithProgress.value = await Promise.all(promises)
   } catch (err) {
     console.error('Error loading projects list', err)
     toastError('Failed to load project list.')

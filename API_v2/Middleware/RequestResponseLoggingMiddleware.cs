@@ -45,6 +45,12 @@ namespace API_v2.Middleware
             var path = request.Path;
             var method = request.Method;
             var query = request.QueryString.ToString();
+            
+            if (query.Contains("access_token=", StringComparison.OrdinalIgnoreCase))
+            {
+                query = System.Text.RegularExpressions.Regex.Replace(query, @"access_token=[^&]*", "access_token=***MASKED***");
+            }
+
             var ip = GetClientIp(context);
             var userAgent = request.Headers["User-Agent"].ToString();
 
@@ -133,7 +139,7 @@ namespace API_v2.Middleware
 
         private static void MaskKeys(JsonObject obj)
         {
-            var sensitiveKeys = new[] { "password", "token", "secret", "cardnumber", "cvv" };
+            var sensitiveKeys = new[] { "password", "token", "secret", "cardnumber", "cvv", "idtoken", "id_token", "accesstoken", "access_token" };
             foreach (var property in obj.ToList())
             {
                 var keyLower = property.Key.ToLower();

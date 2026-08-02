@@ -83,8 +83,7 @@ namespace API_v2.Services
 
         public async Task<List<ProjectResponse>> GetProjectsForUserAsync(Guid currentUserId)
         {
-            var members = await _projectRepo.GetProjectMembersWithProjectsByUserIdAsync(currentUserId);
-            return members.Select(m => MapToProjectResponse(m.Project, m.Role)).ToList();
+            return await _projectRepo.GetProjectDashboardsAsync(currentUserId);
         }
 
         public async Task<ProjectResponse> GetProjectDetailAsync(Guid projectId, Guid currentUserId)
