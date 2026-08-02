@@ -15,6 +15,7 @@ using System.Linq;
 using API_v2.Models.DTOs;
 using Serilog;
 using API_v2.Hubs;
+using Microsoft.AspNetCore.RateLimiting;
 
 
 // Enable Serilog self-logging to standard error to capture internal errors
@@ -68,6 +69,35 @@ builder.Services.AddControllers()
     });
 
 builder.Services.AddMemoryCache();
+
+// Configure Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    // Policy for Login: 5 requests per minute
+    options.AddFixedWindowLimiter("login", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0;
+    });
+
+    // Policy for OTP: 3 requests per 5 minutes
+    options.AddFixedWindowLimiter("otp", opt =>
+    {
+        opt.PermitLimit = 3;
+        opt.Window = TimeSpan.FromMinutes(5);
+        opt.QueueLimit = 0;
+    });
+
+    // Custom response when rate limited
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = 429;
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new ApiResponse<object>(false, "Too many requests. Please try again later.", null), 
+            token);
+    };
+});
 
 // Configure EF Core with PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -152,9 +182,9 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 Log.Information("========== Application Started ==========");
 // Configure HTTP request pipeline middlewares in the correct order
-app.UseMiddleware<CorrelationIdMiddleware>(); // 1. Establish Correlation ID context
-app.UseMiddleware<RequestResponseLoggingMiddleware>(); // 2. Log request entry & response exit details (wrapping exception handling)
-app.UseMiddleware<GlobalExceptionHandlerMiddleware>(); // 3. Catch and sanitize errors
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>(); 
+app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -165,6 +195,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("CorsPolicy");
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
