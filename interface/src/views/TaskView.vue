@@ -265,6 +265,7 @@
                           {{ userInitial(user.Email) }}
                         </div>
                         <div class="flex-grow-1 min-w-0 text-start">
+                          <div class="small fw-semibold text-body text-truncate" :title="user.Email">{{ user.Email }}</div>
                         </div>
                       </div>
                     </div>
@@ -560,7 +561,7 @@ const loadComments = async (taskId) => {
   loadingComments.value = true
   try {
     const res = await getComments(taskId)
-    comments.value = res.data?.Data || []
+    comments.value = res.data || []
   } catch (err) {
     console.error('Failed to load comments', err)
   } finally {
