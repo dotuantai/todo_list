@@ -15,5 +15,6 @@ namespace API_v2.Models
         public virtual ICollection<TodoTask> CreatedTasks { get; set; } = new List<TodoTask>();
         public virtual ICollection<TaskAssignment> TaskAssignments { get; set; } = new List<TaskAssignment>();
         public virtual ICollection<ProjectMember> ProjectMembers { get; set; } = new List<ProjectMember>();
+        public virtual ICollection<TaskComment> Comments { get; set; } = new List<TaskComment>();
     }
 }

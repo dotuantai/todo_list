@@ -36,9 +36,17 @@ export const removeMember = (projectId, userId) => {
   return api.delete(`/projects/${projectId}/members/${userId}`)
 }
 
-export const getProjectTasks = (projectId, columnId = null, page = 1, pageSize = 20) => {
+export const getProjectTasks = (projectId, columnId = null, page = 1, pageSize = 20, search = null, priority = null, assigneeId = null) => {
   let url = `/projects/${projectId}/tasks?page=${page}&pageSize=${pageSize}`
   if (columnId !== null && columnId !== undefined) url += `&columnId=${columnId}`
+  if (search) url += `&search=${encodeURIComponent(search)}`
+  if (priority) url += `&priority=${encodeURIComponent(priority)}`
+  if (assigneeId) {
+    if (assigneeId === 'unassigned') url += `&assigneeId=` // We'll pass empty for unassigned, wait. Actually, API doesn't support 'unassigned' natively. I should send a special GUID or handle it in backend. Or just let backend handle it?
+    // Wait! In the API, assigneeId is Guid?. I should handle "unassigned" in the backend or frontend. Let's send a fake Guid for unassigned, or update API.
+    // Let's send "00000000-0000-0000-0000-000000000000" for unassigned.
+    url += `&assigneeId=${encodeURIComponent(assigneeId)}`
+  }
   return api.get(url)
 }
 

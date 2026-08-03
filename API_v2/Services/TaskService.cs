@@ -20,6 +20,7 @@ namespace API_v2.Services
         private readonly IProjectColumnRepository _projectColumnRepo;
         private readonly INotificationService _notificationService;
         private readonly ILogger<TaskService> _logger;
+        private readonly API_v2.Datas.AppDbContext _db;
 
         public TaskService(
             ITaskRepository taskRepo, 
@@ -27,6 +28,7 @@ namespace API_v2.Services
             IProjectRepository projectRepo,
             IProjectColumnRepository projectColumnRepo,
             INotificationService notificationService,
+            API_v2.Datas.AppDbContext db,
             ILogger<TaskService> logger)
         {
             _taskRepo = taskRepo;
@@ -34,6 +36,7 @@ namespace API_v2.Services
             _projectRepo = projectRepo;
             _projectColumnRepo = projectColumnRepo;
             _notificationService = notificationService;
+            _db = db;
             _logger = logger;
         }
 
@@ -56,10 +59,23 @@ namespace API_v2.Services
                 CreatorId = creatorId,
                 Deadline = NormalizeToUtc(req.Deadline),
                 ColumnId = req.ColumnId,
-                ProjectId = projectId
+                ProjectId = projectId,
+                Priority = req.Priority
             };
             _taskRepo.Add(task);
             await _taskRepo.SaveAsync();
+
+            if (!string.IsNullOrWhiteSpace(req.AssigneeId) && Guid.TryParse(req.AssigneeId, out Guid parsedUserId))
+            {
+                var assignment = new TaskAssignment
+                {
+                    TaskId = task.Id,
+                    UserId = parsedUserId,
+                    AssignedAt = DateTime.UtcNow
+                };
+                _assignRepo.Add(assignment);
+                await _assignRepo.SaveAsync();
+            }
 
             try
             {
@@ -79,51 +95,95 @@ namespace API_v2.Services
 
         public async Task<string> UpdateTaskAsync(int taskId, UpdateTaskRequest req, Guid currentUserId)
         {
-            var task = await GetTaskOrThrowAsync(taskId);
-
-            if (task.ProjectId.HasValue)
+            using var transaction = await _db.Database.BeginTransactionAsync();
+            try
             {
-                await VerifyOwnerOrManagerAsync(task.ProjectId.Value, currentUserId, "You do not have permission to edit tasks in this project.");
-            }
-            else
-            {
-                if (task.CreatorId != currentUserId)
+                var task = await _taskRepo.GetByIdWithDetailsAsync(taskId);
+                if (task is null)
                 {
-                    var assignment = await _assignRepo.GetAssignmentAsync(taskId, currentUserId);
-                    if (assignment is null)
+                    throw ApiException.NotFound($"Task #{taskId} does not exist.");
+                }
+
+                if (task.ProjectId.HasValue)
+                {
+                    await VerifyOwnerOrManagerAsync(task.ProjectId.Value, currentUserId, "You do not have permission to edit tasks in this project.");
+                }
+                else
+                {
+                    if (task.CreatorId != currentUserId)
                     {
-                        throw ApiException.Forbidden("You do not have permission to edit this task.");
+                        var assignment = await _assignRepo.GetAssignmentAsync(taskId, currentUserId);
+                        if (assignment is null)
+                        {
+                            throw ApiException.Forbidden("You do not have permission to edit this task.");
+                        }
                     }
                 }
-            }
 
-            if (string.IsNullOrWhiteSpace(req.Title))
-            {
-                throw ApiException.BadRequest("Task title cannot be empty.");
-            }
-
-            await VerifyColumnBelongsToProjectAsync(req.ColumnId, task.ProjectId);
-
-            task.Title = req.Title.Trim();
-            task.Description = req.Description?.Trim();
-            task.Deadline = NormalizeToUtc(req.Deadline);
-            task.ColumnId = req.ColumnId;
-            await _taskRepo.SaveAsync();
-
-            if (task.ProjectId.HasValue)
-            {
-                try
+                if (string.IsNullOrWhiteSpace(req.Title))
                 {
-                    var taskWithDetails = await _taskRepo.GetByIdWithDetailsAsync(task.Id);
-                    if (taskWithDetails != null)
+                    throw ApiException.BadRequest("Task title cannot be empty.");
+                }
+
+                await VerifyColumnBelongsToProjectAsync(req.ColumnId, task.ProjectId);
+
+                task.Title = req.Title.Trim();
+                task.Description = req.Description?.Trim();
+                task.Deadline = NormalizeToUtc(req.Deadline);
+                task.ColumnId = req.ColumnId;
+                task.Priority = req.Priority;
+                
+                // Update assignments if provided
+                if (req.AssignedUserIds != null)
+                {
+                    // Remove existing assignments not in the new list
+                    var currentAssigneeIds = task.Assignments.Select(a => a.UserId).ToList();
+                    
+                    var toRemove = task.Assignments.Where(a => !req.AssignedUserIds.Contains(a.UserId.ToString())).ToList();
+                    foreach (var a in toRemove)
                     {
-                        await _notificationService.SendTaskUpdatedAsync(task.ProjectId.Value, MapToTaskDetailResponse(taskWithDetails));
+                        _assignRepo.Remove(a);
+                    }
+
+                    // Add new assignments
+                    foreach (var userIdStr in req.AssignedUserIds)
+                    {
+                        if (Guid.TryParse(userIdStr, out Guid parsedUserId) && !currentAssigneeIds.Contains(parsedUserId))
+                        {
+                            _assignRepo.Add(new TaskAssignment
+                            {
+                                TaskId = task.Id,
+                                UserId = parsedUserId,
+                                AssignedAt = DateTime.UtcNow
+                            });
+                        }
                     }
                 }
-                catch (Exception ex) { _logger.LogWarning(ex, "Failed to send task updated notification."); }
-            }
 
-            return "Task updated successfully.";
+                await _taskRepo.SaveAsync(); // this saves both task and assignments due to context tracking
+                await transaction.CommitAsync();
+
+                if (task.ProjectId.HasValue)
+                {
+                    try
+                    {
+                        // Refresh details to include newly added assignments for notification
+                        var updatedTaskWithDetails = await _taskRepo.GetByIdWithDetailsAsync(task.Id);
+                        if (updatedTaskWithDetails != null)
+                        {
+                            await _notificationService.SendTaskUpdatedAsync(task.ProjectId.Value, MapToTaskDetailResponse(updatedTaskWithDetails));
+                        }
+                    }
+                    catch (Exception ex) { _logger.LogWarning(ex, "Failed to send task updated notification."); }
+                }
+
+                return "Task updated successfully.";
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<string> DeleteTaskAsync(int taskId, Guid currentUserId)
@@ -233,7 +293,7 @@ namespace API_v2.Services
             return "Task assigned successfully.";
         }
 
-        public async Task<PagedResponse<TaskDetailResponse>> GetProjectTasksAsync(Guid projectId, Guid userId, int? columnId, int page, int pageSize)
+        public async Task<PagedResponse<TaskDetailResponse>> GetProjectTasksAsync(Guid projectId, Guid userId, int? columnId, int page, int pageSize, string search = null, API_v2.Models.Enums.TaskPriority? priority = null, Guid? assigneeId = null)
         {
             var member = await _projectRepo.GetMemberAsync(projectId, userId);
             if (member is null)
@@ -241,7 +301,7 @@ namespace API_v2.Services
                 throw ApiException.Forbidden("You are not a member of this project.");
             }
 
-            var (items, totalCount) = await _taskRepo.GetTasksByProjectIdAsync(projectId, columnId, page, pageSize);
+            var (items, totalCount) = await _taskRepo.GetTasksByProjectIdAsync(projectId, columnId, page, pageSize, search, priority, assigneeId);
             
             return new PagedResponse<TaskDetailResponse>
             {
@@ -390,6 +450,7 @@ namespace API_v2.Services
                 CreatorId = task.CreatorId,
                 Deadline = task.Deadline,
                 ColumnId = task.ColumnId,
+                Priority = task.Priority,
                 AssignedUsers = task.Assignments?
                     .Select(a => new AssignedUserResponse
                     {

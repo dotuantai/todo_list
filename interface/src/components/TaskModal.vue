@@ -39,7 +39,7 @@
                 />
               </div>
 
-              <!-- Deadline + Column -->
+              <!-- Deadline + Column + Priority + Assignee -->
               <div class="row g-3 mb-4">
                 <div class="col-md-6 text-start">
                   <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.deadline') }}</label>
@@ -56,6 +56,23 @@
                   </div>
                   <select v-else v-model="form.columnId" class="form-select text-body">
                     <option v-for="col in columns" :key="col.Id" :value="col.Id">{{ col.Name }}</option>
+                  </select>
+                </div>
+                <div class="col-md-6 text-start">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Priority</label>
+                  <select v-model="form.priority" class="form-select text-body">
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
+                <div class="col-md-6 text-start">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Assignee <span class="text-muted text-lowercase" style="font-size: 0.75rem;">(Optional)</span></label>
+                  <select v-model="form.assigneeId" class="form-select text-body">
+                    <option :value="null">-- Unassigned --</option>
+                    <option v-for="m in members" :key="m.UserId" :value="m.UserId">
+                      {{ m.Email }} ({{ m.Role }})
+                    </option>
                   </select>
                 </div>
               </div>
@@ -111,7 +128,7 @@
 <script setup>
 import { ref, defineExpose } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { createProjectTask, getProjectColumns } from '../services/projectService.js'
+import { createProjectTask, getProjectColumns, getMembers } from '../services/projectService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 const projectStore = useProjectStore()
 import { toastSuccess, toastError, toastWarning, extractMessage } from '../utils/swal.js'
@@ -122,12 +139,15 @@ const show = ref(false)
 const loading = ref(false)
 const loadingColumns = ref(false)
 const columns = ref([])
+const members = ref([])
 
 const form = ref({
   title: '',
   description: '',
   deadline: '',
-  columnId: null
+  columnId: null,
+  priority: 'Medium',
+  assigneeId: null
 })
 
 const loadColumns = async () => {
@@ -147,16 +167,29 @@ const loadColumns = async () => {
   }
 }
 
+const loadMembers = async () => {
+  if (!projectStore.currentProjectId) return
+  try {
+    const res = await getMembers(projectStore.currentProjectId)
+    members.value = res?.data?.Data || res?.data || []
+  } catch (e) {
+    console.error('Failed to load members', e)
+  }
+}
+
 const openModal = () => {
   form.value = {
     title: '',
     description: '',
     deadline: '',
-    columnId: null
+    columnId: null,
+    priority: 'Medium',
+    assigneeId: null
   }
   show.value = true
   document.body.style.overflow = 'hidden'
   loadColumns()
+  loadMembers()
 }
 
 const closeModal = () => {
@@ -188,7 +221,9 @@ const handleSubmit = async () => {
       title: form.value.title,
       description: form.value.description,
       deadline: form.value.deadline || null,
-      columnId: form.value.columnId
+      columnId: form.value.columnId,
+      priority: form.value.priority,
+      assigneeId: form.value.assigneeId
     }
 
     await createProjectTask(projectStore.currentProjectId, payload)
