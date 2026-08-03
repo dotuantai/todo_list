@@ -50,14 +50,20 @@ namespace API_v2.Services
             }
         }
 
-        public async Task<List<TaskCommentResponse>> GetCommentsAsync(int taskId, Guid currentUserId)
+        public async Task<PagedResponse<TaskCommentResponse>> GetCommentsAsync(int taskId, Guid currentUserId, int page = 1, int limit = 5)
         {
             await ValidateUserAccessToTask(taskId, currentUserId);
 
-            return await _context.TaskComments
+            var query = _context.TaskComments
                 .Include(tc => tc.User)
-                .Where(tc => tc.TaskId == taskId)
-                .OrderBy(tc => tc.CreatedAt)
+                .Where(tc => tc.TaskId == taskId);
+
+            var totalCount = await query.CountAsync();
+
+            var comments = await query
+                .OrderByDescending(tc => tc.CreatedAt)
+                .Skip((page - 1) * limit)
+                .Take(limit)
                 .Select(tc => new TaskCommentResponse
                 {
                     Id = tc.Id,
@@ -68,6 +74,16 @@ namespace API_v2.Services
                     CreatedAt = tc.CreatedAt
                 })
                 .ToListAsync();
+
+            comments.Reverse();
+
+            return new PagedResponse<TaskCommentResponse>
+            {
+                Items = comments,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = limit
+            };
         }
 
         public async Task<TaskCommentResponse> CreateCommentAsync(int taskId, CreateTaskCommentRequest req, Guid currentUserId)

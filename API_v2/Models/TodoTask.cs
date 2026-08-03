@@ -11,6 +11,9 @@ namespace API_v2.Models
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? Deadline { get; set; }
+        public DateTime? StartDate { get; set; }
+        public double? EstimatedHours { get; set; }
+        public double? ActualHours { get; set; }
         public int ColumnId { get; set; }
         public Guid CreatorId { get; set; }
         public Guid? ProjectId { get; set; }

@@ -219,6 +219,24 @@
                   </div>
                 </div>
                 <div class="col-6 col-md-4">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Start Date</label>
+                  <div class="text-body fw-medium">
+                    {{ modal.task?.StartDate ? formatDate(modal.task.StartDate) : '—' }}
+                  </div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Est. Hours</label>
+                  <div class="text-body fw-medium">
+                    {{ modal.task?.EstimatedHours != null ? modal.task.EstimatedHours + 'h' : '—' }}
+                  </div>
+                </div>
+                <div class="col-6 col-md-4">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Act. Hours</label>
+                  <div class="text-body fw-medium">
+                    {{ modal.task?.ActualHours != null ? modal.task.ActualHours + 'h' : '—' }}
+                  </div>
+                </div>
+                <div class="col-6 col-md-4">
                   <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Task ID</label>
                   <div class="text-muted font-monospace">#{{ modal.task?.Id }}</div>
                 </div>
@@ -273,43 +291,104 @@
                 </div>
               </div>
 
-            <!-- Comments Section -->
+            <!-- Unified Activity Feed -->
             <div class="mt-4 pt-4 border-top">
               <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider d-flex align-items-center gap-2 mb-3">
-                <i class="bi bi-chat-left-text"></i> Comments
-                <span class="badge bg-body-secondary text-secondary border rounded-pill">{{ comments.length }}</span>
+                <i class="bi bi-activity"></i> Activity
+                <span class="badge bg-body-secondary text-secondary border rounded-pill">{{ unifiedFeed.length }}</span>
               </label>
 
               <!-- Loading state -->
-              <div v-if="loadingComments" class="text-center py-3 text-muted">
-                <span class="spinner-border spinner-border-sm me-2"></span> Loading comments...
+              <div v-if="loadingFeed" class="text-center py-3 text-muted">
+                <span class="spinner-border spinner-border-sm me-2"></span> Loading...
               </div>
 
-              <!-- Comment List -->
-              <div v-else class="d-flex flex-column gap-3 mb-4">
-                <div v-for="comment in comments" :key="comment.Id" class="d-flex gap-3">
-                  <div class="user-avatar text-white d-flex align-items-center justify-content-center fw-bold rounded-circle flex-shrink-0 mt-1" :style="{ background: getUserColor(comment.UserName), width: '32px', height: '32px', fontSize: '12px' }">
-                    {{ userInitial(comment.UserName) }}
-                  </div>
-                  <div class="flex-grow-1">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                      <span class="fw-semibold text-body" style="font-size: 0.9rem;">{{ comment.UserName }}</span>
-                      <span class="text-muted" style="font-size: 0.75rem;">{{ formatTimeAgo(comment.CreatedAt) }}</span>
-                      <button v-if="comment.UserId === projectStore.user?.Id" class="btn btn-link text-danger p-0 ms-auto text-decoration-none" style="font-size: 0.8rem;" @click="removeComment(comment.Id)">
-                        Delete
-                      </button>
-                    </div>
-                    <div class="text-body bg-body-secondary p-2 rounded-3 border" style="font-size: 0.9rem; white-space: pre-wrap;">{{ comment.Content }}</div>
-                  </div>
+              <div v-else class="d-flex flex-column gap-0 mb-4">
+
+                <!-- Load More Comments Button -->
+                <div v-if="hasMoreFeed" class="text-center mb-3">
+                  <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1" @click="loadMoreFeed" :disabled="loadingFeed" style="font-size: 0.8rem; transition: all 0.2s ease;">
+                    <span v-if="loadingFeed" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    <i v-else class="bi bi-arrow-up-circle me-1"></i> Load previous activity
+                  </button>
                 </div>
-                <div v-if="comments.length === 0" class="text-center py-3 text-muted small fst-italic">
-                  No comments yet. Be the first to start the conversation!
+
+                <!-- Empty state -->
+                <div v-if="unifiedFeed.length === 0" class="text-center py-3 text-muted small fst-italic">
+                  No activity yet. Edit the task or leave a comment to get started!
+                </div>
+
+                <!-- Feed items -->
+                <div v-for="(item, idx) in unifiedFeed" :key="(item.Type || item.type) + '-' + (item.Id || item.id)">
+
+                  <!-- ── COMMENT ITEM ── -->
+                  <div v-if="(item.Type || item.type)?.toLowerCase() === 'comment'" class="d-flex gap-3 py-3" :class="idx > 0 ? 'border-top border-dashed' : ''">
+                    <div class="user-avatar text-white d-flex align-items-center justify-content-center fw-bold rounded-circle flex-shrink-0 mt-1"
+                      :style="{ background: getUserColor(item.UserName), width: '32px', height: '32px', fontSize: '12px' }">
+                      {{ userInitial(item.UserName) }}
+                    </div>
+                    <div class="flex-grow-1">
+                      <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="fw-semibold text-body" style="font-size: 0.9rem;">{{ item.UserName }}</span>
+                        <span class="text-muted" style="font-size: 0.75rem;">{{ formatTimeAgo(item.CreatedAt) }}</span>
+                        <button v-if="item.UserId === projectStore.user?.Id" class="btn btn-link text-danger p-0 ms-auto text-decoration-none" style="font-size: 0.8rem;" @click="removeComment(item.Id)">
+                          Delete
+                        </button>
+                      </div>
+                      <div class="text-body bg-body-secondary p-2 rounded-3 border" style="font-size: 0.9rem; white-space: pre-wrap;">{{ item.Content }}</div>
+                    </div>
+                  </div>
+
+                  <!-- ── ACTIVITY ITEM ── -->
+                  <div v-else-if="(item.Type || item.type)?.toLowerCase() === 'activity'" class="d-flex gap-3 py-3" :class="idx > 0 ? 'border-top border-dashed' : ''">
+                    <div class="flex-shrink-0 mt-1 d-flex align-items-center justify-content-center rounded-circle border bg-body-secondary"
+                      :style="{ width: '32px', height: '32px' }">
+                      <i class="bi bi-pencil text-secondary" style="font-size: 11px;"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                      <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="fw-semibold text-body" style="font-size: 0.9rem;">{{ item.UserName }}</span>
+                        <span class="text-muted" style="font-size: 0.75rem;">{{ formatTimeAgo(item.CreatedAt || item.createdAt) }}</span>
+                      </div>
+                      <!-- Change list -->
+                      <ul class="list-unstyled mb-0 d-flex flex-column gap-1">
+                        <li v-for="change in item.Changes" :key="change.Field"
+                          class="d-flex align-items-baseline gap-2 text-secondary"
+                          style="font-size: 0.85rem; line-height: 1.4;">
+                          <span class="text-muted flex-shrink-0" style="font-size: 10px;">○</span>
+                          <span>
+                            <span class="fw-semibold text-body">{{ change.Field }}</span>:
+                            <!-- Description special case -->
+                            <template v-if="change.NewValue === '__description_changed__'">
+                              <span class="text-primary" style="font-style: italic; cursor: default;">Contents of changes</span>
+                            </template>
+                            <!-- Assignee added (no old value) -->
+                            <template v-else-if="change.Field.includes('Assignee Added')">
+                              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2" style="font-size: 0.75rem;">+ {{ change.NewValue }}</span>
+                            </template>
+                            <!-- Assignee removed (no new value) -->
+                            <template v-else-if="change.Field.includes('Assignee Removed')">
+                              <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2" style="font-size: 0.75rem;">− {{ change.OldValue }}</span>
+                            </template>
+                            <!-- Standard change: old → new -->
+                            <template v-else>
+                              <span class="text-muted text-decoration-line-through me-1" v-if="change.OldValue">{{ change.OldValue }}</span>
+                              <i class="bi bi-arrow-right text-muted mx-1" style="font-size: 10px;" v-if="change.OldValue && change.NewValue"></i>
+                              <span class="fw-medium text-body">{{ change.NewValue ?? '—' }}</span>
+                            </template>
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+
                 </div>
               </div>
 
               <!-- Comment Input -->
               <div class="d-flex gap-3">
-                <div class="user-avatar text-white d-flex align-items-center justify-content-center fw-bold rounded-circle flex-shrink-0" :style="{ background: getUserColor(projectStore.user?.Email), width: '32px', height: '32px', fontSize: '12px' }">
+                <div class="user-avatar text-white d-flex align-items-center justify-content-center fw-bold rounded-circle flex-shrink-0"
+                  :style="{ background: getUserColor(projectStore.user?.Email), width: '32px', height: '32px', fontSize: '12px' }">
                   {{ userInitial(projectStore.user?.Email || 'U') }}
                 </div>
                 <div class="flex-grow-1 position-relative">
@@ -340,18 +419,30 @@
                 <textarea id="edit-desc" v-model="editForm.description" class="form-control" rows="4" :placeholder="$t('tasks.description')"></textarea>
               </div>
 
-              <div class="row g-3">
-                <div class="col-12 col-md-4">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.deadline') }}</label>
-                  <input id="edit-deadline" v-model="editForm.deadline" type="datetime-local" class="form-control" />
+              <div class="row g-3 mb-4">
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">Start Date</label>
+                  <input id="edit-startdate" v-model="editForm.startDate" type="date" class="form-control" />
                 </div>
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.deadline') }}</label>
+                  <input id="edit-deadline" v-model="editForm.deadline" type="date" class="form-control" />
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">Est. Hours</label>
+                  <input id="edit-esthours" v-model="editForm.estimatedHours" type="number" step="0.5" class="form-control" placeholder="e.g. 2.5" />
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">Actual Hours</label>
+                  <input id="edit-acthours" v-model="editForm.actualHours" type="number" step="0.5" class="form-control" placeholder="e.g. 3.0" />
+                </div>
+                <div class="col-12 col-md-6">
                   <label class="form-label fw-semibold text-secondary small text-uppercase">Column</label>
                   <select id="edit-status" v-model="editForm.columnId" class="form-select">
                     <option v-for="col in columns" :key="col.Id" :value="col.Id">{{ col.Name }}</option>
                   </select>
                 </div>
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-6">
                   <label class="form-label fw-semibold text-secondary small text-uppercase">Priority</label>
                   <select id="edit-priority" v-model="editForm.priority" class="form-select">
                     <option value="Low">Low</option>
@@ -429,7 +520,7 @@
 import draggable from 'vuedraggable'
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { assignTask, updateTask, removeAssignment, updateTaskColumn, deleteTask, getComments, addComment, deleteComment } from '../services/taskService.js'
+import { assignTask, updateTask, removeAssignment, updateTaskColumn, deleteTask, addComment, deleteComment, getTaskFeed } from '../services/taskService.js'
 import { getMembers, addMember, updateMemberRole, removeMember, getProjectTasks, getProjectColumns } from '../services/projectService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 const projectStore = useProjectStore()
@@ -443,7 +534,7 @@ const loading       = ref(false)
 const saving        = ref(false)
 const modal         = reactive({ open: false, task: null })
 const editMode      = ref(false)
-const editForm      = reactive({ title: '', description: '', deadline: '', columnId: null, priority: 'Medium', assignedUserIds: [] })
+const editForm      = reactive({ title: '', description: '', deadline: '', startDate: '', estimatedHours: null, actualHours: null, columnId: null, priority: 'Medium', assignedUserIds: [] })
 
 // Filter states
 const filters = reactive({ search: '', priority: null, assigneeId: null })
@@ -537,14 +628,16 @@ const openModal = (task) => {
   modal.open = true
   editMode.value = false
   document.body.style.overflow = 'hidden'
-  loadComments(task.Id)
+  loadFeed(task.Id)
 }
 
-// Comments logic
-const comments = ref([])
+// Unified Feed logic
+const unifiedFeed = ref([])
 const newComment = ref('')
-const loadingComments = ref(false)
+const loadingFeed = ref(false)
 const submittingComment = ref(false)
+const feedPage = ref(1)
+const hasMoreFeed = ref(false)
 
 const formatTimeAgo = (dateStr) => {
   if (!dateStr) return ''
@@ -557,15 +650,33 @@ const formatTimeAgo = (dateStr) => {
   return d.toLocaleDateString()
 }
 
-const loadComments = async (taskId) => {
-  loadingComments.value = true
+const loadFeed = async (taskId) => {
+  loadingFeed.value = true
+  feedPage.value = 1
   try {
-    const res = await getComments(taskId)
-    comments.value = res.data || []
+    const res = await getTaskFeed(taskId, feedPage.value, 5)
+    unifiedFeed.value = res.data?.Items || []
+    hasMoreFeed.value = (res.data?.Page < res.data?.TotalPages)
   } catch (err) {
-    console.error('Failed to load comments', err)
+    console.error('Failed to load feed', err)
   } finally {
-    loadingComments.value = false
+    loadingFeed.value = false
+  }
+}
+
+const loadMoreFeed = async () => {
+  if (!hasMoreFeed.value || loadingFeed.value) return
+  loadingFeed.value = true
+  feedPage.value++
+  try {
+    const res = await getTaskFeed(modal.task.Id, feedPage.value, 5)
+    const newItems = res.data?.Items || []
+    unifiedFeed.value = [...newItems, ...unifiedFeed.value]
+    hasMoreFeed.value = (res.data?.Page < res.data?.TotalPages)
+  } catch (err) {
+    console.error('Failed to load more feed', err)
+  } finally {
+    loadingFeed.value = false
   }
 }
 
@@ -575,7 +686,7 @@ const submitComment = async () => {
   try {
     await addComment(modal.task.Id, { content: newComment.value })
     newComment.value = ''
-    await loadComments(modal.task.Id)
+    await loadFeed(modal.task.Id)
   } catch (err) {
     toastError('Failed to add comment')
   } finally {
@@ -594,7 +705,7 @@ const removeComment = async (id) => {
   if (!ok.isConfirmed) return
   try {
     await deleteComment(id)
-    await loadComments(modal.task.Id)
+    await loadFeed(modal.task.Id)
   } catch (err) {
     toastError('Failed to delete comment')
   }
@@ -607,16 +718,19 @@ const closeModal = () => {
   selectedAssigneeId.value = null
 }
 
-const toDatetimeLocal = (iso) => {
+const toDateLocal = (iso) => {
   if (!iso) return ''
-  return iso.slice(0, 16)
+  return iso.slice(0, 10)
 }
 
 const toggleEdit = () => {
   if (!editMode.value) {
     editForm.title       = modal.task?.Title || ''
     editForm.description = modal.task?.Description || ''
-    editForm.deadline    = toDatetimeLocal(modal.task?.Deadline)
+    editForm.deadline    = toDateLocal(modal.task?.Deadline)
+    editForm.startDate   = toDateLocal(modal.task?.StartDate)
+    editForm.estimatedHours = modal.task?.EstimatedHours ?? null
+    editForm.actualHours = modal.task?.ActualHours ?? null
     editForm.columnId    = modal.task?.ColumnId || (columns.value.length > 0 ? columns.value[0].Id : null)
     editForm.priority    = modal.task?.Priority || 'Medium'
     editForm.assignedUserIds = modal.task?.AssignedUsers?.map(u => u.UserId) || []
@@ -633,6 +747,9 @@ const saveEdit = async () => {
       title:       editForm.title,
       description: editForm.description,
       Deadline:    editForm.deadline ? new Date(editForm.deadline).toISOString() : null,
+      StartDate:   editForm.startDate ? new Date(editForm.startDate).toISOString() : null,
+      EstimatedHours: editForm.estimatedHours,
+      ActualHours: editForm.actualHours,
       ColumnId:    editForm.columnId,
       Priority:    editForm.priority,
       AssignedUserIds: editForm.assignedUserIds
@@ -643,6 +760,7 @@ const saveEdit = async () => {
     if (updated) modal.task = updated
     editMode.value = false
     toastSuccess('Task updated successfully!')
+    await loadFeed(modal.task.Id)
   } catch (err) {
     console.error(err)
     toastError(extractMessage(err, t('errors.default')))
