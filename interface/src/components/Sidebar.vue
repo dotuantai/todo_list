@@ -8,7 +8,7 @@
   >
     <!-- Sidebar Header -->
     <div class="px-4 py-3 border-bottom d-flex align-items-center justify-content-between">
-      <router-link to="/projects" class="d-flex align-items-center gap-3 text-decoration-none" style="cursor: pointer;">
+      <router-link to="/projects" class="d-flex align-items-center gap-3 text-decoration-none" style="cursor: pointer;" @click="closeMobileMenu">
         <div class="logo-box text-white d-flex align-items-center justify-content-center fw-bold fs-5 rounded-3" :style="{ background: getProjectColor(projectStore.currentProject?.Name) }" style="width: 38px; height: 38px; min-width: 38px;">
           {{ projectStore.currentProject ? projectStore.currentProject.Name[0].toUpperCase() : 'P' }}
         </div>
@@ -24,7 +24,7 @@
     </div>
 
     <div class="px-3 py-3" v-if="projectStore.currentProjectId && projectStore.userRole !== 'Member'">
-      <button class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2 shadow-sm" style="border-radius: 10px; background: linear-gradient(135deg, #059669, #10b981); border: none;" @click="$emit('create-task')">
+      <button class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2 shadow-sm" style="border-radius: 10px; background: linear-gradient(135deg, #059669, #10b981); border: none;" @click="$emit('create-task'); closeMobileMenu()">
         <i class="bi bi-plus-lg"></i> {{ $t('sidebar.create_task') }}
       </button>
     </div>
@@ -34,28 +34,28 @@
       <ul class="nav flex-column gap-1 mb-4">
         <!-- Dashboard link -->
         <li class="nav-item">
-          <router-link :to="`/projects/${projectStore.currentProjectId}/dashboard`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
+          <router-link :to="`/projects/${projectStore.currentProjectId}/dashboard`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm" @click="closeMobileMenu">
             <i class="bi bi-grid-1x2-fill fs-6"></i>
             <span class="small fw-medium">{{ $t('sidebar.dashboard') }}</span>
           </router-link>
         </li>
         <!-- Task Board link -->
         <li class="nav-item">
-          <router-link :to="`/projects/${projectStore.currentProjectId}/tasks`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
+          <router-link :to="`/projects/${projectStore.currentProjectId}/tasks`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm" @click="closeMobileMenu">
             <i class="bi bi-kanban fs-6"></i>
             <span class="small fw-medium">{{ $t('sidebar.task_board') }}</span>
           </router-link>
         </li>
         <!-- Members link -->
         <li class="nav-item">
-          <router-link :to="`/projects/${projectStore.currentProjectId}/members`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
+          <router-link :to="`/projects/${projectStore.currentProjectId}/members`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm" @click="closeMobileMenu">
             <i class="bi bi-people-fill fs-6"></i>
             <span class="small fw-medium">{{ $t('sidebar.members') }}</span>
           </router-link>
         </li>
         <!-- Settings link -->
         <li class="nav-item">
-          <router-link :to="`/projects/${projectStore.currentProjectId}/settings`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm">
+          <router-link :to="`/projects/${projectStore.currentProjectId}/settings`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm" @click="closeMobileMenu">
             <i class="bi bi-gear-fill fs-6"></i>
             <span class="small fw-medium">{{ $t('sidebar.settings') }}</span>
           </router-link>
@@ -68,7 +68,7 @@
       <ul class="nav flex-column gap-1">
         <li class="nav-item">
           <button
-            @click="handleLogout"
+            @click="handleLogout(); closeMobileMenu()"
             class="btn btn-link nav-link sidebar-link-danger d-flex align-items-center gap-2 px-3 py-2 rounded-3 w-100 text-start text-decoration-none border-0 bg-transparent">
             <i class="bi bi-box-arrow-right fs-6"></i>
             <span class="small fw-medium">{{ $t('sidebar.sign_out') }}</span>
@@ -101,6 +101,13 @@ const handleLogout = async () => {
     stopSignalR()
     projectStore.clearStore()
     router.push('/login')
+  }
+}
+
+const closeMobileMenu = () => {
+  if (window.innerWidth < 992) {
+    const closeBtn = document.querySelector('#sidebarMenu .btn-close')
+    if (closeBtn) closeBtn.click()
   }
 }
 

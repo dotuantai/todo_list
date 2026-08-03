@@ -103,13 +103,13 @@ namespace API_v2.Controllers
         }
 
         [HttpGet("{projectId:guid}/tasks")]
-        public async Task<ActionResult> GetProjectTasks(Guid projectId, [FromQuery] int? columnId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult> GetProjectTasks(Guid projectId, [FromQuery] int? columnId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string search = null, [FromQuery] API_v2.Models.Enums.TaskPriority? priority = null, [FromQuery] Guid? assigneeId = null)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 20;
             if (pageSize > 200) pageSize = 200;
 
-            var result = await _taskService.GetProjectTasksAsync(projectId, CurrentUserId, columnId, page, pageSize);
+            var result = await _taskService.GetProjectTasksAsync(projectId, CurrentUserId, columnId, page, pageSize, search, priority, assigneeId);
             return Ok(new ApiResponse<PagedResponse<TaskDetailResponse>>(true, "Success", result));
         }
 

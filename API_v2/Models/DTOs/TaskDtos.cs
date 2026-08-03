@@ -12,6 +12,8 @@ namespace API_v2.Models.DTOs
         public string? Description { get; set; }
         public DateTime? Deadline { get; set; }
         public int ColumnId { get; set; }
+        public API_v2.Models.Enums.TaskPriority Priority { get; set; } = API_v2.Models.Enums.TaskPriority.Medium;
+        public string? AssigneeId { get; set; }
     }
 
     public class UpdateTaskRequest
@@ -24,6 +26,8 @@ namespace API_v2.Models.DTOs
         public string? Description { get; set; }
         public DateTime? Deadline { get; set; }
         public int ColumnId { get; set; }
+        public API_v2.Models.Enums.TaskPriority Priority { get; set; } = API_v2.Models.Enums.TaskPriority.Medium;
+        public List<string>? AssignedUserIds { get; set; }
     }
 
     public class AssignTaskRequest
@@ -55,6 +59,7 @@ namespace API_v2.Models.DTOs
         public Guid CreatorId { get; set; }
         public DateTime? Deadline { get; set; }
         public int ColumnId { get; set; }
+        public API_v2.Models.Enums.TaskPriority Priority { get; set; } = API_v2.Models.Enums.TaskPriority.Medium;
     }
 
     public class AssignedUserResponse
@@ -72,6 +77,7 @@ namespace API_v2.Models.DTOs
         public Guid CreatorId { get; set; }
         public DateTime? Deadline { get; set; }
         public int ColumnId { get; set; }
+        public API_v2.Models.Enums.TaskPriority Priority { get; set; } = API_v2.Models.Enums.TaskPriority.Medium;
         public List<AssignedUserResponse>? AssignedUsers { get; set; }
     }
 

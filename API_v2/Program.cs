@@ -54,6 +54,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     })
     .ConfigureApiBehaviorOptions(options =>
     {
@@ -124,6 +125,7 @@ builder.Services.AddScoped<IProjectColumnRepository, ProjectColumnRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<ITaskCommentService, TaskCommentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IProjectColumnService, ProjectColumnService>();
 builder.Services.AddHttpClient<IEmailService, EmailService>()

@@ -17,6 +17,7 @@ namespace API_v2.Datas
         public DbSet<ProjectMember> ProjectMembers { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<ProjectColumn> ProjectColumns { get; set; }
+        public DbSet<TaskComment> TaskComments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -82,6 +83,11 @@ namespace API_v2.Datas
                 .HasForeignKey(c => c.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<TodoTask>()
+                .Property(t => t.Priority)
+                .HasDefaultValue(API_v2.Models.Enums.TaskPriority.Medium)
+                .HasConversion<string>();
+
             // Add missing indexes for performance optimization
             modelBuilder.Entity<TodoTask>()
                 .HasIndex(t => t.ProjectId)
@@ -110,6 +116,18 @@ namespace API_v2.Datas
             modelBuilder.Entity<RefreshToken>()
                 .HasIndex(rt => rt.UserId)
                 .HasDatabaseName("IX_RefreshTokens_UserId");
+
+            modelBuilder.Entity<TaskComment>()
+                .HasOne(tc => tc.Task)
+                .WithMany(t => t.Comments)
+                .HasForeignKey(tc => tc.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskComment>()
+                .HasOne(tc => tc.User)
+                .WithMany(u => u.Comments)
+                .HasForeignKey(tc => tc.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             base.OnModelCreating(modelBuilder);
         }

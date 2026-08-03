@@ -10,7 +10,7 @@ namespace API_v2.Repositories.IRepositories
     {
         Task<TodoTask?> GetByIdAsync(int id);
         Task<TodoTask?> GetByIdWithDetailsAsync(int id);
-        Task<(List<TodoTask> items, int totalCount)> GetTasksByProjectIdAsync(Guid projectId, int? columnId, int page, int pageSize);
+        Task<(List<TodoTask> items, int totalCount)> GetTasksByProjectIdAsync(Guid projectId, int? columnId, int page, int pageSize, string search = null, API_v2.Models.Enums.TaskPriority? priority = null, Guid? assigneeId = null);
         Task<TaskStatsResponse> GetTaskStatsByProjectIdAsync(Guid projectId);
         void Add(TodoTask task);
         void Delete(TodoTask task);

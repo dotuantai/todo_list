@@ -1,15 +1,86 @@
 <template>
   <div class="p-3 p-md-4">
 
-    <!-- Page header -->
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-     
-      <!-- <div class="d-flex align-items-center gap-2">
+    <!-- Page header & Toolbar -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4" v-if="projectStore.currentProjectId">
+      <div class="d-flex flex-wrap align-items-center gap-3">
+        <!-- Search -->
+        <div class="input-group" style="width: 220px;">
+          <span class="input-group-text bg-body border-end-0 text-muted"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control border-start-0 ps-0" placeholder="Search tasks..." v-model="filters.search" @input="onSearchInput" />
+        </div>
+
+        <!-- Priority -->
+        <div class="dropdown">
+          <label class="form-label small text-muted mb-1 d-block" style="font-size: 11px; margin-top: -15px;">Priority</label>
+          <button class="btn btn-outline-secondary dropdown-toggle bg-body d-flex align-items-center justify-content-between text-start" type="button" data-bs-toggle="dropdown" style="width: 140px; font-size: 0.85rem; height: 38px;">
+            {{ filters.priority || 'All' }}
+          </button>
+          <ul class="dropdown-menu shadow-sm" style="font-size: 0.85rem; width: 140px;">
+            <li><a class="dropdown-item" href="#" @click.prevent="setFilter('priority', null)">All</a></li>
+            <li><a class="dropdown-item" href="#" @click.prevent="setFilter('priority', 'High')"><span class="badge bg-danger text-white">High</span></a></li>
+            <li><a class="dropdown-item" href="#" @click.prevent="setFilter('priority', 'Medium')"><span class="badge bg-warning text-dark">Medium</span></a></li>
+            <li><a class="dropdown-item" href="#" @click.prevent="setFilter('priority', 'Low')"><span class="badge bg-info text-white">Low</span></a></li>
+          </ul>
+        </div>
+
+        <!-- Assignee -->
+        <div class="dropdown">
+          <label class="form-label small text-muted mb-1 d-block" style="font-size: 11px; margin-top: -15px;">Assignee</label>
+          <button class="btn btn-outline-secondary dropdown-toggle bg-body d-flex align-items-center justify-content-between text-start" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" style="width: 180px; font-size: 0.85rem; height: 38px;" @click="assigneeSearch = ''">
+            <div class="d-flex align-items-center gap-2 text-truncate">
+              <span v-if="!filters.assigneeId">All Assignees</span>
+              <span v-else-if="filters.assigneeId === '00000000-0000-0000-0000-000000000000'">Unassigned</span>
+              <template v-else>
+                <div class="rounded-circle text-white d-flex align-items-center justify-content-center" :style="{ background: getUserColor(getAssigneeName(filters.assigneeId)) }" style="width: 18px; height: 18px; font-size: 9px; min-width: 18px;">
+                  {{ getAssigneeName(filters.assigneeId)[0]?.toUpperCase() }}
+                </div>
+                <span class="text-truncate">{{ getAssigneeName(filters.assigneeId) }}</span>
+              </template>
+            </div>
+          </button>
+          <ul class="dropdown-menu shadow-sm p-2" style="width: 240px;">
+            <li class="mb-2">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-body text-muted border-end-0"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control border-start-0 ps-0" placeholder="Search members..." v-model="assigneeSearch" />
+              </div>
+            </li>
+            <div style="max-height: 220px; overflow-y: auto;" class="custom-scrollbar">
+              <li><a class="dropdown-item py-2 d-flex align-items-center gap-2 rounded-2" :class="{'active': filters.assigneeId === null}" href="#" @click.prevent="setFilter('assigneeId', null)">
+                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 11px;"><i class="bi bi-people-fill"></i></div>
+                <span style="font-size: 0.85rem;">All Assignees</span>
+              </a></li>
+              <li><a class="dropdown-item py-2 d-flex align-items-center gap-2 rounded-2" :class="{'active': filters.assigneeId === '00000000-0000-0000-0000-000000000000'}" href="#" @click.prevent="setFilter('assigneeId', '00000000-0000-0000-0000-000000000000')">
+                <div class="rounded-circle border border-secondary text-secondary d-flex align-items-center justify-content-center bg-body" style="width: 24px; height: 24px; font-size: 11px;"><i class="bi bi-person-dash"></i></div>
+                <span style="font-size: 0.85rem;">Unassigned</span>
+              </a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li v-for="user in filteredAssignees" :key="user.UserId">
+                <a class="dropdown-item py-2 d-flex align-items-center gap-2 rounded-2" :class="{'active': filters.assigneeId === user.UserId}" href="#" @click.prevent="setFilter('assigneeId', user.UserId)">
+                  <div class="rounded-circle text-white d-flex align-items-center justify-content-center" :style="{ background: getUserColor(user.Email) }" style="width: 24px; height: 24px; font-size: 10px; min-width: 24px;">
+                    {{ user.Email[0]?.toUpperCase() }}
+                  </div>
+                  <span class="text-truncate" style="font-size: 0.85rem;" :title="user.Email">{{ user.Email }}</span>
+                </a>
+              </li>
+            </div>
+          </ul>
+        </div>
+        
+        <!-- Clear filters -->
+        <button v-if="hasActiveFilters" class="btn btn-link text-muted text-decoration-none small align-self-end ms-2" style="font-size: 0.85rem; padding: 0; margin-bottom: 8px;" @click="clearFilters">
+          Clear filters
+        </button>
+      </div>
+      
+      <!-- Refresh Button -->
+      <div class="align-self-end mb-1">
         <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center" @click="refreshAll" :disabled="loading" title="Refresh" style="width: 38px; height: 38px; border-radius: 8px;">
-          <svg v-if="!loading" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+          <i class="bi bi-arrow-clockwise" v-if="!loading"></i>
           <span v-else class="spinner-border spinner-border-sm text-secondary" role="status"></span>
         </button>
-      </div> -->
+      </div>
     </div>
 
     <!-- Empty Project Selection State -->
@@ -26,11 +97,7 @@
           style="min-width: 290px; width: 290px;"
         >
         <div 
-          class="card bg-body-tertiary border-0 shadow-sm rounded-3 p-3 kanban-col"
-          :class="{ 'kanban-col--dragover': dragOverCol === col.Id }"
-          @dragover="onDragOver($event, col.Id)"
-          @dragleave="onDragLeave"
-          @drop="onDrop($event, col.Id)"
+          class="card bg-body-tertiary border-0 shadow-sm rounded-3 p-3 kanban-col d-flex flex-column"
         >
           <!-- Column Header -->
           <div class="d-flex align-items-center gap-2 mb-3">
@@ -46,44 +113,55 @@
             <div v-for="n in 3" :key="n" class="skeleton-card bg-body rounded-3 shadow-sm w-100" style="height: 100px;"></div>
           </div>
 
-          <div v-else-if="getTasksByColumnId(col.Id).length === 0" class="text-center py-4 border border-dashed rounded-3 bg-body text-muted">
-            <i class="bi bi-inbox d-block mb-1 fs-4 text-secondary opacity-50"></i>
-            <span class="small" style="font-size: 0.85rem;">{{ $t('tasks.no_tasks_col') }}</span>
-          </div>
-
-          <div v-else class="d-flex flex-column gap-2">
-            <div
-              v-for="task in getTasksByColumnId(col.Id)"
-              :key="task.Id"
-              class="card border-0 border-top border-4 shadow-sm task-tag-card p-3"
-              :class="{ 'task-tag-card--dragging': draggingTask?.Id === task.Id }"
-              :style="{ borderTopColor: col.color, cursor: 'grab' }"
-              :draggable="true"
-              @dragstart="onDragStart(task)"
-              @dragend="onDragEnd"
-              @click="openModal(task)"
+          <div v-else class="h-100 flex-grow-1">
+            <draggable
+              :list="getTasksByColumnId(col.Id)"
+              item-key="Id"
+              group="tasks"
+              class="d-flex flex-column gap-2"
+              style="min-height: 150px;"
+              ghost-class="task-tag-card--ghost"
+              drag-class="task-tag-card--dragging"
+              :animation="200"
+              @change="onChange($event, col.Id)"
             >
-              <span class="fw-bold text-body mb-2 text-start d-block" style="font-size: 0.95rem; line-height: 1.4;">{{ task.Title }}</span>
-              <div class="d-flex flex-column gap-1 align-items-start">
-                <span class="text-muted small d-flex align-items-center gap-1.5" style="font-size: 0.75rem;">
-                  <i class="bi bi-calendar3"></i>
-                  {{ formatDateShort(task.CreatedAt) }}
-                </span>
-                <span v-if="task.Deadline" class="small d-flex align-items-center gap-1.5" :class="isOverdue(task) ? 'text-danger fw-bold' : 'text-muted'" style="font-size: 0.75rem;">
-                  <i :class="isOverdue(task) ? 'bi bi-exclamation-circle-fill' : 'bi bi-clock'"></i>
-                  {{ formatDateShort(task.Deadline) }}
-                  <span v-if="isOverdue(task)" class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-0.5 ms-1" style="font-size: 0.65rem;">{{ $t('tasks.overdue') }}</span>
-                </span>
-              </div>
-            </div>
-            
-            <!-- Column Load More -->
-            <div v-if="columnStates[col.Id]?.hasMore" class="mt-2 text-center pb-2">
-              <button class="btn btn-sm w-100 fw-semibold btn-outline-secondary" style="border-radius: 6px;" @click="loadMore(col.Id)" :disabled="columnStates[col.Id]?.loading">
-                <span v-if="columnStates[col.Id]?.loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                {{ $t('tasks.load_more', 'Load More') }}
-              </button>
-            </div>
+              <template #item="{ element: task }">
+                <div
+                  class="card border-0 border-top border-4 shadow-sm task-tag-card p-3"
+                  :style="{ borderTopColor: col.color, cursor: 'grab' }"
+                  @click="openModal(task)"
+                >
+                  <span class="fw-bold text-body mb-2 text-start d-block" style="font-size: 0.95rem; line-height: 1.4;">{{ task.Title }}</span>
+                  <div class="d-flex flex-column gap-1 align-items-start">
+                    <span v-if="task.Priority" class="badge mb-1" :class="getPriorityBadgeClass(task.Priority)" style="font-size: 0.65rem;">{{ task.Priority }} Priority</span>
+                    <span class="text-muted small d-flex align-items-center gap-1.5" style="font-size: 0.75rem;">
+                      <i class="bi bi-calendar3"></i>
+                      {{ formatDateShort(task.CreatedAt) }}
+                    </span>
+                    <span v-if="task.Deadline" class="small d-flex align-items-center gap-1.5" :class="isOverdue(task) ? 'text-danger fw-bold' : 'text-muted'" style="font-size: 0.75rem;">
+                      <i :class="isOverdue(task) ? 'bi bi-exclamation-circle-fill' : 'bi bi-clock'"></i>
+                      {{ formatDateShort(task.Deadline) }}
+                      <span v-if="isOverdue(task)" class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-0.5 ms-1" style="font-size: 0.65rem;">{{ $t('tasks.overdue') }}</span>
+                    </span>
+                  </div>
+                </div>
+              </template>
+              
+              <template #footer>
+                <div v-if="getTasksByColumnId(col.Id).length === 0" class="text-center py-4 border border-dashed rounded-3 bg-body text-muted mt-2">
+                  <i class="bi bi-inbox d-block mb-1 fs-4 text-secondary opacity-50"></i>
+                  <span class="small" style="font-size: 0.85rem;">{{ $t('tasks.no_tasks_col') }}</span>
+                </div>
+                
+                <!-- Column Load More -->
+                <div v-if="columnStates[col.Id]?.hasMore" class="mt-2 text-center pb-2">
+                  <button class="btn btn-sm w-100 fw-semibold btn-outline-secondary" style="border-radius: 6px;" @click="loadMore(col.Id)" :disabled="columnStates[col.Id]?.loading">
+                    <span v-if="columnStates[col.Id]?.loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    {{ $t('tasks.load_more', 'Load More') }}
+                  </button>
+                </div>
+              </template>
+            </draggable>
           </div>
         </div>
       </div>
@@ -102,6 +180,9 @@
                 <div class="d-flex gap-2 flex-wrap mb-2">
                   <span class="badge text-uppercase font-monospace" :style="{ background: getColById(modal.task?.ColumnId)?.bgMid, color: getColById(modal.task?.ColumnId)?.color }">
                     {{ getColById(modal.task?.ColumnId)?.Name }}
+                  </span>
+                  <span v-if="modal.task?.Priority" class="badge" :class="getPriorityBadgeClass(modal.task?.Priority)">
+                    {{ modal.task?.Priority }} Priority
                   </span>
                   <span v-if="modal.task && isOverdue(modal.task)" class="badge bg-danger bg-opacity-10 text-danger rounded-pill">
                     {{ $t('tasks.overdue') }}
@@ -127,21 +208,30 @@
               </div>
 
               <div class="row g-3 mb-4">
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-4">
                   <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.created_at') }}</label>
                   <div class="text-body fw-medium">{{ formatDate(modal.task?.CreatedAt) }}</div>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-4">
                   <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.deadline') }}</label>
                   <div class="text-body fw-medium" :class="modal.task && isOverdue(modal.task) ? 'text-danger fw-bold' : ''">
                     {{ modal.task?.Deadline ? formatDate(modal.task.Deadline) : '—' }}
                   </div>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-4">
                   <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Task ID</label>
                   <div class="text-muted font-monospace">#{{ modal.task?.Id }}</div>
                 </div>
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md-4">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Priority</label>
+                  <div>
+                    <span v-if="modal.task?.Priority" class="badge" :class="getPriorityBadgeClass(modal.task?.Priority)">
+                      {{ modal.task?.Priority }}
+                    </span>
+                    <span v-else class="text-muted">—</span>
+                  </div>
+                </div>
+                <div class="col-6 col-md-4">
                   <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Column</label>
                   <div v-if="projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager' || isAssignedToCurrentUser(modal.task)">
                     <select :value="modal.task?.ColumnId" @change="changeTaskColumnFromSelect($event.target.value)" class="form-select form-select-sm" style="border-radius: 8px;">
@@ -175,18 +265,62 @@
                           {{ userInitial(user.Email) }}
                         </div>
                         <div class="flex-grow-1 min-w-0 text-start">
-                          <div class="small fw-semibold text-body text-truncate" :title="user.Email">{{ user.Email }}</div>
                         </div>
-                        <!-- Remove assignment button (Only for Owner/Manager) -->
-                        <button v-if="projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager'" class="btn btn-sm btn-outline-danger p-1 ms-auto" @click="removeUser(user)" title="Remove assignment" style="width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center;">
-                          <i class="bi bi-trash3-fill" style="font-size:11px"></i>
-                        </button>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
+
+            <!-- Comments Section -->
+            <div class="mt-4 pt-4 border-top">
+              <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider d-flex align-items-center gap-2 mb-3">
+                <i class="bi bi-chat-left-text"></i> Comments
+                <span class="badge bg-body-secondary text-secondary border rounded-pill">{{ comments.length }}</span>
+              </label>
+
+              <!-- Loading state -->
+              <div v-if="loadingComments" class="text-center py-3 text-muted">
+                <span class="spinner-border spinner-border-sm me-2"></span> Loading comments...
+              </div>
+
+              <!-- Comment List -->
+              <div v-else class="d-flex flex-column gap-3 mb-4">
+                <div v-for="comment in comments" :key="comment.Id" class="d-flex gap-3">
+                  <div class="user-avatar text-white d-flex align-items-center justify-content-center fw-bold rounded-circle flex-shrink-0 mt-1" :style="{ background: getUserColor(comment.UserName), width: '32px', height: '32px', fontSize: '12px' }">
+                    {{ userInitial(comment.UserName) }}
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                      <span class="fw-semibold text-body" style="font-size: 0.9rem;">{{ comment.UserName }}</span>
+                      <span class="text-muted" style="font-size: 0.75rem;">{{ formatTimeAgo(comment.CreatedAt) }}</span>
+                      <button v-if="comment.UserId === projectStore.user?.Id" class="btn btn-link text-danger p-0 ms-auto text-decoration-none" style="font-size: 0.8rem;" @click="removeComment(comment.Id)">
+                        Delete
+                      </button>
+                    </div>
+                    <div class="text-body bg-body-secondary p-2 rounded-3 border" style="font-size: 0.9rem; white-space: pre-wrap;">{{ comment.Content }}</div>
+                  </div>
+                </div>
+                <div v-if="comments.length === 0" class="text-center py-3 text-muted small fst-italic">
+                  No comments yet. Be the first to start the conversation!
+                </div>
+              </div>
+
+              <!-- Comment Input -->
+              <div class="d-flex gap-3">
+                <div class="user-avatar text-white d-flex align-items-center justify-content-center fw-bold rounded-circle flex-shrink-0" :style="{ background: getUserColor(projectStore.user?.Email), width: '32px', height: '32px', fontSize: '12px' }">
+                  {{ userInitial(projectStore.user?.Email || 'U') }}
+                </div>
+                <div class="flex-grow-1 position-relative">
+                  <textarea v-model="newComment" class="form-control" rows="2" placeholder="Write a comment..." style="border-radius: 12px; font-size: 0.9rem; padding-bottom: 40px; resize: none;"></textarea>
+                  <button class="btn btn-primary btn-sm position-absolute bottom-0 end-0 m-2" @click="submitComment" :disabled="!newComment.trim() || submittingComment" style="border-radius: 8px;">
+                    <span v-if="submittingComment" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    <i v-else class="bi bi-send-fill me-1"></i> Send
+                  </button>
+                </div>
+              </div>
             </div>
+          </div>
 
             <!-- ── EDIT MODE ── -->
             <div v-else class="modal-body p-4 text-start">
@@ -206,46 +340,67 @@
               </div>
 
               <div class="row g-3">
-                <div class="col-12 col-md-6">
+                <div class="col-12 col-md-4">
                   <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.deadline') }}</label>
                   <input id="edit-deadline" v-model="editForm.deadline" type="datetime-local" class="form-control" />
                 </div>
-                <div class="col-12 col-md-6">
+                <div class="col-12 col-md-4">
                   <label class="form-label fw-semibold text-secondary small text-uppercase">Column</label>
                   <select id="edit-status" v-model="editForm.columnId" class="form-select">
                     <option v-for="col in columns" :key="col.Id" :value="col.Id">{{ col.Name }}</option>
                   </select>
                 </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">Priority</label>
+                  <select id="edit-priority" v-model="editForm.priority" class="form-select">
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label fw-semibold text-secondary small text-uppercase">Assignees</label>
+                <!-- Display currently assigned users with remove button -->
+                <div v-if="editAssignedUsers.length > 0" class="row g-2 mb-3">
+                  <div v-for="user in editAssignedUsers" :key="user.UserId" class="col-12 col-md-6">
+                    <div class="card bg-body-secondary border p-2 rounded-3 h-100">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="user-avatar bg-secondary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width:24px; height:24px; font-size:10px;">
+                          {{ userInitial(user.Email) }}
+                        </div>
+                        <div class="flex-grow-1 min-w-0 text-start">
+                          <div class="small fw-semibold text-body text-truncate" :title="user.Email">{{ user.Email }}</div>
+                        </div>
+                        <button v-if="projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager'" class="btn btn-sm btn-outline-danger p-1 ms-auto" @click.prevent="removeUserLocal(user.UserId)" title="Remove assignment" style="width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;">
+                          <i class="bi bi-trash3-fill" style="font-size:10px"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Add Assignee section -->
+                <div v-if="projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager'" class="d-flex align-items-center gap-2">
+                  <select v-model="selectedAssigneeId" @change="assignUserLocal" class="form-select form-select-sm" style="border-radius: 8px;">
+                    <option :value="null">-- {{ $t('taskModal.select_assignee') }} --</option>
+                    <option v-for="m in projectMembersNotAssignedToEdit" :key="m.UserId" :value="m.UserId">
+                      {{ m.Email }} ({{ m.Role }})
+                    </option>
+                  </select>
+                </div>
               </div>
 
               <div class="mt-4 pt-3 border-top text-end">
-                <button class="btn btn-sm btn-outline-danger px-3 py-2 fw-semibold" @click="handleDeleteTask">
+                <button class="btn btn-sm btn-outline-danger px-3 py-2 fw-semibold" @click.prevent="handleDeleteTask">
                   <i class="bi bi-trash3 me-1"></i> {{ $t('tasks.delete_task') }}
                 </button>
               </div>
             </div>
 
-            <!-- ── FOOTER — View mode, Assign Users (Only for Owner/Manager) ── -->
-            <div v-if="!editMode && (projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager')" class="modal-footer p-4 border-top bg-body-secondary d-flex align-items-center gap-3 flex-wrap">
-              <div class="flex-grow-1 text-start" style="min-width: 250px;">
-                <select v-model="selectedAssigneeId" class="form-select" style="border-radius: 8px;">
-                  <option :value="null">-- {{ $t('taskModal.select_assignee') }} --</option>
-                  <option v-for="m in projectMembersNotAssigned" :key="m.UserId" :value="m.UserId">
-                    {{ m.Email }} ({{ m.Role }})
-                  </option>
-                </select>
-              </div>
-
-              <div class="ms-auto d-flex gap-2">
-                <button class="btn btn-primary fw-semibold px-3" @click="assignUser" :disabled="!selectedAssigneeId" style="border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">
-                  <i class="bi bi-person-plus-fill me-1"></i> {{ $t('members.add_btn') }}
-                </button>
-                <button class="btn btn-outline-secondary px-3" @click="closeModal" style="border-radius: 8px;">{{ $t('tasks.cancel') }}</button>
-              </div>
-            </div>
-
-            <!-- ── FOOTER — View mode, Member ── -->
-            <div v-else-if="!editMode" class="modal-footer p-4 border-top bg-body-secondary text-end">
+            <!-- ── FOOTER — View mode ── -->
+            <div v-if="!editMode" class="modal-footer p-4 border-top bg-body-secondary text-end">
               <button class="btn btn-sm btn-outline-secondary px-4 py-2" @click="closeModal" style="border-radius: 8px;">{{ $t('tasks.cancel') }}</button>
             </div>
 
@@ -270,9 +425,10 @@
 </template>
 
 <script setup>
+import draggable from 'vuedraggable'
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { assignTask, updateTask, removeAssignment, updateTaskColumn, deleteTask } from '../services/taskService.js'
+import { assignTask, updateTask, removeAssignment, updateTaskColumn, deleteTask, getComments, addComment, deleteComment } from '../services/taskService.js'
 import { getMembers, addMember, updateMemberRole, removeMember, getProjectTasks, getProjectColumns } from '../services/projectService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 const projectStore = useProjectStore()
@@ -286,7 +442,60 @@ const loading       = ref(false)
 const saving        = ref(false)
 const modal         = reactive({ open: false, task: null })
 const editMode      = ref(false)
-const editForm      = reactive({ title: '', description: '', deadline: '', columnId: null })
+const editForm      = reactive({ title: '', description: '', deadline: '', columnId: null, priority: 'Medium', assignedUserIds: [] })
+
+// Filter states
+const filters = reactive({ search: '', priority: null, assigneeId: null })
+const assigneeSearch = ref('')
+let searchTimeout = null
+
+const hasActiveFilters = computed(() => {
+  return !!filters.search || !!filters.priority || !!filters.assigneeId
+})
+
+const filteredAssignees = computed(() => {
+  if (!members.value) return []
+  if (!assigneeSearch.value) return members.value
+  const s = assigneeSearch.value.toLowerCase()
+  return members.value.filter(m => m.Email && m.Email.toLowerCase().includes(s))
+})
+
+const getAssigneeName = (id) => {
+  if (!id) return ''
+  if (id === '00000000-0000-0000-0000-000000000000') return 'Unassigned'
+  const m = members.value.find(u => u.UserId === id)
+  return m ? m.Email : 'Unknown'
+}
+
+const onSearchInput = () => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    Object.values(columnStates).forEach(col => { col.page = 1; col.hasMore = true })
+    loadData()
+  }, 500)
+}
+
+const setFilter = (key, value) => {
+  filters[key] = value
+  Object.values(columnStates).forEach(col => { col.page = 1; col.hasMore = true })
+  loadData()
+}
+
+const clearFilters = () => {
+  filters.search = ''
+  filters.priority = null
+  filters.assigneeId = null
+  Object.values(columnStates).forEach(col => { col.page = 1; col.hasMore = true })
+  loadData()
+}
+
+const getUserColor = (name) => {
+  if (!name) return '#6b7280'
+  const colors = ['#f59e0b', '#ef4444', '#ec4899', '#8b5cf6', '#06b6d4', '#10b981', '#3b82f6']
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  return colors[Math.abs(hash) % colors.length]
+}
 
 // Pagination states
 const columnStates = reactive({})
@@ -299,11 +508,6 @@ const loadingMembers = ref(false)
 
 // Assignee selection states
 const selectedAssigneeId = ref(null)
-
-// Drag states
-const draggingTask       = ref(null)
-const draggingFromStatus = ref(null)
-const dragOverCol        = ref(null)
 
 const tasksByColumnId = computed(() => {
   const map = {}
@@ -332,6 +536,67 @@ const openModal = (task) => {
   modal.open = true
   editMode.value = false
   document.body.style.overflow = 'hidden'
+  loadComments(task.Id)
+}
+
+// Comments logic
+const comments = ref([])
+const newComment = ref('')
+const loadingComments = ref(false)
+const submittingComment = ref(false)
+
+const formatTimeAgo = (dateStr) => {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  const now = new Date()
+  const diff = Math.floor((now - d) / 1000)
+  if (diff < 60) return 'Just now'
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`
+  return d.toLocaleDateString()
+}
+
+const loadComments = async (taskId) => {
+  loadingComments.value = true
+  try {
+    const res = await getComments(taskId)
+    comments.value = res.data?.Data || []
+  } catch (err) {
+    console.error('Failed to load comments', err)
+  } finally {
+    loadingComments.value = false
+  }
+}
+
+const submitComment = async () => {
+  if (!newComment.value.trim() || !modal.task) return
+  submittingComment.value = true
+  try {
+    await addComment(modal.task.Id, { content: newComment.value })
+    newComment.value = ''
+    await loadComments(modal.task.Id)
+  } catch (err) {
+    toastError('Failed to add comment')
+  } finally {
+    submittingComment.value = false
+  }
+}
+
+const removeComment = async (id) => {
+  const ok = await Swal.fire({
+    title: 'Delete Comment?',
+    text: 'You cannot undo this action.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, delete it!'
+  })
+  if (!ok.isConfirmed) return
+  try {
+    await deleteComment(id)
+    await loadComments(modal.task.Id)
+  } catch (err) {
+    toastError('Failed to delete comment')
+  }
 }
 
 const closeModal = () => {
@@ -352,6 +617,8 @@ const toggleEdit = () => {
     editForm.description = modal.task?.Description || ''
     editForm.deadline    = toDatetimeLocal(modal.task?.Deadline)
     editForm.columnId    = modal.task?.ColumnId || (columns.value.length > 0 ? columns.value[0].Id : null)
+    editForm.priority    = modal.task?.Priority || 'Medium'
+    editForm.assignedUserIds = modal.task?.AssignedUsers?.map(u => u.UserId) || []
   }
   editMode.value = !editMode.value
 }
@@ -366,6 +633,8 @@ const saveEdit = async () => {
       description: editForm.description,
       Deadline:    editForm.deadline ? new Date(editForm.deadline).toISOString() : null,
       ColumnId:    editForm.columnId,
+      Priority:    editForm.priority,
+      AssignedUserIds: editForm.assignedUserIds
     }
     await updateTask(modal.task.Id, payload)
     await loadData()
@@ -405,9 +674,19 @@ const handleDeleteTask = async () => {
 
 // Members computed list (members not assigned to the active task)
 const projectMembersNotAssigned = computed(() => {
-  if (!members.value || !modal.task) return []
-  const assignedIds = modal.task.AssignedUsers?.map(au => au.UserId) || []
-  return members.value.filter(m => !assignedIds.includes(m.UserId))
+  if (!members.value) return []
+  const assigned = modal.task?.AssignedUsers?.map(u => u.UserId) || []
+  return members.value.filter(m => !assigned.includes(m.UserId))
+})
+
+const projectMembersNotAssignedToEdit = computed(() => {
+  if (!members.value) return []
+  return members.value.filter(m => !editForm.assignedUserIds.includes(m.UserId))
+})
+
+const editAssignedUsers = computed(() => {
+  if (!members.value) return []
+  return members.value.filter(m => editForm.assignedUserIds.includes(m.UserId))
 })
 
 const loadColumnData = async (colId, append = false) => {
@@ -418,7 +697,7 @@ const loadColumnData = async (colId, append = false) => {
   
   colState.loading = true
   try {
-    const res = await getProjectTasks(projectStore.currentProjectId, colId, colState.page, pageSize)
+    const res = await getProjectTasks(projectStore.currentProjectId, colId, colState.page, pageSize, filters.search, filters.priority, filters.assigneeId)
     const pageData = res?.data
     if (pageData) {
       if (append) {
@@ -540,81 +819,34 @@ const changeTaskColumnFromSelect = async (newColumnId) => {
 }
 
 // Task assignment Actions
-const assignUser = async () => {
-  if (!selectedAssigneeId.value) return
-  try {
-    await assignTask({
-      taskId:  modal.task.Id,
-      userId:  selectedAssigneeId.value,
-    })
-    selectedAssigneeId.value = null
-    await loadData()
-    const updated = tasks.value.find(t => t.Id === modal.task.Id)
-    if (updated) modal.task = updated
-    toastSuccess('Task assigned successfully!')
-  } catch (err) {
-    console.error(err)
-    toastError(extractMessage(err, t('errors.default')))
+const assignUserLocal = () => {
+  if (selectedAssigneeId.value && !editForm.assignedUserIds.includes(selectedAssigneeId.value)) {
+    editForm.assignedUserIds.push(selectedAssigneeId.value)
   }
+  selectedAssigneeId.value = null
 }
 
-const removeUser = async (user) => {
-  const ok = await confirm(
-    t('tasks.revoke_confirm_title'),
-    t('tasks.revoke_confirm_desc', { email: user.Email }),
-    t('tasks.revoke_confirm_btn')
-  )
-  if (!ok) return
-  try {
-    await removeAssignment(modal.task.Id, user.UserId)
-    await loadData()
-    const updated = tasks.value.find(t => t.Id === modal.task.Id)
-    if (updated) modal.task = updated
-    toastSuccess('Assignment revoked successfully!')
-  } catch (err) {
-    console.error(err)
-    toastError(extractMessage(err, t('errors.default')))
-  }
+const removeUserLocal = (userId) => {
+  editForm.assignedUserIds = editForm.assignedUserIds.filter(id => id !== userId)
 }
 
-// Drag & drop
-const onDragStart = (task) => {
-  draggingTask.value = task
-  draggingFromStatus.value = task.ColumnId
-}
+// Drag & drop handled by vuedraggable
+const onChange = async (evt, colId) => {
+  if (evt.added) {
+    const task = evt.added.element
+    if (!task || task.ColumnId === colId) return
 
-const onDragEnd = () => {
-  draggingTask.value = null
-  draggingFromStatus.value = null
-  dragOverCol.value = null
-}
+    const oldColumnId = task.ColumnId
+    task.ColumnId = colId
 
-const onDragOver = (e, colId) => {
-  e.preventDefault()
-  dragOverCol.value = colId
-}
-
-const onDragLeave = () => {
-  dragOverCol.value = null
-}
-
-const onDrop = async (e, targetColId) => {
-  e.preventDefault()
-  dragOverCol.value = null
-  const task = draggingTask.value
-  if (!task || task.ColumnId === targetColId) return
-
-  // Optimistic update
-  const oldColumnId = task.ColumnId
-  task.ColumnId = targetColId
-
-  try {
-    await updateTaskColumn({ taskId: task.Id, columnId: targetColId })
-    toastSuccess('Status updated!')
-  } catch (err) {
-    task.ColumnId = oldColumnId
-    console.error('Failed to update status, rolled back:', err)
-    toastError(extractMessage(err, t('errors.default')))
+    try {
+      await updateTaskColumn({ taskId: task.Id, columnId: colId })
+      toastSuccess('Status updated!')
+    } catch (err) {
+      task.ColumnId = oldColumnId
+      console.error('Failed to update status, rolled back:', err)
+      toastError(extractMessage(err, t('errors.default')))
+    }
   }
 }
 
@@ -632,6 +864,15 @@ const getRoleBadgeClass = (role) => {
     case 'member':
     default:
       return 'bg-secondary-subtle text-secondary border border-secondary-subtle'
+  }
+}
+
+const getPriorityBadgeClass = (priority) => {
+  switch (priority) {
+    case 'High': return 'bg-danger text-white'
+    case 'Medium': return 'bg-warning text-dark'
+    case 'Low': return 'bg-info text-white'
+    default: return 'bg-secondary text-white'
   }
 }
 
@@ -713,6 +954,11 @@ const userInitial     = (email) => email ? email[0].toUpperCase() : '?'
   opacity: 0.5;
   transform: scale(0.96);
   cursor: grabbing !important;
+}
+.task-tag-card--ghost {
+  opacity: 0.4;
+  background: var(--bs-secondary-bg);
+  border: 1px dashed var(--bs-border-color);
 }
 .kanban-col {
   min-height: 580px;

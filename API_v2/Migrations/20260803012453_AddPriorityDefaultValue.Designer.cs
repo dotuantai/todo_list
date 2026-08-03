@@ -3,6 +3,7 @@ using System;
 using API_v2.Datas;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API_v2.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260803012453_AddPriorityDefaultValue")]
+    partial class AddPriorityDefaultValue
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -207,37 +210,6 @@ namespace API_v2.Migrations
                     b.ToTable("TaskAssignments");
                 });
 
-            modelBuilder.Entity("API_v2.Models.TaskComment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("TaskId")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TaskId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("TaskComments");
-                });
-
             modelBuilder.Entity("API_v2.Models.TodoTask", b =>
                 {
                     b.Property<int>("Id")
@@ -397,25 +369,6 @@ namespace API_v2.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("API_v2.Models.TaskComment", b =>
-                {
-                    b.HasOne("API_v2.Models.TodoTask", "Task")
-                        .WithMany("Comments")
-                        .HasForeignKey("TaskId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("API_v2.Models.User", "User")
-                        .WithMany("Comments")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Task");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("API_v2.Models.TodoTask", b =>
                 {
                     b.HasOne("API_v2.Models.ProjectColumn", "Column")
@@ -459,14 +412,10 @@ namespace API_v2.Migrations
             modelBuilder.Entity("API_v2.Models.TodoTask", b =>
                 {
                     b.Navigation("Assignments");
-
-                    b.Navigation("Comments");
                 });
 
             modelBuilder.Entity("API_v2.Models.User", b =>
                 {
-                    b.Navigation("Comments");
-
                     b.Navigation("CreatedTasks");
 
                     b.Navigation("ProjectMembers");

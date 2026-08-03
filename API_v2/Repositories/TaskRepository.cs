@@ -28,7 +28,7 @@ namespace API_v2.Repositories
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<(List<TodoTask> items, int totalCount)> GetTasksByProjectIdAsync(Guid projectId, int? columnId, int page, int pageSize)
+        public async Task<(List<TodoTask> items, int totalCount)> GetTasksByProjectIdAsync(Guid projectId, int? columnId, int page, int pageSize, string search = null, API_v2.Models.Enums.TaskPriority? priority = null, Guid? assigneeId = null)
         {
             var query = _db.Tasks
                 .AsNoTracking()
@@ -39,6 +39,29 @@ namespace API_v2.Repositories
             if (columnId.HasValue)
             {
                 query = query.Where(x => x.ColumnId == columnId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchLower = search.ToLower();
+                query = query.Where(x => x.Title.ToLower().Contains(searchLower) || (x.Description != null && x.Description.ToLower().Contains(searchLower)));
+            }
+
+            if (priority.HasValue)
+            {
+                query = query.Where(x => x.Priority == priority.Value);
+            }
+
+            if (assigneeId.HasValue)
+            {
+                if (assigneeId.Value == Guid.Empty)
+                {
+                    query = query.Where(x => !x.Assignments.Any());
+                }
+                else
+                {
+                    query = query.Where(x => x.Assignments.Any(a => a.UserId == assigneeId.Value));
+                }
             }
 
             query = query.OrderByDescending(x => x.CreatedAt);
