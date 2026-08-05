@@ -73,3 +73,17 @@ export const updateProjectColumn = (projectId, columnId, data) => {
 export const deleteProjectColumn = (projectId, columnId) => {
   return api.delete(`/projects/${projectId}/columns/${columnId}`)
 }
+
+export const downloadTaskTemplate = () => {
+  return api.get('/projects/tasks/template', { responseType: 'blob' })
+}
+
+export const importTasks = (projectId, file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return api.post(`/projects/${projectId}/tasks/import`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}

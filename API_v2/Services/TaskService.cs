@@ -1,10 +1,12 @@
 using System;
 using System.Text.Json;
+using System.IO;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MiniExcelLibs;
 using API_v2.Exceptions;
 using API_v2.Models;
 using API_v2.Models.DTOs;
@@ -491,6 +493,95 @@ namespace API_v2.Services
                 }
                 catch (Exception ex) { _logger.LogWarning(ex, "Failed to send task updated notification."); }
             }
+        }
+
+        public async Task<byte[]> GetTaskTemplateAsync()
+        {
+            var template = new List<dynamic>
+            {
+                new { Title = "Example Task 1", Description = "Description of task 1", Deadline = DateTime.UtcNow.AddDays(3).ToString("yyyy-MM-dd"), StartDate = DateTime.UtcNow.ToString("yyyy-MM-dd"), EstimatedHours = 4.5, Priority = "High" },
+                new { Title = "Example Task 2", Description = "Description of task 2", Deadline = "", StartDate = "", EstimatedHours = 2.0, Priority = "Medium" }
+            };
+
+            using var stream = new MemoryStream();
+            await stream.SaveAsAsync(template);
+            return stream.ToArray();
+        }
+
+        public async Task<int> ImportTasksAsync(Guid projectId, Guid currentUserId, Stream fileStream, string fileName)
+        {
+            await VerifyOwnerOrManagerAsync(projectId, currentUserId, "Only Owners or Managers can import tasks.");
+
+            var columns = await _projectColumnRepo.GetColumnsByProjectIdAsync(projectId);
+            var defaultColumn = columns.OrderBy(c => c.Order).FirstOrDefault();
+            if (defaultColumn == null)
+            {
+                throw ApiException.BadRequest("Project has no columns to assign tasks to.");
+            }
+
+            var importedTasks = new List<TodoTask>();
+            var rows = await fileStream.QueryAsync(useHeaderRow: true);
+            foreach (var row in rows)
+            {
+                var rowDict = row as IDictionary<string, object>;
+                if (rowDict == null) continue;
+
+                var title = rowDict.ContainsKey("Title") ? rowDict["Title"]?.ToString() : null;
+                if (string.IsNullOrWhiteSpace(title)) continue;
+
+                var description = rowDict.ContainsKey("Description") ? rowDict["Description"]?.ToString() : null;
+                
+                DateTime? deadline = null;
+                if (rowDict.ContainsKey("Deadline") && DateTime.TryParse(rowDict["Deadline"]?.ToString(), out var parsedDeadline))
+                {
+                    deadline = NormalizeToUtc(parsedDeadline);
+                }
+
+                DateTime? startDate = null;
+                if (rowDict.ContainsKey("StartDate") && DateTime.TryParse(rowDict["StartDate"]?.ToString(), out var parsedStartDate))
+                {
+                    startDate = NormalizeToUtc(parsedStartDate);
+                }
+
+                double? estHours = null;
+                if (rowDict.ContainsKey("EstimatedHours") && double.TryParse(rowDict["EstimatedHours"]?.ToString(), out var parsedEst))
+                {
+                    estHours = parsedEst;
+                }
+
+                var priorityStr = rowDict.ContainsKey("Priority") ? rowDict["Priority"]?.ToString() : null;
+                if (!Enum.TryParse<API_v2.Models.Enums.TaskPriority>(priorityStr, true, out var priority))
+                {
+                    priority = API_v2.Models.Enums.TaskPriority.Medium;
+                }
+
+                importedTasks.Add(new TodoTask
+                {
+                    Title = title.Trim(),
+                    Description = description?.Trim(),
+                    CreatedAt = DateTime.UtcNow,
+                    CreatorId = currentUserId,
+                    Deadline = deadline,
+                    StartDate = startDate,
+                    EstimatedHours = estHours,
+                    ColumnId = defaultColumn.Id,
+                    ProjectId = projectId,
+                    Priority = priority
+                });
+            }
+
+            if (!importedTasks.Any())
+            {
+                throw ApiException.BadRequest("No valid tasks found in the uploaded file. Ensure 'Title' column exists.");
+            }
+
+            foreach (var t in importedTasks)
+            {
+                _taskRepo.Add(t);
+            }
+            await _taskRepo.SaveAsync();
+
+            return importedTasks.Count;
         }
 
         private async Task<TodoTask> GetTaskOrThrowAsync(int taskId)

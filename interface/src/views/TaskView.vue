@@ -73,14 +73,46 @@
           Clear filters
         </button>
       </div>
-      
-      <!-- Refresh Button -->
-      <div class="align-self-end mb-1">
-        <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center" @click="refreshAll" :disabled="loading" title="Refresh" style="width: 38px; height: 38px; border-radius: 8px;">
+      <!-- Actions Right Side -->
+      <div class="d-flex align-items-center gap-2 align-self-end mb-1">
+        <!-- Import / Export Dropdown -->
+        <div class="dropdown" v-if="projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager'">
+          <button class="btn btn-outline-secondary d-flex align-items-center gap-2 px-3 dropdown-toggle shadow-sm bg-body" type="button" data-bs-toggle="dropdown" style="border-radius: 8px; height: 38px; font-size: 0.85rem; transition: all 0.2s ease;">
+            <i class="bi bi-cloud-arrow-up"></i>
+            Import Tasks
+          </button>
+          <ul class="dropdown-menu shadow-sm py-2 rounded-3 border mt-1" style="font-size: 0.85rem; min-width: 200px;">
+            <li>
+              <a class="dropdown-item py-2 d-flex align-items-center gap-3" href="#" @click.prevent="triggerImportFile">
+                <i class="bi bi-file-earmark-arrow-up text-primary fs-5"></i>
+                <div>
+                  <div class="fw-semibold text-body">Upload File</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">.xlsx, .csv supported</div>
+                </div>
+              </a>
+            </li>
+            <li><hr class="dropdown-divider my-1"></li>
+            <li>
+              <a class="dropdown-item py-2 d-flex align-items-center gap-3" href="#" @click.prevent="handleDownloadTemplate">
+                <i class="bi bi-file-earmark-spreadsheet text-success fs-5"></i>
+                <div>
+                  <div class="fw-semibold text-body">Download Template</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">Sample format</div>
+                </div>
+              </a>
+            </li>
+          </ul>
+        </div>
+        
+        <!-- Refresh Button -->
+        <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center bg-body shadow-sm" @click="refreshAll" :disabled="loading" title="Refresh" style="width: 38px; height: 38px; border-radius: 8px; transition: all 0.2s ease;">
           <i class="bi bi-arrow-clockwise" v-if="!loading"></i>
           <span v-else class="spinner-border spinner-border-sm text-secondary" role="status"></span>
         </button>
       </div>
+      
+      <!-- Hidden file input for importing tasks -->
+      <input type="file" ref="importFileInput" class="d-none" accept=".xlsx, .csv" @change="handleImportFile" />
     </div>
 
     <!-- Empty Project Selection State -->
@@ -521,7 +553,7 @@ import draggable from 'vuedraggable'
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { assignTask, updateTask, removeAssignment, updateTaskColumn, deleteTask, addComment, deleteComment, getTaskFeed } from '../services/taskService.js'
-import { getMembers, addMember, updateMemberRole, removeMember, getProjectTasks, getProjectColumns } from '../services/projectService.js'
+import { getMembers, addMember, updateMemberRole, removeMember, getProjectTasks, getProjectColumns, importTasks, downloadTaskTemplate } from '../services/projectService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 const projectStore = useProjectStore()
 import { toastSuccess, toastError, confirm, extractMessage } from '../utils/swal.js'
@@ -535,6 +567,48 @@ const saving        = ref(false)
 const modal         = reactive({ open: false, task: null })
 const editMode      = ref(false)
 const editForm      = reactive({ title: '', description: '', deadline: '', startDate: '', estimatedHours: null, actualHours: null, columnId: null, priority: 'Medium', assignedUserIds: [] })
+
+const importFileInput = ref(null)
+
+const triggerImportFile = () => {
+  if (importFileInput.value) {
+    importFileInput.value.click()
+  }
+}
+
+const handleImportFile = async (event) => {
+  const file = event.target.files[0]
+  if (!file) return
+  if (!projectStore.currentProjectId) return
+
+  loading.value = true
+  try {
+    const res = await importTasks(projectStore.currentProjectId, file)
+    toastSuccess(res.data?.message || 'Tasks imported successfully!')
+    refreshAll()
+  } catch (err) {
+    toastError(extractMessage(err, 'Failed to import tasks'))
+  } finally {
+    loading.value = false
+    event.target.value = '' // reset
+  }
+}
+
+const handleDownloadTemplate = async () => {
+  try {
+    const res = await downloadTaskTemplate()
+    const url = window.URL.createObjectURL(new Blob([res.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', 'TaskTemplate.xlsx')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (err) {
+    toastError('Failed to download template')
+  }
+}
 
 // Filter states
 const filters = reactive({ search: '', priority: null, assigneeId: null })

@@ -131,5 +131,26 @@ namespace API_v2.Controllers
             var result = await _taskService.CreateTaskAsync(req, CurrentUserId, projectId);
             return Ok(new ApiResponse<string>(true, result, null));
         }
+
+        [HttpGet("tasks/template")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetTaskTemplate()
+        {
+            var fileBytes = await _taskService.GetTaskTemplateAsync();
+            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "TaskTemplate.xlsx");
+        }
+
+        [HttpPost("{projectId:guid}/tasks/import")]
+        public async Task<ActionResult> ImportTasks(Guid projectId, Microsoft.AspNetCore.Http.IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new ApiResponse<object>(false, "No file uploaded.", null));
+            }
+
+            using var stream = file.OpenReadStream();
+            var count = await _taskService.ImportTasksAsync(projectId, CurrentUserId, stream, file.FileName);
+            return Ok(new ApiResponse<int>(true, $"{count} tasks imported successfully.", count));
+        }
     }
 }
