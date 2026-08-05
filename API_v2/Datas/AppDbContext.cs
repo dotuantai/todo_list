@@ -18,6 +18,7 @@ namespace API_v2.Datas
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<ProjectColumn> ProjectColumns { get; set; }
         public DbSet<TaskComment> TaskComments { get; set; }
+        public DbSet<TaskActivity> TaskActivities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -128,6 +129,22 @@ namespace API_v2.Datas
                 .WithMany(u => u.Comments)
                 .HasForeignKey(tc => tc.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskActivity>()
+                .HasOne(ta => ta.Task)
+                .WithMany()
+                .HasForeignKey(ta => ta.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskActivity>()
+                .HasOne(ta => ta.User)
+                .WithMany()
+                .HasForeignKey(ta => ta.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskActivity>()
+                .HasIndex(ta => ta.TaskId)
+                .HasDatabaseName("IX_TaskActivities_TaskId");
 
             base.OnModelCreating(modelBuilder);
         }

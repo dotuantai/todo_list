@@ -39,61 +39,86 @@
                 />
               </div>
 
-              <!-- Deadline + Column + Priority + Assignee -->
               <div class="row g-3 mb-4">
+                <div class="col-md-6 text-start">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Start Date</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-calendar-event"></i></span>
+                    <input v-model="form.startDate" type="date" class="form-control text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;" />
+                  </div>
+                </div>
                 <div class="col-md-6 text-start">
                   <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.deadline') }}</label>
                   <div class="input-group">
                     <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-calendar3"></i></span>
-                    <input v-model="form.deadline" type="date" class="form-control text-body" style="border-color: var(--bs-border-color);" />
+                    <input v-model="form.deadline" type="date" class="form-control text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;" />
                   </div>
                 </div>
+
+                <div class="col-md-6 text-start">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Est. Hours</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-stopwatch"></i></span>
+                    <input v-model="form.estimatedHours" type="number" step="0.5" min="0" placeholder="e.g. 4.5" class="form-control text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;" />
+                  </div>
+                </div>
+                <div class="col-md-6 text-start">
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Act. Hours</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-clock-history"></i></span>
+                    <input v-model="form.actualHours" type="number" step="0.5" min="0" placeholder="e.g. 5.0" class="form-control text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;" />
+                  </div>
+                </div>
+
                 <div class="col-md-6 text-start">
                   <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.status') }}</label>
                   <div v-if="loadingColumns" class="d-flex align-items-center gap-2 py-2">
                     <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
                     <span class="text-muted small">{{ $t('common.loading') }}</span>
                   </div>
-                  <select v-else v-model="form.columnId" class="form-select text-body">
-                    <option v-for="col in columns" :key="col.Id" :value="col.Id">{{ col.Name }}</option>
-                  </select>
+                  <div v-else class="input-group">
+                    <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-kanban"></i></span>
+                    <select v-model="form.columnId" class="form-select text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;">
+                      <option v-for="col in columns" :key="col.Id" :value="col.Id">{{ col.Name }}</option>
+                    </select>
+                  </div>
                 </div>
                 <div class="col-md-6 text-start">
                   <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Priority</label>
-                  <select v-model="form.priority" class="form-select text-body">
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                  </select>
+                  <div class="input-group">
+                    <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-flag"></i></span>
+                    <select v-model="form.priority" class="form-select text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;">
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                    </select>
+                  </div>
                 </div>
-                <div class="col-md-6 text-start">
+
+                <div class="col-12 text-start">
                   <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Assignee <span class="text-muted text-lowercase" style="font-size: 0.75rem;">(Optional)</span></label>
-                  <select v-model="form.assigneeId" class="form-select text-body">
-                    <option :value="null">-- Unassigned --</option>
-                    <option v-for="m in members" :key="m.UserId" :value="m.UserId">
-                      {{ m.Email }} ({{ m.Role }})
-                    </option>
-                  </select>
+                  <div class="input-group">
+                    <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-person"></i></span>
+                    <select v-model="form.assigneeId" class="form-select text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;">
+                      <option :value="null">-- Unassigned --</option>
+                      <option v-for="m in members" :key="m.UserId" :value="m.UserId">
+                        {{ m.Email }} ({{ m.Role }})
+                      </option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
               <!-- Description -->
               <div class="mb-4">
                 <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.description') }}</label>
-                <div class="border rounded-3 overflow-hidden bg-body" style="border-color: var(--bs-border-color) !important;">
-                  <div class="bg-body-secondary border-bottom p-2 d-flex gap-1" style="border-color: var(--bs-border-color) !important;">
-                    <button type="button" class="btn btn-sm btn-light border-0"><i class="bi bi-type-bold"></i></button>
-                    <button type="button" class="btn btn-sm btn-light border-0"><i class="bi bi-type-italic"></i></button>
-                    <button type="button" class="btn btn-sm btn-light border-0"><i class="bi bi-list-ul"></i></button>
-                    <button type="button" class="btn btn-sm btn-light border-0"><i class="bi bi-link"></i></button>
-                  </div>
-                  <textarea 
-                    v-model="form.description"
-                    class="form-control border-0 shadow-none rounded-0 bg-transparent" 
-                    rows="5"
-                    placeholder="Describe the task details here..."
-                  ></textarea>
-                </div>
+                <textarea 
+                  v-model="form.description"
+                  class="form-control text-body" 
+                  rows="5"
+                  placeholder="Describe the task details here..."
+                  style="border-color: var(--bs-border-color);"
+                ></textarea>
               </div>
 
               <!-- Footer Actions -->
@@ -144,7 +169,10 @@ const members = ref([])
 const form = ref({
   title: '',
   description: '',
+  startDate: '',
   deadline: '',
+  estimatedHours: null,
+  actualHours: null,
   columnId: null,
   priority: 'Medium',
   assigneeId: null
@@ -181,7 +209,10 @@ const openModal = () => {
   form.value = {
     title: '',
     description: '',
+    startDate: '',
     deadline: '',
+    estimatedHours: null,
+    actualHours: null,
     columnId: null,
     priority: 'Medium',
     assigneeId: null
@@ -220,7 +251,10 @@ const handleSubmit = async () => {
     const payload = {
       title: form.value.title,
       description: form.value.description,
+      startDate: form.value.startDate || null,
       deadline: form.value.deadline || null,
+      estimatedHours: form.value.estimatedHours,
+      actualHours: form.value.actualHours,
       columnId: form.value.columnId,
       priority: form.value.priority,
       assigneeId: form.value.assigneeId

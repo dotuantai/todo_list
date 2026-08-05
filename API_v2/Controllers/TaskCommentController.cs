@@ -31,12 +31,12 @@ namespace API_v2.Controllers
         }
 
         [HttpGet("{taskId}/comments")]
-        public async Task<IActionResult> GetComments(int taskId)
+        public async Task<IActionResult> GetComments(int taskId, [FromQuery] int page = 1, [FromQuery] int limit = 5)
         {
             try
             {
                 var userId = GetCurrentUserId();
-                var comments = await _commentService.GetCommentsAsync(taskId, userId);
+                var comments = await _commentService.GetCommentsAsync(taskId, userId, page, limit);
                 return Ok(new ApiResponse<object>(true, "Comments retrieved successfully.", comments));
             }
             catch (Exception ex)

@@ -24,8 +24,8 @@ export const updateTaskColumn = (data) => {
   return api.put('/tasks/status', data)
 }
 
-export const getComments = (taskId) => {
-  return api.get(`/tasks/${taskId}/comments`)
+export const getComments = (taskId, page = 1, limit = 5) => {
+  return api.get(`/tasks/${taskId}/comments?page=${page}&limit=${limit}`)
 }
 
 export const addComment = (taskId, data) => {
@@ -39,3 +39,11 @@ export const updateComment = (id, data) => {
 export const deleteComment = (id) => {
   return api.delete(`/tasks/comments/${id}`)
 }
+
+export const getActivities = (taskId) => {
+  return api.get(`/tasks/${taskId}/activities`)
+}
+
+export const getTaskFeed = (taskId, page = 1, pageSize = 5) => {
+  return api.get(`/tasks/${taskId}/feed`, { params: { page, pageSize } })
+}

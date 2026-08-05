@@ -11,6 +11,9 @@ namespace API_v2.Models.DTOs
         [MaxLength(5000, ErrorMessage = "Description must not exceed 5000 characters")]
         public string? Description { get; set; }
         public DateTime? Deadline { get; set; }
+        public DateTime? StartDate { get; set; }
+        public double? EstimatedHours { get; set; }
+        public double? ActualHours { get; set; }
         public int ColumnId { get; set; }
         public API_v2.Models.Enums.TaskPriority Priority { get; set; } = API_v2.Models.Enums.TaskPriority.Medium;
         public string? AssigneeId { get; set; }
@@ -25,6 +28,9 @@ namespace API_v2.Models.DTOs
         [MaxLength(5000, ErrorMessage = "Description must not exceed 5000 characters")]
         public string? Description { get; set; }
         public DateTime? Deadline { get; set; }
+        public DateTime? StartDate { get; set; }
+        public double? EstimatedHours { get; set; }
+        public double? ActualHours { get; set; }
         public int ColumnId { get; set; }
         public API_v2.Models.Enums.TaskPriority Priority { get; set; } = API_v2.Models.Enums.TaskPriority.Medium;
         public List<string>? AssignedUserIds { get; set; }
@@ -58,6 +64,9 @@ namespace API_v2.Models.DTOs
         public DateTime CreatedAt { get; set; }
         public Guid CreatorId { get; set; }
         public DateTime? Deadline { get; set; }
+        public DateTime? StartDate { get; set; }
+        public double? EstimatedHours { get; set; }
+        public double? ActualHours { get; set; }
         public int ColumnId { get; set; }
         public API_v2.Models.Enums.TaskPriority Priority { get; set; } = API_v2.Models.Enums.TaskPriority.Medium;
     }
@@ -76,6 +85,9 @@ namespace API_v2.Models.DTOs
         public DateTime CreatedAt { get; set; }
         public Guid CreatorId { get; set; }
         public DateTime? Deadline { get; set; }
+        public DateTime? StartDate { get; set; }
+        public double? EstimatedHours { get; set; }
+        public double? ActualHours { get; set; }
         public int ColumnId { get; set; }
         public API_v2.Models.Enums.TaskPriority Priority { get; set; } = API_v2.Models.Enums.TaskPriority.Medium;
         public List<AssignedUserResponse>? AssignedUsers { get; set; }
@@ -93,5 +105,22 @@ namespace API_v2.Models.DTOs
         public int ColumnId { get; set; }
         public string ColumnName { get; set; } = string.Empty;
         public int TaskCount { get; set; }
+    }
+
+    public class FieldChangeDto
+    {
+        public string Field { get; set; } = string.Empty;
+        public string? OldValue { get; set; }
+        public string? NewValue { get; set; }
+    }
+
+    public class TaskActivityResponse
+    {
+        public int Id { get; set; }
+        public int TaskId { get; set; }
+        public Guid UserId { get; set; }
+        public string UserEmail { get; set; } = string.Empty;
+        public DateTime ChangedAt { get; set; }
+        public List<FieldChangeDto> Changes { get; set; } = new();
     }
 }

@@ -1,8 +1,12 @@
 using System;
+using System.Text.Json;
+using System.IO;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MiniExcelLibs;
 using API_v2.Exceptions;
 using API_v2.Models;
 using API_v2.Models.DTOs;
@@ -58,6 +62,9 @@ namespace API_v2.Services
                 CreatedAt = DateTime.UtcNow,
                 CreatorId = creatorId,
                 Deadline = NormalizeToUtc(req.Deadline),
+                StartDate = NormalizeToUtc(req.StartDate),
+                EstimatedHours = req.EstimatedHours,
+                ActualHours = req.ActualHours,
                 ColumnId = req.ColumnId,
                 ProjectId = projectId,
                 Priority = req.Priority
@@ -127,11 +134,87 @@ namespace API_v2.Services
 
                 await VerifyColumnBelongsToProjectAsync(req.ColumnId, task.ProjectId);
 
+                // Compute and record activity changes
+                var changes = new List<FieldChange>();
+
+                if (task.Title != req.Title.Trim())
+                    changes.Add(new FieldChange { Field = "Title", OldValue = task.Title, NewValue = req.Title.Trim() });
+
+                var oldDesc = task.Description?.Trim();
+                var newDesc = req.Description?.Trim();
+                if (oldDesc != newDesc)
+                    changes.Add(new FieldChange { Field = "Description", OldValue = null, NewValue = "__description_changed__" });
+
+                var normalizedDeadline = NormalizeToUtc(req.Deadline);
+                if (task.Deadline?.Date != normalizedDeadline?.Date)
+                    changes.Add(new FieldChange { Field = "Deadline", OldValue = task.Deadline?.ToString("MMM d, yyyy"), NewValue = normalizedDeadline?.ToString("MMM d, yyyy") });
+
+                var normalizedStart = NormalizeToUtc(req.StartDate);
+                if (task.StartDate?.Date != normalizedStart?.Date)
+                    changes.Add(new FieldChange { Field = "Start Date", OldValue = task.StartDate?.ToString("MMM d, yyyy"), NewValue = normalizedStart?.ToString("MMM d, yyyy") });
+
+                if (task.EstimatedHours != req.EstimatedHours)
+                    changes.Add(new FieldChange { Field = "Est. Hours", OldValue = task.EstimatedHours?.ToString() ?? "empty", NewValue = req.EstimatedHours?.ToString() ?? "empty" });
+
+                if (task.ActualHours != req.ActualHours)
+                    changes.Add(new FieldChange { Field = "Act. Hours", OldValue = task.ActualHours?.ToString() ?? "empty", NewValue = req.ActualHours?.ToString() ?? "empty" });
+
+                if (task.Priority != req.Priority)
+                    changes.Add(new FieldChange { Field = "Priority", OldValue = task.Priority.ToString(), NewValue = req.Priority.ToString() });
+
+                if (task.ColumnId != req.ColumnId)
+                {
+                    var oldCol = await _projectColumnRepo.GetByIdAsync(task.ColumnId);
+                    var newCol = await _projectColumnRepo.GetByIdAsync(req.ColumnId);
+                    changes.Add(new FieldChange { Field = "Status", OldValue = oldCol?.Name ?? task.ColumnId.ToString(), NewValue = newCol?.Name ?? req.ColumnId.ToString() });
+                }
+
+                if (req.AssignedUserIds != null)
+                {
+                    var oldIds = task.Assignments.Select(a => a.UserId.ToString()).ToHashSet();
+                    var newIds = req.AssignedUserIds.ToHashSet();
+                    var addedIds = newIds.Except(oldIds).ToList();
+                    var removedIds = oldIds.Except(newIds).ToList();
+
+                    // Resolve IDs to emails for a human-readable activity log
+                    var allRelevantIds = addedIds.Concat(removedIds)
+                        .Select(id => Guid.TryParse(id, out var g) ? g : (Guid?)null)
+                        .Where(g => g.HasValue).Select(g => g!.Value).ToList();
+
+                    var userEmailMap = allRelevantIds.Any()
+                        ? await _db.Users
+                            .Where(u => allRelevantIds.Contains(u.Id))
+                            .ToDictionaryAsync(u => u.Id.ToString(), u => u.Email)
+                        : new Dictionary<string, string>();
+
+                    string ResolveEmails(List<string> ids) =>
+                        string.Join(", ", ids.Select(id => userEmailMap.TryGetValue(id, out var email) ? email : id));
+
+                    if (addedIds.Any())
+                        changes.Add(new FieldChange { Field = "Assignee Added", OldValue = null, NewValue = ResolveEmails(addedIds) });
+                    if (removedIds.Any())
+                        changes.Add(new FieldChange { Field = "Assignee Removed", OldValue = ResolveEmails(removedIds), NewValue = null });
+                }
+
                 task.Title = req.Title.Trim();
                 task.Description = req.Description?.Trim();
                 task.Deadline = NormalizeToUtc(req.Deadline);
+                task.StartDate = NormalizeToUtc(req.StartDate);
+                task.EstimatedHours = req.EstimatedHours;
+                task.ActualHours = req.ActualHours;
                 task.ColumnId = req.ColumnId;
                 task.Priority = req.Priority;
+
+                if (changes.Any())
+                {
+                    _db.TaskActivities.Add(new TaskActivity
+                    {
+                        TaskId = taskId,
+                        UserId = currentUserId,
+                        ChangedAt = DateTime.UtcNow,
+                        Changes = JsonSerializer.Serialize(changes)
+                    });
+                }
                 
                 // Update assignments if provided
                 if (req.AssignedUserIds != null)
@@ -412,6 +495,95 @@ namespace API_v2.Services
             }
         }
 
+        public async Task<byte[]> GetTaskTemplateAsync()
+        {
+            var template = new List<dynamic>
+            {
+                new { Title = "Example Task 1", Description = "Description of task 1", Deadline = DateTime.UtcNow.AddDays(3).ToString("yyyy-MM-dd"), StartDate = DateTime.UtcNow.ToString("yyyy-MM-dd"), EstimatedHours = 4.5, Priority = "High" },
+                new { Title = "Example Task 2", Description = "Description of task 2", Deadline = "", StartDate = "", EstimatedHours = 2.0, Priority = "Medium" }
+            };
+
+            using var stream = new MemoryStream();
+            await stream.SaveAsAsync(template);
+            return stream.ToArray();
+        }
+
+        public async Task<int> ImportTasksAsync(Guid projectId, Guid currentUserId, Stream fileStream, string fileName)
+        {
+            await VerifyOwnerOrManagerAsync(projectId, currentUserId, "Only Owners or Managers can import tasks.");
+
+            var columns = await _projectColumnRepo.GetColumnsByProjectIdAsync(projectId);
+            var defaultColumn = columns.OrderBy(c => c.Order).FirstOrDefault();
+            if (defaultColumn == null)
+            {
+                throw ApiException.BadRequest("Project has no columns to assign tasks to.");
+            }
+
+            var importedTasks = new List<TodoTask>();
+            var rows = await fileStream.QueryAsync(useHeaderRow: true);
+            foreach (var row in rows)
+            {
+                var rowDict = row as IDictionary<string, object>;
+                if (rowDict == null) continue;
+
+                var title = rowDict.ContainsKey("Title") ? rowDict["Title"]?.ToString() : null;
+                if (string.IsNullOrWhiteSpace(title)) continue;
+
+                var description = rowDict.ContainsKey("Description") ? rowDict["Description"]?.ToString() : null;
+                
+                DateTime? deadline = null;
+                if (rowDict.ContainsKey("Deadline") && DateTime.TryParse(rowDict["Deadline"]?.ToString(), out var parsedDeadline))
+                {
+                    deadline = NormalizeToUtc(parsedDeadline);
+                }
+
+                DateTime? startDate = null;
+                if (rowDict.ContainsKey("StartDate") && DateTime.TryParse(rowDict["StartDate"]?.ToString(), out var parsedStartDate))
+                {
+                    startDate = NormalizeToUtc(parsedStartDate);
+                }
+
+                double? estHours = null;
+                if (rowDict.ContainsKey("EstimatedHours") && double.TryParse(rowDict["EstimatedHours"]?.ToString(), out var parsedEst))
+                {
+                    estHours = parsedEst;
+                }
+
+                var priorityStr = rowDict.ContainsKey("Priority") ? rowDict["Priority"]?.ToString() : null;
+                if (!Enum.TryParse<API_v2.Models.Enums.TaskPriority>(priorityStr, true, out var priority))
+                {
+                    priority = API_v2.Models.Enums.TaskPriority.Medium;
+                }
+
+                importedTasks.Add(new TodoTask
+                {
+                    Title = title.Trim(),
+                    Description = description?.Trim(),
+                    CreatedAt = DateTime.UtcNow,
+                    CreatorId = currentUserId,
+                    Deadline = deadline,
+                    StartDate = startDate,
+                    EstimatedHours = estHours,
+                    ColumnId = defaultColumn.Id,
+                    ProjectId = projectId,
+                    Priority = priority
+                });
+            }
+
+            if (!importedTasks.Any())
+            {
+                throw ApiException.BadRequest("No valid tasks found in the uploaded file. Ensure 'Title' column exists.");
+            }
+
+            foreach (var t in importedTasks)
+            {
+                _taskRepo.Add(t);
+            }
+            await _taskRepo.SaveAsync();
+
+            return importedTasks.Count;
+        }
+
         private async Task<TodoTask> GetTaskOrThrowAsync(int taskId)
         {
             var task = await _taskRepo.GetByIdAsync(taskId);
@@ -429,12 +601,14 @@ namespace API_v2.Services
                 return null;
             }
 
-            return value.Value.Kind switch
+            var utc = value.Value.Kind switch
             {
                 DateTimeKind.Unspecified => DateTime.SpecifyKind(value.Value, DateTimeKind.Utc),
                 DateTimeKind.Local => value.Value.ToUniversalTime(),
                 _ => value.Value
             };
+
+            return new DateTime(utc.Year, utc.Month, utc.Day, 0, 0, 0, DateTimeKind.Utc);
         }
 
 
@@ -449,6 +623,9 @@ namespace API_v2.Services
                 CreatedAt = task.CreatedAt,
                 CreatorId = task.CreatorId,
                 Deadline = task.Deadline,
+                StartDate = task.StartDate,
+                EstimatedHours = task.EstimatedHours,
+                ActualHours = task.ActualHours,
                 ColumnId = task.ColumnId,
                 Priority = task.Priority,
                 AssignedUsers = task.Assignments?
