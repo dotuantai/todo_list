@@ -27,6 +27,7 @@ namespace API_v2.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<ActionResult> Create([FromBody] CreateProjectRequest req)
         {
             if (req is null || !ModelState.IsValid)

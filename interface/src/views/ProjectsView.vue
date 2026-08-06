@@ -95,6 +95,7 @@
           <p class="text-muted small mb-0">{{ $t('projects.subtitle') }}</p>
         </div>
         <button 
+          v-if="projectStore.appRole !== 'Member'"
           class="btn btn-primary fw-semibold d-flex align-items-center gap-2 shadow-sm" 
           @click="handleCreateProject"
           style="border-radius: 8px; height: 40px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"
@@ -115,6 +116,7 @@
         <h3 class="fw-bold text-body mt-3">{{ $t('projects.no_projects') }}</h3>
         <p class="text-muted mx-auto mb-4" style="max-width: 480px;">{{ $t('projects.no_projects_desc') }}</p>
         <button 
+          v-if="projectStore.appRole !== 'Member'"
           class="btn btn-primary fw-semibold px-4 py-2.5" 
           @click="handleCreateProject"
           style="border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"

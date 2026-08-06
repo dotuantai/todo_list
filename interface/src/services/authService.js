@@ -37,3 +37,15 @@ export const changePassword = (data) => {
 export const googleLogin = (idToken) => {
   return api.post('/auth/google-login', { idToken })
 }
+
+export const getAllUsers = () => {
+  return api.get('/user')
+}
+
+export const updateUserRole = (userId, role) => {
+  return api.put(`/user/${userId}/role`, { role })
+}
+
+export const updateUserStatus = (userId, isActive) => {
+  return api.put(`/user/${userId}/status`, { isActive })
+}

@@ -18,12 +18,16 @@ namespace API_v2.Repositories
         public async Task<User?> GetByEmailAsync(string email)
         {
             var lower = email.Trim().ToLower();
-            return await _db.Users.FirstOrDefaultAsync(u => u.Email == lower);
+            return await _db.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Email == lower);
         }
 
         public async Task<User?> GetByIdAsync(Guid id)
         {
-            return await _db.Users.FindAsync(id);
+            return await _db.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Id == id);
         }
 
         public void Create(User user)
@@ -49,6 +53,45 @@ namespace API_v2.Repositories
                     Email = u.Email
                 })
                 .ToListAsync();
+        }
+
+        public async Task<List<AdminUserResponse>> GetAllUsersAsync()
+        {
+            return await _db.Users
+                .Include(u => u.Role)
+                .OrderByDescending(u => u.CreatedAt)
+                .Select(u => new AdminUserResponse
+                {
+                    UserId = u.Id,
+                    Email = u.Email,
+                    Role = u.Role != null ? u.Role.Name : "Member",
+                    IsActive = u.IsActive,
+                    CreatedAt = u.CreatedAt
+                })
+                .ToListAsync();
+        }
+
+        public async Task<bool> UpdateUserRoleAsync(Guid userId, string newRole)
+        {
+            var user = await _db.Users.FindAsync(userId);
+            if (user == null) return false;
+
+            var role = await _db.Roles.FirstOrDefaultAsync(r => r.Name == newRole);
+            if (role == null) return false;
+
+            user.RoleId = role.Id;
+            await _db.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateUserStatusAsync(Guid userId, bool isActive)
+        {
+            var user = await _db.Users.FindAsync(userId);
+            if (user == null) return false;
+
+            user.IsActive = isActive;
+            await _db.SaveChangesAsync();
+            return true;
         }
     }
 }

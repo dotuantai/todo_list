@@ -10,7 +10,8 @@ export const useProjectStore = defineStore('project', {
     loading: false,
     currentUserEmail: localStorage.getItem('userEmail') || null,
     currentUserId: localStorage.getItem('userId') || null,
-    token: localStorage.getItem('token') || null
+    token: localStorage.getItem('token') || null,
+    appRole: localStorage.getItem('appRole') || 'Member'
   }),
 
   getters: {
@@ -78,16 +79,21 @@ export const useProjectStore = defineStore('project', {
                       payload.sub || 
                       'User'
         const userId = payload.sub || payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']
+        const role = payload.role || payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 'Member'
+        
         this.currentUserEmail = email
         this.currentUserId = userId
+        this.appRole = role
         localStorage.setItem('userEmail', email)
         if (userId) {
           localStorage.setItem('userId', userId)
         }
+        localStorage.setItem('appRole', role)
       } catch (e) {
         console.error('Error decoding token', e)
         this.currentUserEmail = 'User'
         this.currentUserId = null
+        this.appRole = 'Member'
       }
     },
 
@@ -116,6 +122,8 @@ export const useProjectStore = defineStore('project', {
       localStorage.removeItem('currentProjectId')
       localStorage.removeItem('userEmail')
       localStorage.removeItem('userId')
+      localStorage.removeItem('appRole')
+      this.appRole = 'Member'
     }
   }
 })

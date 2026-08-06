@@ -10,7 +10,8 @@ namespace API_v2.Models.DTOs
 
         [MaxLength(5000, ErrorMessage = "Description must not exceed 5000 characters")]
         public string? Description { get; set; }
-        public DateTime? Deadline { get; set; }
+        [Required(ErrorMessage = "Deadline is required")]
+        public DateTime Deadline { get; set; }
         public DateTime? StartDate { get; set; }
         public double? EstimatedHours { get; set; }
         public double? ActualHours { get; set; }
@@ -27,7 +28,8 @@ namespace API_v2.Models.DTOs
 
         [MaxLength(5000, ErrorMessage = "Description must not exceed 5000 characters")]
         public string? Description { get; set; }
-        public DateTime? Deadline { get; set; }
+        [Required(ErrorMessage = "Deadline is required")]
+        public DateTime Deadline { get; set; }
         public DateTime? StartDate { get; set; }
         public double? EstimatedHours { get; set; }
         public double? ActualHours { get; set; }
@@ -63,7 +65,7 @@ namespace API_v2.Models.DTOs
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; }
         public Guid CreatorId { get; set; }
-        public DateTime? Deadline { get; set; }
+        public DateTime Deadline { get; set; }
         public DateTime? StartDate { get; set; }
         public double? EstimatedHours { get; set; }
         public double? ActualHours { get; set; }
@@ -84,7 +86,7 @@ namespace API_v2.Models.DTOs
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; }
         public Guid CreatorId { get; set; }
-        public DateTime? Deadline { get; set; }
+        public DateTime Deadline { get; set; }
         public DateTime? StartDate { get; set; }
         public double? EstimatedHours { get; set; }
         public double? ActualHours { get; set; }

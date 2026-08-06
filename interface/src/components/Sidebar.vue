@@ -46,6 +46,20 @@
             <span class="small fw-medium">{{ $t('sidebar.task_board') }}</span>
           </router-link>
         </li>
+        <!-- Calendar link -->
+        <li class="nav-item">
+          <router-link :to="`/projects/${projectStore.currentProjectId}/calendar`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm" @click="closeMobileMenu">
+            <i class="bi bi-calendar3 fs-6"></i>
+            <span class="small fw-medium">Lịch</span>
+          </router-link>
+        </li>
+        <!-- Gantt link -->
+        <li class="nav-item">
+          <router-link :to="`/projects/${projectStore.currentProjectId}/gantt`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm" @click="closeMobileMenu">
+            <i class="bi bi-bar-chart-steps fs-6"></i>
+            <span class="small fw-medium">Sơ đồ Gantt</span>
+          </router-link>
+        </li>
         <!-- Members link -->
         <li class="nav-item">
           <router-link :to="`/projects/${projectStore.currentProjectId}/members`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm" @click="closeMobileMenu">

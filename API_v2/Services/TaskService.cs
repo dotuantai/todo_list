@@ -61,8 +61,8 @@ namespace API_v2.Services
                 Description = req.Description?.Trim(),
                 CreatedAt = DateTime.UtcNow,
                 CreatorId = creatorId,
-                Deadline = NormalizeToUtc(req.Deadline),
-                StartDate = NormalizeToUtc(req.StartDate),
+                Deadline = NormalizeToUtc(req.Deadline).Value,
+                StartDate = NormalizeToUtc(req.StartDate).Value,
                 EstimatedHours = req.EstimatedHours,
                 ActualHours = req.ActualHours,
                 ColumnId = req.ColumnId,
@@ -146,12 +146,12 @@ namespace API_v2.Services
                     changes.Add(new FieldChange { Field = "Description", OldValue = null, NewValue = "__description_changed__" });
 
                 var normalizedDeadline = NormalizeToUtc(req.Deadline);
-                if (task.Deadline?.Date != normalizedDeadline?.Date)
-                    changes.Add(new FieldChange { Field = "Deadline", OldValue = task.Deadline?.ToString("MMM d, yyyy"), NewValue = normalizedDeadline?.ToString("MMM d, yyyy") });
+                if (task.Deadline.Date != normalizedDeadline?.Date)
+                    changes.Add(new FieldChange { Field = "Deadline", OldValue = task.Deadline.ToString("MMM d, yyyy"), NewValue = normalizedDeadline?.ToString("MMM d, yyyy") });
 
                 var normalizedStart = NormalizeToUtc(req.StartDate);
-                if (task.StartDate?.Date != normalizedStart?.Date)
-                    changes.Add(new FieldChange { Field = "Start Date", OldValue = task.StartDate?.ToString("MMM d, yyyy"), NewValue = normalizedStart?.ToString("MMM d, yyyy") });
+                if (task.StartDate.Date != normalizedStart?.Date)
+                    changes.Add(new FieldChange { Field = "Start Date", OldValue = task.StartDate.ToString("MMM d, yyyy"), NewValue = normalizedStart?.ToString("MMM d, yyyy") });
 
                 if (task.EstimatedHours != req.EstimatedHours)
                     changes.Add(new FieldChange { Field = "Est. Hours", OldValue = task.EstimatedHours?.ToString() ?? "empty", NewValue = req.EstimatedHours?.ToString() ?? "empty" });
@@ -198,8 +198,8 @@ namespace API_v2.Services
 
                 task.Title = req.Title.Trim();
                 task.Description = req.Description?.Trim();
-                task.Deadline = NormalizeToUtc(req.Deadline);
-                task.StartDate = NormalizeToUtc(req.StartDate);
+                task.Deadline = NormalizeToUtc(req.Deadline).Value;
+                task.StartDate = NormalizeToUtc(req.StartDate).Value;
                 task.EstimatedHours = req.EstimatedHours;
                 task.ActualHours = req.ActualHours;
                 task.ColumnId = req.ColumnId;
@@ -500,7 +500,7 @@ namespace API_v2.Services
             var template = new List<dynamic>
             {
                 new { Title = "Example Task 1", Description = "Description of task 1", Deadline = DateTime.UtcNow.AddDays(3).ToString("yyyy-MM-dd"), StartDate = DateTime.UtcNow.ToString("yyyy-MM-dd"), EstimatedHours = 4.5, Priority = "High" },
-                new { Title = "Example Task 2", Description = "Description of task 2", Deadline = "", StartDate = "", EstimatedHours = 2.0, Priority = "Medium" }
+                new { Title = "Example Task 2", Description = "Description of task 2", Deadline = DateTime.UtcNow.AddDays(7).ToString("yyyy-MM-dd"), StartDate = DateTime.UtcNow.ToString("yyyy-MM-dd"), EstimatedHours = 2.0, Priority = "Medium" }
             };
 
             using var stream = new MemoryStream();
@@ -531,17 +531,17 @@ namespace API_v2.Services
 
                 var description = rowDict.ContainsKey("Description") ? rowDict["Description"]?.ToString() : null;
                 
-                DateTime? deadline = null;
-                if (rowDict.ContainsKey("Deadline") && DateTime.TryParse(rowDict["Deadline"]?.ToString(), out var parsedDeadline))
+                if (!rowDict.ContainsKey("Deadline") || !DateTime.TryParse(rowDict["Deadline"]?.ToString(), out var parsedDeadline))
                 {
-                    deadline = NormalizeToUtc(parsedDeadline);
+                    throw ApiException.BadRequest($"Task '{title}' is missing a valid Deadline.");
                 }
+                DateTime deadline = NormalizeToUtc(parsedDeadline).Value;
 
-                DateTime? startDate = null;
-                if (rowDict.ContainsKey("StartDate") && DateTime.TryParse(rowDict["StartDate"]?.ToString(), out var parsedStartDate))
+                if (!rowDict.ContainsKey("StartDate") || !DateTime.TryParse(rowDict["StartDate"]?.ToString(), out var parsedStartDate))
                 {
-                    startDate = NormalizeToUtc(parsedStartDate);
+                    throw ApiException.BadRequest($"Task '{title}' is missing a valid StartDate.");
                 }
+                DateTime startDate = NormalizeToUtc(parsedStartDate).Value;
 
                 double? estHours = null;
                 if (rowDict.ContainsKey("EstimatedHours") && double.TryParse(rowDict["EstimatedHours"]?.ToString(), out var parsedEst))

@@ -41,17 +41,17 @@
 
               <div class="row g-3 mb-4">
                 <div class="col-md-6 text-start">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Start Date</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Start Date <span class="text-danger">*</span></label>
                   <div class="input-group">
                     <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-calendar-event"></i></span>
-                    <input v-model="form.startDate" type="date" class="form-control text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;" />
+                    <input v-model="form.startDate" type="date" class="form-control text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;" required />
                   </div>
                 </div>
                 <div class="col-md-6 text-start">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.deadline') }}</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.deadline') }} <span class="text-danger">*</span></label>
                   <div class="input-group">
                     <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-calendar3"></i></span>
-                    <input v-model="form.deadline" type="date" class="form-control text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;" />
+                    <input v-model="form.deadline" type="date" class="form-control text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;" required />
                   </div>
                 </div>
 
