@@ -260,9 +260,11 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { login as apiLogin, googleLogin } from '../services/authService.js'
 import { toastError, extractMessage } from '../utils/swal.js'
+import { useProjectStore } from '../stores/projectStore.js'
 
 const router = useRouter()
 const { locale, t } = useI18n()
+const store = useProjectStore()
 
 const changeLocale = (lang) => {
   locale.value = lang
@@ -318,7 +320,12 @@ const handleGoogleCredentialResponse = async (response) => {
 
     if (res?.data?.AccessToken) {
       localStorage.setItem('token', res.data.AccessToken)
-      router.push('/projects')
+      store.decodeToken()
+      if (store.appRole === 'Admin') {
+        router.push('/admin/projects')
+      } else {
+        router.push('/projects')
+      }
     }
   } catch (error) {
     toastError(extractMessage(error, t('auth.google_login_failed')))
@@ -338,9 +345,13 @@ const login = async () => {
 
     if (response?.data?.AccessToken) {
       localStorage.setItem('token', response.data.AccessToken)
+      store.decodeToken()
+      if (store.appRole === 'Admin') {
+        router.push('/admin/projects')
+      } else {
+        router.push('/projects')
+      }
     }
-
-    router.push('/projects')
   } catch (error) {
     toastError(extractMessage(error, t('errors.default')))
   } finally {

@@ -185,7 +185,7 @@
     "edit_title": "Chỉnh sửa công việc",
     "task_name": "Tên công việc",
     "description": "Mô tả công việc",
-    "deadline": "Hạn chót (tùy chọn)",
+    "deadline": "Hạn chót",
     "status": "Trạng thái",
     "priority": "Độ ưu tiên",
     "assignee": "Người thực hiện (tùy chọn)",

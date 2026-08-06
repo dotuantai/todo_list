@@ -453,12 +453,12 @@
 
               <div class="row g-3 mb-4">
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase">Start Date</label>
-                  <input id="edit-startdate" v-model="editForm.startDate" type="date" class="form-control" />
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">Start Date <span class="text-danger">*</span></label>
+                  <input id="edit-startdate" v-model="editForm.startDate" type="date" class="form-control" required />
                 </div>
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.deadline') }}</label>
-                  <input id="edit-deadline" v-model="editForm.deadline" type="date" class="form-control" />
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.deadline') }} <span class="text-danger">*</span></label>
+                  <input id="edit-deadline" v-model="editForm.deadline" type="date" class="form-control" required />
                 </div>
                 <div class="col-12 col-md-6">
                   <label class="form-label fw-semibold text-secondary small text-uppercase">Est. Hours</label>

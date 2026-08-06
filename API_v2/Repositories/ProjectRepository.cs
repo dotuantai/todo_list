@@ -1,5 +1,6 @@
 using API_v2.Datas;
 using API_v2.Models;
+using API_v2.Models.Constants;
 using API_v2.Models.DTOs;
 using API_v2.Repositories.IRepositories;
 using Microsoft.EntityFrameworkCore;
@@ -52,8 +53,31 @@ namespace API_v2.Repositories
 
         public async Task<ProjectMember?> GetMemberAsync(Guid projectId, Guid userId)
         {
-            return await _dbContext.ProjectMembers
+            var member = await _dbContext.ProjectMembers
                 .FirstOrDefaultAsync(pm => pm.ProjectId == projectId && pm.UserId == userId);
+                
+            var user = await _dbContext.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == userId);
+            bool isAdmin = user?.Role?.Name == "Admin";
+
+            if (isAdmin)
+            {
+                if (member != null)
+                {
+                    _dbContext.Entry(member).State = EntityState.Detached;
+                    member.Role = ProjectRoles.Owner;
+                    return member;
+                }
+                
+                return new ProjectMember
+                {
+                    ProjectId = projectId,
+                    UserId = userId,
+                    Role = ProjectRoles.Owner,
+                    JoinedAt = DateTime.UtcNow
+                };
+            }
+
+            return member;
         }
 
         public void AddMember(ProjectMember member)
@@ -83,24 +107,45 @@ namespace API_v2.Repositories
 
         public async Task<List<ProjectResponse>> GetProjectDashboardsAsync(Guid userId)
         {
-            return await _dbContext.ProjectMembers
+            var user = await _dbContext.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == userId);
+            bool isAdmin = user?.Role?.Name == "Admin";
+
+            var query = _dbContext.ProjectMembers.AsNoTracking();
+
+            if (!isAdmin)
+            {
+                query = query.Where(pm => pm.UserId == userId);
+            }
+            
+            // To prevent duplicate projects for Admin when they are also a member, we group by Project
+            // But Wait, if Admin, what UserRole should they see if they didn't join? Default to empty or Viewer.
+            // Since ProjectResponse requires UserRole, if Admin is not a member, we can just say "Admin" or something.
+            // A better way is:
+            var projects = await _dbContext.Projects
                 .AsNoTracking()
-                .Where(pm => pm.UserId == userId)
-                .Select(pm => new ProjectResponse
+                .Include(p => p.Owner)
+                .Include(p => p.ProjectMembers)
+                .Include(p => p.Tasks)
+                .Where(p => isAdmin || p.ProjectMembers.Any(pm => pm.UserId == userId))
+                .Select(p => new ProjectResponse
                 {
-                    Id = pm.Project.Id,
-                    Name = pm.Project.Name,
-                    Description = pm.Project.Description,
-                    OwnerId = pm.Project.OwnerId,
-                    OwnerEmail = pm.Project.Owner.Email,
-                    CreatedAt = pm.Project.CreatedAt,
-                    UpdatedAt = pm.Project.UpdatedAt,
-                    UserRole = pm.Role,
-                    MemberCount = pm.Project.ProjectMembers.Count(),
-                    TotalTasks = pm.Project.Tasks.Count(),
-                    CompletedTasks = pm.Project.Tasks.Count(t => t.Column != null && t.Column.IsCompletedStage)
+                    Id = p.Id,
+                    Name = p.Name,
+                    Description = p.Description,
+                    OwnerId = p.OwnerId,
+                    OwnerEmail = p.Owner.Email,
+                    CreatedAt = p.CreatedAt,
+                    UpdatedAt = p.UpdatedAt,
+                    UserRole = p.ProjectMembers.FirstOrDefault(pm => pm.UserId == userId) != null 
+                        ? p.ProjectMembers.FirstOrDefault(pm => pm.UserId == userId).Role 
+                        : "Admin", // Fallback for Admin who isn't a member
+                    MemberCount = p.ProjectMembers.Count(),
+                    TotalTasks = p.Tasks.Count(),
+                    CompletedTasks = p.Tasks.Count(t => t.Column != null && t.Column.IsCompletedStage)
                 })
                 .ToListAsync();
+
+            return projects;
         }
     }
 }

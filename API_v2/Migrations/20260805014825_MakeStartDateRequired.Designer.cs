@@ -3,6 +3,7 @@ using System;
 using API_v2.Datas;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API_v2.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260805014825_MakeStartDateRequired")]
+    partial class MakeStartDateRequired
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -189,38 +192,6 @@ namespace API_v2.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
-            modelBuilder.Entity("API_v2.Models.Role", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Roles");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("11111111-1111-1111-1111-111111111111"),
-                            Name = "Admin"
-                        },
-                        new
-                        {
-                            Id = new Guid("22222222-2222-2222-2222-222222222222"),
-                            Name = "Manager"
-                        },
-                        new
-                        {
-                            Id = new Guid("33333333-3333-3333-3333-333333333333"),
-                            Name = "Member"
-                        });
-                });
-
             modelBuilder.Entity("API_v2.Models.TaskActivity", b =>
                 {
                     b.Property<int>("Id")
@@ -379,28 +350,12 @@ namespace API_v2.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("RoleId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.HasIndex("RoleId");
-
                     b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("00000000-0000-0000-0000-000000000001"),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Email = "admin@gmail.com",
-                            IsActive = true,
-                            PasswordHash = "$2a$11$X3uPA9Yy730DZgeFEHKiiuSfcUtkQRjEDfRuPzDVbFwUGYio17M92",
-                            RoleId = new Guid("11111111-1111-1111-1111-111111111111")
-                        });
                 });
 
             modelBuilder.Entity("API_v2.Models.Notification", b =>
@@ -549,17 +504,6 @@ namespace API_v2.Migrations
                     b.Navigation("Project");
                 });
 
-            modelBuilder.Entity("API_v2.Models.User", b =>
-                {
-                    b.HasOne("API_v2.Models.Role", "Role")
-                        .WithMany("Users")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Role");
-                });
-
             modelBuilder.Entity("API_v2.Models.Project", b =>
                 {
                     b.Navigation("Columns");
@@ -572,11 +516,6 @@ namespace API_v2.Migrations
             modelBuilder.Entity("API_v2.Models.ProjectColumn", b =>
                 {
                     b.Navigation("Tasks");
-                });
-
-            modelBuilder.Entity("API_v2.Models.Role", b =>
-                {
-                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("API_v2.Models.TodoTask", b =>

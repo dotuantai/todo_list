@@ -5,9 +5,16 @@ const RegisterView = () => import('../views/RegisterView.vue')
 const ProjectsView = () => import('../views/ProjectsView.vue')
 const DashboardView = () => import('../views/DashboardView.vue')
 const TaskView = () => import('../views/TaskView.vue')
+const CalendarView = () => import('../views/CalendarView.vue')
+const GanttView = () => import('../views/GanttView.vue')
 const SettingsView = () => import('../views/SettingsView.vue')
 const MembersView = () => import('../views/MembersView.vue')
 const ChangePasswordView = () => import('../views/ChangePasswordView.vue')
+
+// Admin Views
+const AdminLayout = () => import('../layouts/AdminLayout.vue')
+const AdminProjectsView = () => import('../views/admin/AdminProjectsView.vue')
+const AdminUsersView = () => import('../views/admin/AdminUsersView.vue')
 
 const routes = [
   {
@@ -45,6 +52,18 @@ const routes = [
     meta: { requiresAuth: true, requiresProject: true }
   },
   {
+    path: '/projects/:projectId/calendar',
+    name: 'project-calendar',
+    component: CalendarView,
+    meta: { requiresAuth: true, requiresProject: true }
+  },
+  {
+    path: '/projects/:projectId/gantt',
+    name: 'project-gantt',
+    component: GanttView,
+    meta: { requiresAuth: true, requiresProject: true }
+  },
+  {
     path: '/projects/:projectId/settings',
     name: 'project-settings',
     component: SettingsView,
@@ -55,6 +74,28 @@ const routes = [
     name: 'project-members',
     component: MembersView,
     meta: { requiresAuth: true, requiresProject: true }
+  },
+  // --- ADMIN ROUTES ---
+  {
+    path: '/admin',
+    component: AdminLayout,
+    meta: { requiresAuth: true, requiresAdmin: true },
+    children: [
+      {
+        path: '',
+        redirect: '/admin/projects'
+      },
+      {
+        path: 'projects',
+        name: 'admin-projects',
+        component: AdminProjectsView
+      },
+      {
+        path: 'users',
+        name: 'admin-users',
+        component: AdminUsersView
+      }
+    ]
   },
   {
     path: '/:pathMatch(.*)*',
@@ -79,6 +120,7 @@ router.beforeEach(async (to, from) => {
 
   if (to.path === '/login' || to.path === '/register') {
     if (isAuthenticated) {
+      if (store.appRole === 'Admin') return '/admin/projects'
       return '/projects'
     }
     return true
@@ -87,6 +129,10 @@ router.beforeEach(async (to, from) => {
   if (to.meta.requiresAuth && !isAuthenticated) {
     store.clearStore()
     return '/login'
+  }
+
+  if (to.meta.requiresAdmin && store.appRole !== 'Admin') {
+    return '/projects'
   }
 
   if (to.meta.requiresProject) {

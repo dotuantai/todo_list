@@ -19,6 +19,7 @@ namespace API_v2.Datas
         public DbSet<ProjectColumn> ProjectColumns { get; set; }
         public DbSet<TaskComment> TaskComments { get; set; }
         public DbSet<TaskActivity> TaskActivities { get; set; }
+        public DbSet<Role> Roles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -145,6 +146,36 @@ namespace API_v2.Datas
             modelBuilder.Entity<TaskActivity>()
                 .HasIndex(ta => ta.TaskId)
                 .HasDatabaseName("IX_TaskActivities_TaskId");
+
+            // Role Configuration & Seeding
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Role)
+                .WithMany(r => r.Users)
+                .HasForeignKey(u => u.RoleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            var adminRoleId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+            var managerRoleId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+            var memberRoleId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+
+            modelBuilder.Entity<Role>().HasData(
+                new Role { Id = adminRoleId, Name = "Admin" },
+                new Role { Id = managerRoleId, Name = "Manager" },
+                new Role { Id = memberRoleId, Name = "Member" }
+            );
+
+            var adminUserId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+            modelBuilder.Entity<User>().HasData(
+                new User
+                {
+                    Id = adminUserId,
+                    Email = "admin@gmail.com",
+                    PasswordHash = "$2a$11$X3uPA9Yy730DZgeFEHKiiuSfcUtkQRjEDfRuPzDVbFwUGYio17M92",
+                    IsActive = true,
+                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    RoleId = adminRoleId
+                }
+            );
 
             base.OnModelCreating(modelBuilder);
         }

@@ -98,7 +98,8 @@ namespace API_v2.Services
                     Email = emailLower,
                     PasswordHash = PasswordHelper.HashPassword(req.Password),
                     IsActive = false, // Must verify OTP to activate
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    RoleId = Guid.Parse("33333333-3333-3333-3333-333333333333") // Member Role
                 };
                 _userRepo.Create(user);
             }
