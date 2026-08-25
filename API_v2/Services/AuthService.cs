@@ -231,7 +231,8 @@ namespace API_v2.Services
             return new LoginResponse
             {
                 AccessToken = accessToken,
-                RefreshToken = refreshToken
+                RefreshToken = refreshToken,
+                RequiresPasswordChange = user.RequiresPasswordChange
             };
         }
 
@@ -315,9 +316,77 @@ namespace API_v2.Services
             }
 
             user.PasswordHash = PasswordHelper.HashPassword(req.NewPassword);
+            user.RequiresPasswordChange = false;
             await _userRepo.SaveAsync();
 
             _logger.LogInformation("AUDIT [Password Changed] User ID: {UserId} successfully changed password.", userId);
+        }
+
+        public async Task ForgotPasswordAsync(ForgotPasswordRequest req)
+        {
+            var emailLower = req.Email.Trim().ToLower();
+            var user = await _userRepo.GetByEmailAsync(emailLower);
+
+            if (user == null || !user.IsActive)
+            {
+                throw ApiException.NotFound("User not found or account is inactive.");
+            }
+
+            var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+            
+            // Save to memory cache (valid for 5 minutes)
+            _memoryCache.Set($"PWD_RESET_OTP_{emailLower}", otp, TimeSpan.FromMinutes(5));
+
+            var subject = "TutaFlow - Password Reset Code";
+            var body = $@"
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;'>
+                    <h2 style='color: #4f46e5; text-align: center;'>Password Reset Request</h2>
+                    <p>We received a request to reset your TutaFlow password. Please use the following One-Time Password (OTP) to reset it. This code is valid for 5 minutes.</p>
+                    <div style='background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 15px; text-align: center; margin: 20px 0;'>
+                        <span style='font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #1e293b;'>{otp}</span>
+                    </div>
+                    <p style='font-size: 12px; color: #64748b; text-align: center;'>If you did not request this, you can safely ignore this email.</p>
+                </div>";
+
+            _emailQueue.QueueEmail(emailLower, subject, body);
+            _logger.LogInformation("AUDIT [Forgot Password] OTP queued for Email: {Email}", emailLower);
+        }
+
+        public async Task ResetPasswordAsync(ResetPasswordRequest req)
+        {
+            var emailLower = req.Email.Trim().ToLower();
+
+            if (!_memoryCache.TryGetValue($"PWD_RESET_OTP_{emailLower}", out string? storedOtp) || storedOtp != req.Otp.Trim())
+            {
+                throw ApiException.BadRequest("Invalid or expired OTP code.");
+            }
+
+            if (!IsStrongPassword(req.NewPassword))
+            {
+                throw ApiException.BadRequest("New password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.");
+            }
+
+            var user = await _userRepo.GetByEmailAsync(emailLower);
+            if (user == null || !user.IsActive)
+            {
+                throw ApiException.NotFound("User not found or account is inactive.");
+            }
+
+            user.PasswordHash = PasswordHelper.HashPassword(req.NewPassword);
+            user.RequiresPasswordChange = false;
+            
+            _memoryCache.Remove($"PWD_RESET_OTP_{emailLower}");
+            await _userRepo.SaveAsync();
+
+            // Revoke all refresh tokens
+            var activeTokens = await _refreshTokenRepo.GetActiveTokensByUserIdAsync(user.Id);
+            foreach (var token in activeTokens)
+            {
+                token.RevokedAt = DateTime.UtcNow;
+            }
+            await _refreshTokenRepo.SaveAsync();
+
+            _logger.LogInformation("AUDIT [Password Reset] Password has been reset for User ID: {UserId}, Email: {Email}", user.Id, emailLower);
         }
 
         public async Task<LoginResponse> LoginWithGoogleAsync(GoogleLoginRequest req)
@@ -348,19 +417,8 @@ namespace API_v2.Services
 
             if (user == null)
             {
-                user = new User
-                {
-                    Id = Guid.NewGuid(),
-                    Email = emailLower,
-                    PasswordHash = PasswordHelper.HashPassword(Guid.NewGuid().ToString("N")),
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                _userRepo.Create(user);
-                await _userRepo.SaveAsync();
-
-                _logger.LogInformation("AUDIT [Google Register Success] New user created: {Email} (ID: {UserId})", emailLower, user.Id);
+                _logger.LogWarning("SECURITY AUDIT [Google Login Failed] Unregistered user attempt: {Email}", emailLower);
+                throw ApiException.Unauthorized("Tài khoản của bạn chưa được đăng ký trong hệ thống. Vui lòng liên hệ quản trị viên.");
             }
             else
             {
@@ -395,7 +453,8 @@ namespace API_v2.Services
             return new LoginResponse
             {
                 AccessToken = accessToken,
-                RefreshToken = refreshToken
+                RefreshToken = refreshToken,
+                RequiresPasswordChange = user.RequiresPasswordChange
             };
         }
     }

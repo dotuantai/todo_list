@@ -80,6 +80,15 @@
     <!-- Sidebar Footer -->
     <div class="px-2 py-3 border-top">
       <ul class="nav flex-column gap-1">
+        <li class="nav-item" v-if="projectStore.appRole === 'Admin'">
+          <router-link
+            to="/admin/dashboard"
+            @click="closeMobileMenu"
+            class="btn btn-link nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3 w-100 text-start text-decoration-none border-0 bg-transparent text-primary">
+            <i class="bi bi-shield-lock-fill fs-6"></i>
+            <span class="small fw-bold">Admin Dashboard</span>
+          </router-link>
+        </li>
         <li class="nav-item">
           <button
             @click="handleLogout(); closeMobileMenu()"

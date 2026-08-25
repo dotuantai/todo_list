@@ -61,12 +61,12 @@
       
       <!-- Left Sidebar: Task Names -->
       <div class="gantt-sidebar border-end d-flex flex-column bg-body-tertiary" style="width: 280px; flex-shrink: 0; z-index: 20;">
-        <div class="gantt-header p-3 border-bottom d-flex align-items-center fw-bold text-muted text-uppercase tracking-wider bg-body-secondary" style="height: 65px; font-size: 0.75rem;">
+        <div class="gantt-header p-3 border-bottom d-flex align-items-center fw-bold text-muted text-uppercase tracking-wider bg-body-secondary flex-shrink-0" style="height: 65px; font-size: 0.75rem;">
           Tên công việc
         </div>
         <div class="gantt-rows overflow-hidden d-flex flex-column flex-grow-1" ref="sidebarRows" @scroll="syncScroll('sidebar')">
           <div v-for="task in filteredTasks" :key="task.Id" 
-               class="p-2 px-3 border-bottom text-truncate d-flex flex-column justify-content-center bg-body hover-bg transition-all" 
+               class="p-2 px-3 border-bottom text-truncate d-flex flex-column justify-content-center bg-body hover-bg transition-all flex-shrink-0" 
                style="height: 60px; cursor: pointer;" 
                :title="task.Title"
                @click="openTaskDetails(task)">
@@ -80,7 +80,7 @@
       
       <!-- Right Timeline -->
       <div class="gantt-timeline overflow-auto flex-grow-1 position-relative" ref="timelineContainer" @scroll="syncScroll('timeline')">
-        <div class="gantt-grid" :style="{ display: 'grid', gridTemplateColumns: `repeat(${timelineDays.length}, minmax(45px, 1fr))` }">
+        <div class="gantt-grid" :style="{ display: 'grid', gridTemplateColumns: `repeat(${timelineDays.length}, minmax(45px, 1fr))`, gridTemplateRows: '65px', gridAutoRows: '60px' }">
           
           <!-- Timeline Header -->
           <div class="gantt-header-row position-sticky top-0 bg-body-secondary border-bottom" style="grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; height: 65px; z-index: 10;">

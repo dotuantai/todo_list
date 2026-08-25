@@ -14,6 +14,7 @@ namespace API_v2.Repositories.IRepositories
         Task SaveAsync();
         Task<List<UserSearchResponse>> SearchUsersAsync(string keyword);
         Task<List<AdminUserResponse>> GetAllUsersAsync();
+        Task<Guid?> GetRoleIdByNameAsync(string roleName);
         Task<bool> UpdateUserRoleAsync(Guid userId, string newRole);
         Task<bool> UpdateUserStatusAsync(Guid userId, bool isActive);
     }
