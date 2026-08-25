@@ -1,13 +1,13 @@
 <template>
   <div>
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h3 class="fw-bold mb-0 text-body">Tất cả Dự án</h3>
+      <h3 class="fw-bold mb-0 text-body">{{ $t('admin.projects_title') }}</h3>
     </div>
 
     <!-- Loading State -->
     <div v-if="projectStore.loading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
-      <p class="text-muted mt-3">Đang tải dữ liệu...</p>
+      <p class="text-muted mt-3">{{ $t('admin.projects_loading') }}</p>
     </div>
 
     <!-- Data Table for Projects -->
@@ -16,11 +16,11 @@
         <table class="table table-hover mb-0 align-middle">
           <thead class="bg-light">
             <tr>
-              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tên dự án</th>
-              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Chủ sở hữu</th>
-              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Thành viên</th>
-              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">Tiến độ Task</th>
-              <th class="border-0 px-4 py-3 text-uppercase text-secondary text-end" style="font-size: 0.75rem; letter-spacing: 0.5px;">Hành động</th>
+              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('admin.projects_col_name') }}</th>
+              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('admin.projects_col_owner') }}</th>
+              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('admin.projects_col_members') }}</th>
+              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('admin.projects_col_progress') }}</th>
+              <th class="border-0 px-4 py-3 text-uppercase text-secondary text-end" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('admin.projects_col_actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -32,7 +32,7 @@
                   </div>
                   <div>
                     <h6 class="mb-0 fw-bold">{{ proj.Name }}</h6>
-                    <small class="text-muted text-truncate d-inline-block" style="max-width: 200px;">{{ proj.Description || 'Không có mô tả' }}</small>
+                    <small class="text-muted text-truncate d-inline-block" style="max-width: 200px;">{{ proj.Description || $t('admin.projects_no_desc') }}</small>
                   </div>
                 </div>
               </td>
@@ -53,13 +53,13 @@
               </td>
               <td class="px-4 py-3 text-end">
                 <button class="btn btn-sm btn-light border-0 text-primary fw-medium px-3" @click="goToProject(proj.Id)">
-                  Vào không gian <i class="bi bi-arrow-right ms-1"></i>
+                  {{ $t('admin.projects_enter') }} <i class="bi bi-arrow-right ms-1"></i>
                 </button>
               </td>
             </tr>
             <tr v-if="projectsWithProgress.length === 0">
               <td colspan="5" class="text-center py-5 text-muted">
-                Không có dự án nào trên hệ thống
+                {{ $t('admin.projects_empty') }}
               </td>
             </tr>
           </tbody>

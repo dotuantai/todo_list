@@ -16,5 +16,7 @@ namespace API_v2.Services.Interfaces
         Task LogoutAsync(string refreshToken);
         Task<List<UserSearchResponse>> SearchUsersAsync(string keyword);
         Task ChangePasswordAsync(Guid userId, ChangePasswordRequest req);
+        Task ForgotPasswordAsync(ForgotPasswordRequest req);
+        Task ResetPasswordAsync(ResetPasswordRequest req);
     }
 }

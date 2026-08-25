@@ -17,19 +17,7 @@ namespace API_v2.Controllers
             _authService = authService;
         }
 
-        [HttpPost("register")]
-        [AllowAnonymous]
-        public async Task<ActionResult> Register([FromBody] RegisterRequest req)
-        {
-            if (req is null)
-            {
-                return BadRequest(new ApiResponse<object>(false, "Invalid data.", null));
-            }
 
-
-            await _authService.RegisterAsync(req);
-            return Ok(new ApiResponse<object>(true, "Registration successful. Please check your email for the OTP verification code.", null));
-        }
 
         [HttpPost("verify-otp")]
         [AllowAnonymous]
@@ -81,7 +69,7 @@ namespace API_v2.Controllers
             };
             Response.Cookies.Append("refreshToken", result.RefreshToken ?? string.Empty, cookieOptions);
 
-            return Ok(new ApiResponse<object>(true, "Sign-in successful.", new { AccessToken = result.AccessToken }));
+            return Ok(new ApiResponse<object>(true, "Sign-in successful.", new { AccessToken = result.AccessToken, RequiresPasswordChange = result.RequiresPasswordChange }));
         }
 
         [HttpPost("google-login")]
@@ -105,7 +93,7 @@ namespace API_v2.Controllers
             };
             Response.Cookies.Append("refreshToken", result.RefreshToken ?? string.Empty, cookieOptions);
 
-            return Ok(new ApiResponse<object>(true, "Google sign-in successful.", new { AccessToken = result.AccessToken }));
+            return Ok(new ApiResponse<object>(true, "Google sign-in successful.", new { AccessToken = result.AccessToken, RequiresPasswordChange = result.RequiresPasswordChange }));
         }
 
         [HttpGet("search")]
@@ -166,6 +154,34 @@ namespace API_v2.Controllers
 
             await _authService.ChangePasswordAsync(CurrentUserId, req);
             return Ok(new ApiResponse<object>(true, "Password changed successfully.", null));
+        }
+
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        [EnableRateLimiting("otp")]
+        public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordRequest req)
+        {
+            if (req == null || string.IsNullOrWhiteSpace(req.Email))
+            {
+                return BadRequest(new ApiResponse<object>(false, "Email is required.", null));
+            }
+
+            await _authService.ForgotPasswordAsync(req);
+            return Ok(new ApiResponse<object>(true, "If the email is registered, an OTP will be sent.", null));
+        }
+
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        [EnableRateLimiting("otp")]
+        public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordRequest req)
+        {
+            if (req == null || string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Otp) || string.IsNullOrWhiteSpace(req.NewPassword))
+            {
+                return BadRequest(new ApiResponse<object>(false, "All fields are required.", null));
+            }
+
+            await _authService.ResetPasswordAsync(req);
+            return Ok(new ApiResponse<object>(true, "Password has been reset successfully.", null));
         }
 
         [HttpGet("health")]

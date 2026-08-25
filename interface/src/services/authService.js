@@ -34,12 +34,28 @@ export const changePassword = (data) => {
   return api.post('/auth/change-password', data)
 }
 
+export const forgotPassword = (data) => {
+  return api.post('/auth/forgot-password', data)
+}
+
+export const resetPassword = (data) => {
+  return api.post('/auth/reset-password', data)
+}
+
 export const googleLogin = (idToken) => {
   return api.post('/auth/google-login', { idToken })
 }
 
 export const getAllUsers = () => {
   return api.get('/user')
+}
+
+export const createUser = (data) => {
+  return api.post('/user', data)
+}
+
+export const resetTemporaryPassword = (userId) => {
+  return api.post(`/user/${userId}/reset-temporary-password`)
 }
 
 export const updateUserRole = (userId, role) => {

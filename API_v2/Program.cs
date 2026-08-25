@@ -128,6 +128,7 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ITaskCommentService, TaskCommentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IProjectColumnService, ProjectColumnService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddHttpClient<IEmailService, EmailService>()
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
 builder.Services.AddSingleton<IEmailQueue, EmailQueue>();
@@ -216,4 +217,4 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 
-app.Run();
+ app.Run();

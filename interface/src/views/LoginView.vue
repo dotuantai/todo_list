@@ -199,12 +199,16 @@
                 class="form-control form-control-clean"
                 placeholder="you@example.com"
                 required
+                tabindex="1"
               />
             </div>
           </div>
 
           <div class="mb-4">
-            <label class="form-label fw-semibold text-body small mb-1">{{ $t('auth.password') }}</label>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label fw-semibold text-body small mb-0">{{ $t('auth.password') }}</label>
+              <router-link to="/forgot-password" class="small text-decoration-none fw-medium text-primary" tabindex="4">{{ $t('auth.forgot_password') }}?</router-link>
+            </div>
             <div class="input-group input-group-clean">
               <span class="input-icon"><i class="bi bi-lock"></i></span>
               <input
@@ -214,6 +218,7 @@
                 placeholder="Enter your password"
                 @keyup.enter="login"
                 required
+                tabindex="2"
               />
               <button type="button" class="btn-eye" @click="showPassword = !showPassword" tabindex="-1">
                 <i class="bi" :class="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
@@ -226,6 +231,7 @@
               class="btn btn-primary flex-grow-1 py-2 d-flex align-items-center justify-content-center gap-2 btn-sign"
               type="submit"
               :disabled="loading"
+              tabindex="3"
             >
               <span v-if="loading" class="spinner-border spinner-border-sm" role="status"></span>
               <span>{{ loading ? $t('auth.signing_in') : $t('auth.login') }}</span>
@@ -237,17 +243,6 @@
           </div>
         </form>
 
-        <!-- Divider -->
-        <div class="divider-row my-4">
-          <span class="divider-line"></span>
-          <span class="divider-text">{{ $t('auth.new_here') }}</span>
-          <span class="divider-line"></span>
-        </div>
-
-        <router-link to="/register" class="btn btn-outline-secondary w-100 py-2 d-flex align-items-center justify-content-center gap-2 text-decoration-none">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8zM19 8v6M22 11h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          {{ $t('auth.create_free_acc') }}
-        </router-link>
       </div>
     </div>
 
@@ -320,8 +315,11 @@ const handleGoogleCredentialResponse = async (response) => {
 
     if (res?.data?.AccessToken) {
       localStorage.setItem('token', res.data.AccessToken)
+      localStorage.setItem('requiresPasswordChange', res.data.RequiresPasswordChange)
       store.decodeToken()
-      if (store.appRole === 'Admin') {
+      if (res.data.RequiresPasswordChange) {
+        router.push('/force-change-password')
+      } else if (store.appRole === 'Admin') {
         router.push('/admin/projects')
       } else {
         router.push('/projects')
@@ -345,8 +343,11 @@ const login = async () => {
 
     if (response?.data?.AccessToken) {
       localStorage.setItem('token', response.data.AccessToken)
+      localStorage.setItem('requiresPasswordChange', response.data.RequiresPasswordChange)
       store.decodeToken()
-      if (store.appRole === 'Admin') {
+      if (response.data.RequiresPasswordChange) {
+        router.push('/force-change-password')
+      } else if (store.appRole === 'Admin') {
         router.push('/admin/projects')
       } else {
         router.push('/projects')

@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useProjectStore } from '../stores/projectStore.js'
 const LoginView = () => import('../views/LoginView.vue')
-const RegisterView = () => import('../views/RegisterView.vue')
 const ProjectsView = () => import('../views/ProjectsView.vue')
 const DashboardView = () => import('../views/DashboardView.vue')
 const TaskView = () => import('../views/TaskView.vue')
@@ -10,9 +9,12 @@ const GanttView = () => import('../views/GanttView.vue')
 const SettingsView = () => import('../views/SettingsView.vue')
 const MembersView = () => import('../views/MembersView.vue')
 const ChangePasswordView = () => import('../views/ChangePasswordView.vue')
+const ForceChangePasswordView = () => import('../views/ForceChangePasswordView.vue')
+const ForgotPasswordView = () => import('../views/ForgotPasswordView.vue')
 
 // Admin Views
 const AdminLayout = () => import('../layouts/AdminLayout.vue')
+const AdminDashboardView = () => import('../views/admin/AdminDashboardView.vue')
 const AdminProjectsView = () => import('../views/admin/AdminProjectsView.vue')
 const AdminUsersView = () => import('../views/admin/AdminUsersView.vue')
 
@@ -23,15 +25,21 @@ const routes = [
     component: LoginView
   },
   {
-    path: '/register',
-    name: 'register',
-    component: RegisterView
-  },
-  {
     path: '/change-password',
     name: 'change-password',
     component: ChangePasswordView,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/force-change-password',
+    name: 'force-change-password',
+    component: ForceChangePasswordView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: ForgotPasswordView
   },
   {
     path: '/projects',
@@ -83,7 +91,12 @@ const routes = [
     children: [
       {
         path: '',
-        redirect: '/admin/projects'
+        redirect: '/admin/dashboard'
+      },
+      {
+        path: 'dashboard',
+        name: 'admin-dashboard',
+        component: AdminDashboardView
       },
       {
         path: 'projects',
@@ -117,10 +130,12 @@ router.beforeEach(async (to, from) => {
 
   const token = localStorage.getItem('token')
   const isAuthenticated = !!token && token !== 'null' && token !== 'undefined' && token.split('.').length === 3
+  const requiresPasswordChange = localStorage.getItem('requiresPasswordChange') === 'true'
 
-  if (to.path === '/login' || to.path === '/register') {
+  if (to.path === '/login') {
     if (isAuthenticated) {
-      if (store.appRole === 'Admin') return '/admin/projects'
+      if (requiresPasswordChange) return '/force-change-password'
+      if (store.appRole === 'Admin') return '/admin/dashboard'
       return '/projects'
     }
     return true
@@ -129,6 +144,15 @@ router.beforeEach(async (to, from) => {
   if (to.meta.requiresAuth && !isAuthenticated) {
     store.clearStore()
     return '/login'
+  }
+
+  if (isAuthenticated && requiresPasswordChange && to.path !== '/force-change-password') {
+    return '/force-change-password'
+  }
+
+  if (isAuthenticated && !requiresPasswordChange && to.path === '/force-change-password') {
+    if (store.appRole === 'Admin') return '/admin/projects'
+    return '/projects'
   }
 
   if (to.meta.requiresAdmin && store.appRole !== 'Admin') {

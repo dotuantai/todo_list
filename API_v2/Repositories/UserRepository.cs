@@ -63,12 +63,20 @@ namespace API_v2.Repositories
                 .Select(u => new AdminUserResponse
                 {
                     UserId = u.Id,
+                    FullName = u.FullName,
                     Email = u.Email,
                     Role = u.Role != null ? u.Role.Name : "Member",
                     IsActive = u.IsActive,
+                    RequiresPasswordChange = u.RequiresPasswordChange,
                     CreatedAt = u.CreatedAt
                 })
                 .ToListAsync();
+        }
+
+        public async Task<Guid?> GetRoleIdByNameAsync(string roleName)
+        {
+            var role = await _db.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+            return role?.Id;
         }
 
         public async Task<bool> UpdateUserRoleAsync(Guid userId, string newRole)
