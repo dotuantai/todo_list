@@ -23,7 +23,7 @@
             <div class="bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-2" :style="{ background: getProjectColor(projectStore.currentProject?.Name) }" style="width: 28px; height: 28px; font-size: 12px;">
               {{ projectStore.currentProject ? projectStore.currentProject.Name[0].toUpperCase() : 'P' }}
             </div>
-            <span class="fw-bold text-body mb-0 fs-6">{{ projectStore.currentProject?.Name || 'Project' }}</span>
+            <span class="fw-bold text-body mb-0 fs-6">{{ projectStore.currentProject?.Name || $t('common.SCR0035') }}</span>
           </div>
         </div>
 
@@ -37,7 +37,7 @@
               type="button"
               data-bs-toggle="dropdown"
               aria-expanded="false"
-              title="Change Language"
+              :title="$t('common.SCR0018')"
             >
               <span class="d-flex align-items-center justify-content-center">
                 <svg v-if="locale === 'vi'" viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><circle cx="12" cy="12" r="12" fill="#da251d"/><polygon points="12,6 12.95,9.58 16.71,9.58 13.66,11.8 14.79,15.38 12,13.16 9.21,15.38 10.34,11.8 7.29,9.58 11.05,9.58" fill="#ffff00"/></svg>
@@ -48,13 +48,13 @@
               <li>
                 <button class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2" @click="changeLocale('vi')">
                   <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><circle cx="12" cy="12" r="12" fill="#da251d"/><polygon points="12,6 12.95,9.58 16.71,9.58 13.66,11.8 14.79,15.38 12,13.16 9.21,15.38 10.34,11.8 7.29,9.58 11.05,9.58" fill="#ffff00"/></svg>
-                  <span style="font-size: 0.85rem;">Tiếng Việt</span>
+                  <span style="font-size: 0.85rem;">{{ $t('common.SCR0019') }}</span>
                 </button>
               </li>
               <li>
                 <button class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2" @click="changeLocale('en')">
                   <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><clipPath id="uk-circle-item-app"><circle cx="12" cy="12" r="12"/></clipPath><g clip-path="url(#uk-circle-item-app)"><rect width="24" height="24" fill="#012169"/><path d="M0,0 L24,24 M24,0 L0,24" stroke="#fff" stroke-width="4"/><path d="M0,0 L24,24 M24,0 L0,24" stroke="#C8102E" stroke-width="2"/><path d="M0,12 H24 M12,0 V24" stroke="#fff" stroke-width="6"/><path d="M0,12 H24 M12,0 V24" stroke="#C8102E" stroke-width="4"/></g></svg>
-                  <span style="font-size: 0.85rem;">English</span>
+                  <span style="font-size: 0.85rem;">{{ $t('common.SCR0020') }}</span>
                 </button>
               </li>
             </ul>
@@ -88,18 +88,18 @@
             <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-2 rounded-3" style="min-width: 200px; font-size: 0.9rem; z-index: 1060;">
               <li class="px-3 py-2 border-bottom mb-1">
                 <span class="d-block fw-bold text-truncate text-body" :title="projectStore.currentUserEmail">{{ projectStore.currentUserEmail }}</span>
-                <span class="text-muted small">{{ $t('settings.account_card') }}</span>
+                <span class="text-muted small">{{ $t('settings.SCR0617') }}</span>
               </li>
               <li>
                 <router-link to="/change-password" class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2">
                   <i class="bi bi-shield-lock-fill text-primary"></i>
-                  <span>{{ $t('changePassword.title') }}</span>
+                  <span>{{ $t('changePassword.SCR0801') }}</span>
                 </router-link>
               </li>
               <li>
                 <button @click="handleLogout" class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2 text-danger">
                   <i class="bi bi-box-arrow-right"></i>
-                  <span>{{ $t('sidebar.sign_out') }}</span>
+                  <span>{{ $t('sidebar.SCR0006') }}</span>
                 </button>
               </li>
             </ul>

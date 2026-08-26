@@ -8,15 +8,15 @@
           <div class="brand-badge bg-primary text-white mx-auto rounded-3 d-flex align-items-center justify-content-center fw-bold mb-3" style="width: 48px; height: 48px; font-size: 1.25rem; background: linear-gradient(135deg, #0d9488, #14b8a6) !important;">
             <i class="bi bi-shield-lock-fill"></i>
           </div>
-          <h2 class="fw-bold h4 mb-1 text-body">{{ $t('changePassword.title') }}</h2>
-          <p class="text-muted small">{{ $t('changePassword.subtitle') }}</p>
+          <h2 class="fw-bold h4 mb-1 text-body">{{ $t('changePassword.SCR0801') }}</h2>
+          <p class="text-muted small">{{ $t('changePassword.SCR0802') }}</p>
         </div>
 
         <!-- Form -->
         <form @submit.prevent="handleChangePassword">
           <!-- Current Password -->
           <div class="mb-3">
-            <label class="form-label fw-semibold text-secondary small text-start d-block">{{ $t('changePassword.current_password') }}</label>
+            <label class="form-label fw-semibold text-secondary small text-start d-block">{{ $t('changePassword.SCR0803') }}</label>
             <div class="input-group">
               <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-radius: 12px 0 0 12px; border-color: var(--bs-border-color);">
                 <i class="bi bi-key-fill"></i>
@@ -25,7 +25,7 @@
                 v-model="form.currentPassword" 
                 :type="showCurrent ? 'text' : 'password'" 
                 class="form-control bg-body-secondary border-start-0 border-end-0 ps-0" 
-                :placeholder="$t('changePassword.current_password_placeholder')" 
+                :placeholder="$t('changePassword.SCR0804')"
                 style="font-size: 0.95rem; height: 48px; border-color: var(--bs-border-color);" 
                 required 
               />
@@ -42,7 +42,7 @@
 
           <!-- New Password -->
           <div class="mb-3">
-            <label class="form-label fw-semibold text-secondary small text-start d-block">{{ $t('changePassword.new_password') }}</label>
+            <label class="form-label fw-semibold text-secondary small text-start d-block">{{ $t('changePassword.SCR0805') }}</label>
             <div class="input-group">
               <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-radius: 12px 0 0 12px; border-color: var(--bs-border-color);">
                 <i class="bi bi-lock-fill"></i>
@@ -51,7 +51,7 @@
                 v-model="form.newPassword" 
                 :type="showNew ? 'text' : 'password'" 
                 class="form-control bg-body-secondary border-start-0 border-end-0 ps-0" 
-                :placeholder="$t('changePassword.new_password_placeholder')" 
+                :placeholder="$t('changePassword.SCR0806')"
                 style="font-size: 0.95rem; height: 48px; border-color: var(--bs-border-color);" 
                 required 
               />
@@ -68,7 +68,7 @@
 
           <!-- Confirm New Password -->
           <div class="mb-4">
-            <label class="form-label fw-semibold text-secondary small text-start d-block">{{ $t('changePassword.confirm_password') }}</label>
+            <label class="form-label fw-semibold text-secondary small text-start d-block">{{ $t('changePassword.SCR0807') }}</label>
             <div class="input-group">
               <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-radius: 12px 0 0 12px; border-color: var(--bs-border-color);">
                 <i class="bi bi-shield-check"></i>
@@ -77,7 +77,7 @@
                 v-model="form.confirmPassword" 
                 :type="showConfirm ? 'text' : 'password'" 
                 class="form-control bg-body-secondary border-start-0 border-end-0 ps-0" 
-                :placeholder="$t('changePassword.confirm_password_placeholder')" 
+                :placeholder="$t('changePassword.SCR0808')"
                 style="font-size: 0.95rem; height: 48px; border-color: var(--bs-border-color);" 
                 required 
               />
@@ -101,7 +101,7 @@
               style="border-radius: 12px; height: 48px; background: linear-gradient(135deg, #0d9488, #14b8a6); border: none;"
             >
               <span v-if="loading" class="spinner-border spinner-border-sm" role="status"></span>
-              {{ loading ? $t('changePassword.updating') : $t('changePassword.submit_btn') }}
+              {{ loading ? $t('changePassword.SCR0810') : $t('changePassword.SCR0801') }}
             </button>
             
             <button 
@@ -111,7 +111,7 @@
               @click="goBack" 
               :disabled="loading"
             >
-              {{ $t('changePassword.cancel_btn') }}
+              {{ $t('changePassword.SCR0811') }}
             </button>
           </div>
         </form>
@@ -148,7 +148,7 @@ const goBack = () => {
 
 const handleChangePassword = async () => {
   if (form.newPassword !== form.confirmPassword) {
-    toastError(t('errors.Passwords do not match'))
+    toastError(t('common.SCR0016'))
     return
   }
 
@@ -158,10 +158,10 @@ const handleChangePassword = async () => {
       CurrentPassword: form.currentPassword,
       NewPassword: form.newPassword
     })
-    toastSuccess(t('changePassword.success'))
+    toastSuccess(t('changePassword.SCR0812'))
     router.push('/projects')
   } catch (error) {
-    toastError(extractMessage(error, t('errors.default')))
+    toastError(extractMessage(error, t('common.SCR0015')))
   } finally {
     loading.value = false
   }

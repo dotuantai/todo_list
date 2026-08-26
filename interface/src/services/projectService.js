@@ -87,3 +87,91 @@ export const importTasks = (projectId, file) => {
     }
   })
 }
+
+export const getProjectExplorer = (projectId, folderId = null, taskId = null) => {
+  let url = `/projects/${projectId}/files/explorer`
+  const params = []
+  if (folderId) params.push(`folderId=${folderId}`)
+  if (taskId) params.push(`taskId=${taskId}`)
+  if (params.length > 0) url += `?${params.join('&')}`
+  return api.get(url)
+}
+
+export const getProjectFiles = (projectId, folderId = null, taskId = null) => {
+  let url = `/projects/${projectId}/files`
+  const params = []
+  if (folderId) params.push(`folderId=${folderId}`)
+  if (taskId) params.push(`taskId=${taskId}`)
+  if (params.length > 0) url += `?${params.join('&')}`
+  return api.get(url)
+}
+
+export const uploadProjectFile = (projectId, file, folderId = null, taskId = null, onUploadProgress = null) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  if (folderId) formData.append('folderId', folderId)
+  if (taskId) formData.append('taskId', taskId)
+  return api.post(`/projects/${projectId}/files`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    },
+    onUploadProgress
+  })
+}
+
+export const updateFileVersion = (projectId, fileId, file, changeNote = null, onUploadProgress = null) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  if (changeNote) formData.append('changeNote', changeNote)
+  return api.post(`/projects/${projectId}/files/${fileId}/version`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    },
+    onUploadProgress
+  })
+}
+
+export const getFileVersionHistory = (projectId, fileId) => {
+  return api.get(`/projects/${projectId}/files/${fileId}/history`)
+}
+
+export const downloadProjectFile = (projectId, fileId, versionId = null) => {
+  const url = `/projects/${projectId}/files/${fileId}/download${versionId ? `?versionId=${versionId}` : ''}`
+  return api.get(url, {
+    responseType: 'blob'
+  })
+}
+
+export const renameProjectFile = (projectId, fileId, fileName) => {
+  return api.put(`/projects/${projectId}/files/${fileId}/rename`, { fileName })
+}
+
+export const deleteProjectFile = (projectId, fileId) => {
+  return api.delete(`/projects/${projectId}/files/${fileId}`)
+}
+
+export const createProjectFolder = (projectId, name, parentFolderId = null) => {
+  return api.post(`/projects/${projectId}/files/folders`, { name, parentFolderId })
+}
+
+export const renameProjectFolder = (projectId, folderId, name) => {
+  return api.put(`/projects/${projectId}/files/folders/${folderId}/rename`, { name })
+}
+
+export const deleteProjectFolder = (projectId, folderId) => {
+  return api.delete(`/projects/${projectId}/files/folders/${folderId}`)
+}
+
+export const getProjectFileActivities = (projectId) => {
+  return api.get(`/projects/${projectId}/files/activities`)
+}
+
+export const batchDownloadProjectFiles = (projectId, fileIds = [], folderIds = []) => {
+  return api.post(`/projects/${projectId}/files/batch-download`, { fileIds, folderIds }, {
+    responseType: 'blob'
+  })
+}
+
+export const batchDeleteProjectFiles = (projectId, fileIds = [], folderIds = []) => {
+  return api.post(`/projects/${projectId}/files/batch-delete`, { fileIds, folderIds })
+}

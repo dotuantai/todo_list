@@ -8,7 +8,7 @@
         class="btn btn-outline-secondary d-flex align-items-center justify-content-center" 
         @click="loadDashboardData" 
         :disabled="loading" 
-        title="Refresh Data"
+        :title="$t('common.SCR0022')"
         style="width: 38px; height: 38px; border-radius: 8px;"
       >
         <span v-if="loading" class="spinner-border spinner-border-sm text-secondary" role="status"></span>
@@ -19,7 +19,7 @@
     <!-- Loading State -->
     <div v-if="loading && projectTasks.length === 0" class="text-center py-5 my-5">
       <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
-      <p class="text-muted mt-3">{{ $t('dashboard.loading') }}</p>
+      <p class="text-muted mt-3">{{ $t('dashboard.SCR0112') }}</p>
     </div>
 
     <!-- Dashboard Content -->
@@ -31,7 +31,7 @@
           <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-body">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-muted small fw-bold text-uppercase tracking-wider">{{ $t('dashboard.total_tasks') }}</span>
+                <span class="text-muted small fw-bold text-uppercase tracking-wider">{{ $t('dashboard.SCR0101') }}</span>
                 <h3 class="fw-bold text-body mt-2 mb-0">{{ stats.totalTasks }}</h3>
               </div>
               <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
@@ -46,7 +46,7 @@
           <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-body">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-muted small fw-bold text-uppercase tracking-wider">{{ $t('dashboard.in_progress') }}</span>
+                <span class="text-muted small fw-bold text-uppercase tracking-wider">{{ $t('dashboard.SCR0102') }}</span>
                 <h3 class="fw-bold text-body mt-2 mb-0">{{ stats.inProgressTasks }}</h3>
               </div>
               <div class="bg-warning bg-opacity-10 text-warning rounded-3 p-2.5 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
@@ -61,7 +61,7 @@
           <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-body">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-muted small fw-bold text-uppercase tracking-wider">{{ $t('dashboard.completed') }}</span>
+                <span class="text-muted small fw-bold text-uppercase tracking-wider">{{ $t('dashboard.SCR0103') }}</span>
                 <h3 class="fw-bold text-body mt-2 mb-0">{{ stats.completedTasks }}</h3>
               </div>
               <div class="bg-success bg-opacity-10 text-success rounded-3 p-2.5 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
@@ -76,7 +76,7 @@
           <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-body">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <span class="text-muted small fw-bold text-uppercase tracking-wider">{{ $t('dashboard.team_members') }}</span>
+                <span class="text-muted small fw-bold text-uppercase tracking-wider">{{ $t('dashboard.SCR0104') }}</span>
                 <h3 class="fw-bold text-body mt-2 mb-0">{{ stats.memberCount }}</h3>
               </div>
               <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-2.5 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
@@ -93,22 +93,22 @@
         <div class="col-12 col-lg-8">
           <div class="card border-0 shadow-sm p-4 rounded-3 h-100 bg-body">
             <div class="d-flex align-items-center justify-content-between mb-3">
-              <h4 class="fw-bold text-body h5 mb-0">{{ $t('dashboard.recent_tasks') }}</h4>
-              <router-link :to="`/projects/${projectId}/tasks`" class="btn btn-sm btn-link text-primary fw-semibold text-decoration-none p-0">{{ $t('dashboard.view_all') }}</router-link>
+              <h4 class="fw-bold text-body h5 mb-0">{{ $t('dashboard.SCR0105') }}</h4>
+              <router-link :to="`/projects/${projectId}/tasks`" class="btn btn-sm btn-link text-primary fw-semibold text-decoration-none p-0">{{ $t('dashboard.SCR0106') }}</router-link>
             </div>
             
             <div v-if="projectTasks.length === 0" class="text-center py-5 border border-dashed rounded-3 text-muted">
               <i class="bi bi-clipboard-x fs-2 opacity-50"></i>
-              <p class="small mt-2 mb-0">{{ $t('dashboard.no_tasks') }}</p>
+              <p class="small mt-2 mb-0">{{ $t('dashboard.SCR0107') }}</p>
             </div>
 
             <div v-else class="table-responsive">
               <table class="table table-hover align-middle border-0 mb-0">
                 <thead class="table-light">
                   <tr>
-                    <th scope="col" class="border-0 rounded-start">{{ $t('dashboard.title_col') }}</th>
-                    <th scope="col" class="border-0">{{ $t('dashboard.deadline_col') }}</th>
-                    <th scope="col" class="border-0 rounded-end">{{ $t('dashboard.status_col') }}</th>
+                    <th scope="col" class="border-0 rounded-start">{{ $t('dashboard.SCR0109') }}</th>
+                    <th scope="col" class="border-0">{{ $t('dashboard.SCR0110') }}</th>
+                    <th scope="col" class="border-0 rounded-end">{{ $t('dashboard.SCR0111') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -137,7 +137,7 @@
         <div class="col-12 col-lg-4 d-flex flex-column gap-4">
           <!-- Tasks Breakdown Card -->
           <div class="card border-0 shadow-sm p-4 rounded-3 bg-body">
-            <h4 class="fw-bold text-body h5 mb-3">{{ $t('dashboard.breakdown') }}</h4>
+            <h4 class="fw-bold text-body h5 mb-3">{{ $t('dashboard.SCR0108') }}</h4>
             <div class="d-flex flex-column gap-3">
               <div v-for="col in statusCounts" :key="col.status" class="border rounded-3 p-2.5">
                 <div class="d-flex align-items-center justify-content-between mb-1.5">
@@ -163,7 +163,7 @@
 
           <!-- Members Quick List Card -->
           <div class="card border-0 shadow-sm p-4 rounded-3 bg-body">
-            <h4 class="fw-bold text-body h5 mb-3">{{ $t('dashboard.team_members') }}</h4>
+            <h4 class="fw-bold text-body h5 mb-3">{{ $t('dashboard.SCR0104') }}</h4>
             <div class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
               <div 
                 v-for="member in projectMembers" 
@@ -178,7 +178,7 @@
                     <span class="small fw-semibold text-body d-block text-truncate">{{ member.Email }}</span>
                   </div>
                 </div>
-                <span class="badge text-uppercase font-monospace" :class="getRoleBadgeClass(member.Role)" style="font-size: 8px; padding: 2px 4px;">{{ member.Role }}</span>
+                <span class="badge text-uppercase font-monospace" :class="getRoleBadgeClass(member.Role)" style="font-size: 8px; padding: 2px 4px;">{{ getRoleLabel(t, member.Role) }}</span>
               </div>
             </div>
           </div>
@@ -192,6 +192,7 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { getRoleLabel } from '../utils/i18nLabels.js'
 import { getProjectTasks, getProjectTaskStats, getMembers, getProjectColumns } from '../services/projectService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 import { toastError } from '../utils/swal.js'
@@ -223,7 +224,7 @@ const loadDashboardData = async () => {
     projectColumns.value = columnsRes?.data || []
   } catch (error) {
     console.error('Error loading dashboard data', error)
-    toastError('Failed to load dashboard data.')
+    toastError(t('common.SCR0015'))
   } finally {
     loading.value = false
   }
@@ -281,7 +282,7 @@ const getStatusBadgeClass = (columnId) => {
 
 const getStatusLabel = (columnId) => {
   const col = projectColumns.value.find(c => c.Id === columnId)
-  return col ? col.Name : 'Unknown'
+  return col ? col.Name : t('common.SCR0033')
 }
 
 const userInitial = (email) => email ? email[0].toUpperCase() : '?'

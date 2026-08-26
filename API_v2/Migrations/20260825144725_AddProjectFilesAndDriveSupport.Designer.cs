@@ -3,6 +3,7 @@ using System;
 using API_v2.Datas;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace API_v2.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260825144725_AddProjectFilesAndDriveSupport")]
+    partial class AddProjectFilesAndDriveSupport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -135,18 +138,12 @@ namespace API_v2.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("CurrentVersion")
-                        .HasColumnType("integer");
-
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<long>("FileSize")
                         .HasColumnType("bigint");
-
-                    b.Property<Guid?>("FolderId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("GoogleDriveFileId")
                         .IsRequired()
@@ -164,19 +161,10 @@ namespace API_v2.Migrations
                     b.Property<int?>("TaskId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UpdatedById")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("UploadedById")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("FolderId")
-                        .HasDatabaseName("IX_ProjectFiles_FolderId");
 
                     b.HasIndex("ProjectId")
                         .HasDatabaseName("IX_ProjectFiles_ProjectId");
@@ -184,134 +172,10 @@ namespace API_v2.Migrations
                     b.HasIndex("TaskId")
                         .HasDatabaseName("IX_ProjectFiles_TaskId");
 
-                    b.HasIndex("UpdatedById");
-
                     b.HasIndex("UploadedById")
                         .HasDatabaseName("IX_ProjectFiles_UploadedById");
 
                     b.ToTable("ProjectFiles");
-                });
-
-            modelBuilder.Entity("API_v2.Models.ProjectFileActivity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ActionType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Details")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("TargetName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectId")
-                        .HasDatabaseName("IX_ProjectFileActivities_ProjectId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ProjectFileActivities");
-                });
-
-            modelBuilder.Entity("API_v2.Models.ProjectFileVersion", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ChangeNote")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<long>("FileSize")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("GoogleDriveFileId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("MimeType")
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("ProjectFileId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UploadedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("VersionNumber")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProjectFileId")
-                        .HasDatabaseName("IX_ProjectFileVersions_ProjectFileId");
-
-                    b.HasIndex("UploadedById");
-
-                    b.ToTable("ProjectFileVersions");
-                });
-
-            modelBuilder.Entity("API_v2.Models.ProjectFolder", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedById")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("GoogleDriveFolderId")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("ParentFolderId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedById");
-
-                    b.HasIndex("ParentFolderId")
-                        .HasDatabaseName("IX_ProjectFolders_ParentFolderId");
-
-                    b.HasIndex("ProjectId")
-                        .HasDatabaseName("IX_ProjectFolders_ProjectId");
-
-                    b.ToTable("ProjectFolders");
                 });
 
             modelBuilder.Entity("API_v2.Models.ProjectMember", b =>
@@ -638,11 +502,6 @@ namespace API_v2.Migrations
 
             modelBuilder.Entity("API_v2.Models.ProjectFile", b =>
                 {
-                    b.HasOne("API_v2.Models.ProjectFolder", "Folder")
-                        .WithMany("Files")
-                        .HasForeignKey("FolderId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
                     b.HasOne("API_v2.Models.Project", "Project")
                         .WithMany("Files")
                         .HasForeignKey("ProjectId")
@@ -654,90 +513,17 @@ namespace API_v2.Migrations
                         .HasForeignKey("TaskId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("API_v2.Models.User", "UpdatedBy")
-                        .WithMany()
-                        .HasForeignKey("UpdatedById")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("API_v2.Models.User", "UploadedBy")
                         .WithMany()
                         .HasForeignKey("UploadedById")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Folder");
 
                     b.Navigation("Project");
 
                     b.Navigation("Task");
 
-                    b.Navigation("UpdatedBy");
-
                     b.Navigation("UploadedBy");
-                });
-
-            modelBuilder.Entity("API_v2.Models.ProjectFileActivity", b =>
-                {
-                    b.HasOne("API_v2.Models.Project", "Project")
-                        .WithMany("FileActivities")
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("API_v2.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Project");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("API_v2.Models.ProjectFileVersion", b =>
-                {
-                    b.HasOne("API_v2.Models.ProjectFile", "ProjectFile")
-                        .WithMany("Versions")
-                        .HasForeignKey("ProjectFileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("API_v2.Models.User", "UploadedBy")
-                        .WithMany()
-                        .HasForeignKey("UploadedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ProjectFile");
-
-                    b.Navigation("UploadedBy");
-                });
-
-            modelBuilder.Entity("API_v2.Models.ProjectFolder", b =>
-                {
-                    b.HasOne("API_v2.Models.User", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("API_v2.Models.ProjectFolder", "ParentFolder")
-                        .WithMany("SubFolders")
-                        .HasForeignKey("ParentFolderId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("API_v2.Models.Project", "Project")
-                        .WithMany("Folders")
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CreatedBy");
-
-                    b.Navigation("ParentFolder");
-
-                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("API_v2.Models.ProjectMember", b =>
@@ -868,11 +654,7 @@ namespace API_v2.Migrations
                 {
                     b.Navigation("Columns");
 
-                    b.Navigation("FileActivities");
-
                     b.Navigation("Files");
-
-                    b.Navigation("Folders");
 
                     b.Navigation("ProjectMembers");
 
@@ -882,18 +664,6 @@ namespace API_v2.Migrations
             modelBuilder.Entity("API_v2.Models.ProjectColumn", b =>
                 {
                     b.Navigation("Tasks");
-                });
-
-            modelBuilder.Entity("API_v2.Models.ProjectFile", b =>
-                {
-                    b.Navigation("Versions");
-                });
-
-            modelBuilder.Entity("API_v2.Models.ProjectFolder", b =>
-                {
-                    b.Navigation("Files");
-
-                    b.Navigation("SubFolders");
                 });
 
             modelBuilder.Entity("API_v2.Models.Role", b =>

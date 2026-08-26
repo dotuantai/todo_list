@@ -3,20 +3,7 @@ import vi from '../locales/vi.json'
 import en from '../locales/en.json'
 
 const localeMap = { vi, en }
-
-const translateError = (message) => {
-  if (!message) return message
-  const currentLocale = localStorage.getItem('locale') || 'vi'
-  const errorsDict = localeMap[currentLocale]?.errors || {}
-  
-  return message
-    .split(' | ')
-    .map(msg => {
-      const trimDot = msg.endsWith('.') ? msg.slice(0, -1) : msg
-      return errorsDict[msg] || errorsDict[trimDot] || msg
-    })
-    .join(' | ')
-}
+const commonText = (code) => localeMap[localStorage.getItem('locale') || 'vi']?.common?.[code] || code
 
 
 // ── Inject CSS into <head> once when the module is loaded ─────────────────
@@ -139,14 +126,14 @@ export const alertError = (title, message = '') =>
  * Confirmation dialog (Confirm / Cancel)
  * @returns {Promise<boolean>} true if user clicks Confirm
  */
-export const confirm = async (title, message = '', confirmText = 'Confirm') => {
+export const confirm = async (title, message = '', confirmText = commonText('SCR0031')) => {
   const result = await Base.fire({
     icon:               'warning',
     title,
     html:               message || undefined,
     showCancelButton:   true,
     confirmButtonText:  confirmText,
-    cancelButtonText:   'Cancel',
+    cancelButtonText:   commonText('SCR0032'),
     reverseButtons:     true,
   })
   return result.isConfirmed
@@ -156,8 +143,12 @@ export const extractMessage = (error, fallback = 'An error occurred.') => {
   let message = ''
   const data = error?.response?.data
   if (data) {
-    if (data.Message) {
+    if (typeof data === 'string') {
+      message = data
+    } else if (data.Message) {
       message = data.Message
+    } else if (data.message) {
+      message = data.message
     } else if (data.errors && typeof data.errors === 'object') {
       const messages = []
       for (const key in data.errors) {
@@ -175,6 +166,7 @@ export const extractMessage = (error, fallback = 'An error occurred.') => {
   if (!message) {
     message = error?.message || fallback
   }
-  return translateError(message)
+  // Backend and validation messages are intentionally shown verbatim.
+  return message
 }
 

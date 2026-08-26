@@ -7,30 +7,30 @@
         <!-- Search -->
         <div class="input-group" style="width: 220px;">
           <span class="input-group-text bg-body border-end-0 text-muted"><i class="bi bi-search"></i></span>
-          <input type="text" class="form-control border-start-0 ps-0" placeholder="Search tasks..." v-model="filters.search" @input="onSearchInput" />
+          <input type="text" class="form-control border-start-0 ps-0" :placeholder="$t('tasks.SCR0245')" v-model="filters.search" @input="onSearchInput" />
         </div>
 
         <!-- Priority -->
         <div class="dropdown">
-          <label class="form-label small text-muted mb-1 d-block" style="font-size: 11px; margin-top: -15px;">Priority</label>
+          <label class="form-label small text-muted mb-1 d-block" style="font-size: 11px; margin-top: -15px;">{{ $t('tasks.SCR0246') }}</label>
           <button class="btn btn-outline-secondary dropdown-toggle bg-body d-flex align-items-center justify-content-between text-start" type="button" data-bs-toggle="dropdown" style="width: 140px; font-size: 0.85rem; height: 38px;">
             {{ filters.priority || 'All' }}
           </button>
           <ul class="dropdown-menu shadow-sm" style="font-size: 0.85rem; width: 140px;">
-            <li><a class="dropdown-item" href="#" @click.prevent="setFilter('priority', null)">All</a></li>
-            <li><a class="dropdown-item" href="#" @click.prevent="setFilter('priority', 'High')"><span class="badge bg-danger text-white">High</span></a></li>
-            <li><a class="dropdown-item" href="#" @click.prevent="setFilter('priority', 'Medium')"><span class="badge bg-warning text-dark">Medium</span></a></li>
-            <li><a class="dropdown-item" href="#" @click.prevent="setFilter('priority', 'Low')"><span class="badge bg-info text-white">Low</span></a></li>
+            <li><a class="dropdown-item" href="#" @click.prevent="setFilter('priority', null)">{{ $t('tasks.SCR0247') }}</a></li>
+            <li><a class="dropdown-item" href="#" @click.prevent="setFilter('priority', 'High')"><span class="badge bg-danger text-white">{{ $t('tasks.SCR0226') }}</span></a></li>
+            <li><a class="dropdown-item" href="#" @click.prevent="setFilter('priority', 'Medium')"><span class="badge bg-warning text-dark">{{ $t('tasks.SCR0225') }}</span></a></li>
+            <li><a class="dropdown-item" href="#" @click.prevent="setFilter('priority', 'Low')"><span class="badge bg-info text-white">{{ $t('tasks.SCR0224') }}</span></a></li>
           </ul>
         </div>
 
         <!-- Assignee -->
         <div class="dropdown">
-          <label class="form-label small text-muted mb-1 d-block" style="font-size: 11px; margin-top: -15px;">Assignee</label>
+          <label class="form-label small text-muted mb-1 d-block" style="font-size: 11px; margin-top: -15px;">{{ $t('tasks.SCR0248') }}</label>
           <button class="btn btn-outline-secondary dropdown-toggle bg-body d-flex align-items-center justify-content-between text-start" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" style="width: 180px; font-size: 0.85rem; height: 38px;" @click="assigneeSearch = ''">
             <div class="d-flex align-items-center gap-2 text-truncate">
-              <span v-if="!filters.assigneeId">All Assignees</span>
-              <span v-else-if="filters.assigneeId === '00000000-0000-0000-0000-000000000000'">Unassigned</span>
+              <span v-if="!filters.assigneeId">{{ $t('tasks.SCR0249') }}</span>
+              <span v-else-if="filters.assigneeId === '00000000-0000-0000-0000-000000000000'">{{ $t('tasks.SCR0223') }}</span>
               <template v-else>
                 <div class="rounded-circle text-white d-flex align-items-center justify-content-center" :style="{ background: getUserColor(getAssigneeName(filters.assigneeId)) }" style="width: 18px; height: 18px; font-size: 9px; min-width: 18px;">
                   {{ getAssigneeName(filters.assigneeId)[0]?.toUpperCase() }}
@@ -43,17 +43,17 @@
             <li class="mb-2">
               <div class="input-group input-group-sm">
                 <span class="input-group-text bg-body text-muted border-end-0"><i class="bi bi-search"></i></span>
-                <input type="text" class="form-control border-start-0 ps-0" placeholder="Search members..." v-model="assigneeSearch" />
+                <input type="text" class="form-control border-start-0 ps-0" :placeholder="$t('tasks.SCR0261')" v-model="assigneeSearch" />
               </div>
             </li>
             <div style="max-height: 220px; overflow-y: auto;" class="custom-scrollbar">
               <li><a class="dropdown-item py-2 d-flex align-items-center gap-2 rounded-2" :class="{'active': filters.assigneeId === null}" href="#" @click.prevent="setFilter('assigneeId', null)">
                 <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 11px;"><i class="bi bi-people-fill"></i></div>
-                <span style="font-size: 0.85rem;">All Assignees</span>
+                <span style="font-size: 0.85rem;">{{ $t('tasks.SCR0249') }}</span>
               </a></li>
               <li><a class="dropdown-item py-2 d-flex align-items-center gap-2 rounded-2" :class="{'active': filters.assigneeId === '00000000-0000-0000-0000-000000000000'}" href="#" @click.prevent="setFilter('assigneeId', '00000000-0000-0000-0000-000000000000')">
                 <div class="rounded-circle border border-secondary text-secondary d-flex align-items-center justify-content-center bg-body" style="width: 24px; height: 24px; font-size: 11px;"><i class="bi bi-person-dash"></i></div>
-                <span style="font-size: 0.85rem;">Unassigned</span>
+                <span style="font-size: 0.85rem;">{{ $t('tasks.SCR0223') }}</span>
               </a></li>
               <li><hr class="dropdown-divider"></li>
               <li v-for="user in filteredAssignees" :key="user.UserId">
@@ -86,7 +86,7 @@
               <a class="dropdown-item py-2 d-flex align-items-center gap-3" href="#" @click.prevent="triggerImportFile">
                 <i class="bi bi-file-earmark-arrow-up text-primary fs-5"></i>
                 <div>
-                  <div class="fw-semibold text-body">Upload File</div>
+                  <div class="fw-semibold text-body">{{ $t('tasks.SCR0250') }}</div>
                   <div class="text-muted" style="font-size: 0.75rem;">.xlsx, .csv supported</div>
                 </div>
               </a>
@@ -96,8 +96,8 @@
               <a class="dropdown-item py-2 d-flex align-items-center gap-3" href="#" @click.prevent="handleDownloadTemplate">
                 <i class="bi bi-file-earmark-spreadsheet text-success fs-5"></i>
                 <div>
-                  <div class="fw-semibold text-body">Download Template</div>
-                  <div class="text-muted" style="font-size: 0.75rem;">Sample format</div>
+                  <div class="fw-semibold text-body">{{ $t('tasks.SCR0251') }}</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">{{ $t('tasks.SCR0252') }}</div>
                 </div>
               </a>
             </li>
@@ -105,7 +105,7 @@
         </div>
         
         <!-- Refresh Button -->
-        <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center bg-body shadow-sm" @click="refreshAll" :disabled="loading" title="Refresh" style="width: 38px; height: 38px; border-radius: 8px; transition: all 0.2s ease;">
+        <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center bg-body shadow-sm" @click="refreshAll" :disabled="loading" :title="$t('tasks.SCR0264')" style="width: 38px; height: 38px; border-radius: 8px; transition: all 0.2s ease;">
           <i class="bi bi-arrow-clockwise" v-if="!loading"></i>
           <span v-else class="spinner-border spinner-border-sm text-secondary" role="status"></span>
         </button>
@@ -118,8 +118,8 @@
     <!-- Empty Project Selection State -->
     <div v-if="!projectStore.currentProjectId" class="text-center py-5 bg-body rounded-4 shadow-sm border border-dashed p-4">
       <i class="bi bi-folder2-open text-primary" style="font-size: 4rem;"></i>
-      <h3 class="fw-bold text-body mt-3">{{ $t('tasks.welcome') }}</h3>
-      <p class="text-muted mx-auto" style="max-width: 480px;">{{ $t('tasks.welcome_desc') }}</p>
+      <h3 class="fw-bold text-body mt-3">{{ $t('tasks.SCR0202') }}</h3>
+      <p class="text-muted mx-auto" style="max-width: 480px;">{{ $t('tasks.SCR0203') }}</p>
     </div>
 
     <!-- Kanban Board -->
@@ -165,7 +165,7 @@
                 >
                   <span class="fw-bold text-body mb-2 text-start d-block" style="font-size: 0.95rem; line-height: 1.4;">{{ task.Title }}</span>
                   <div class="d-flex flex-column gap-1 align-items-start">
-                    <span v-if="task.Priority" class="badge mb-1" :class="getPriorityBadgeClass(task.Priority)" style="font-size: 0.65rem;">{{ task.Priority }} Priority</span>
+                    <span v-if="task.Priority" class="badge mb-1" :class="getPriorityBadgeClass(task.Priority)" style="font-size: 0.65rem;">{{ $t('calendar.SCR1016', { priority: formatPriority(task.Priority) }) }}</span>
                     <span class="text-muted small d-flex align-items-center gap-1.5" style="font-size: 0.75rem;">
                       <i class="bi bi-calendar3"></i>
                       {{ formatDateShort(task.CreatedAt) }}
@@ -173,7 +173,7 @@
                     <span v-if="task.Deadline" class="small d-flex align-items-center gap-1.5" :class="isOverdue(task) ? 'text-danger fw-bold' : 'text-muted'" style="font-size: 0.75rem;">
                       <i :class="isOverdue(task) ? 'bi bi-exclamation-circle-fill' : 'bi bi-clock'"></i>
                       {{ formatDateShort(task.Deadline) }}
-                      <span v-if="isOverdue(task)" class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-0.5 ms-1" style="font-size: 0.65rem;">{{ $t('tasks.overdue') }}</span>
+                      <span v-if="isOverdue(task)" class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-0.5 ms-1" style="font-size: 0.65rem;">{{ $t('tasks.SCR0205') }}</span>
                     </span>
                   </div>
                 </div>
@@ -182,14 +182,14 @@
               <template #footer>
                 <div v-if="getTasksByColumnId(col.Id).length === 0" class="text-center py-4 border border-dashed rounded-3 bg-body text-muted mt-2">
                   <i class="bi bi-inbox d-block mb-1 fs-4 text-secondary opacity-50"></i>
-                  <span class="small" style="font-size: 0.85rem;">{{ $t('tasks.no_tasks_col') }}</span>
+                  <span class="small" style="font-size: 0.85rem;">{{ $t('tasks.SCR0204') }}</span>
                 </div>
                 
                 <!-- Column Load More -->
                 <div v-if="columnStates[col.Id]?.hasMore" class="mt-2 text-center pb-2">
                   <button class="btn btn-sm w-100 fw-semibold btn-outline-secondary" style="border-radius: 6px;" @click="loadMore(col.Id)" :disabled="columnStates[col.Id]?.loading">
                     <span v-if="columnStates[col.Id]?.loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                    {{ $t('tasks.load_more', 'Load More') }}
+                    {{ $t('tasks.SCR0275') }}
                   </button>
                 </div>
               </template>
@@ -214,75 +214,75 @@
                     {{ getColById(modal.task?.ColumnId)?.Name }}
                   </span>
                   <span v-if="modal.task?.Priority" class="badge" :class="getPriorityBadgeClass(modal.task?.Priority)">
-                    {{ modal.task?.Priority }} Priority
+                    {{ $t('calendar.SCR1016', { priority: formatPriority(modal.task?.Priority) }) }}
                   </span>
                   <span v-if="modal.task && isOverdue(modal.task)" class="badge bg-danger bg-opacity-10 text-danger rounded-pill">
-                    {{ $t('tasks.overdue') }}
+                    {{ $t('tasks.SCR0205') }}
                   </span>
                 </div>
                 <h5 class="modal-title fw-bold text-body h5 mb-0 text-start">{{ modal.task?.Title }}</h5>
               </div>
               <div class="d-flex gap-1 align-items-center">
-                <button v-if="projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager'" class="btn btn-sm btn-light border p-2" :class="{ 'btn-primary text-white': editMode }" @click="toggleEdit" title="Edit task" style="border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
+                <button v-if="projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager'" class="btn btn-sm btn-light border p-2" :class="{ 'btn-primary text-white': editMode }" @click="toggleEdit" :title="$t('tasks.SCR0265')" style="border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
                   <i class="bi bi-pencil-fill"></i>
                 </button>
-                <button class="btn-close ms-2" @click="closeModal" aria-label="Close"></button>
+                <button class="btn-close ms-2" @click="closeModal" :aria-label="$t('common.SCR0023')"></button>
               </div>
             </div>
 
             <!-- ── VIEW MODE ── -->
             <div v-if="!editMode" class="modal-body p-4 text-start">
               <div class="mb-4">
-                <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.description') }}</label>
+                <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.SCR0211') }}</label>
                 <div class="text-body bg-body-secondary p-3 rounded-3" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;">
-                  {{ modal.task?.Description || $t('tasks.no_description') }}
+                  {{ modal.task?.Description || $t('tasks.SCR0212') }}
                 </div>
               </div>
 
               <div class="row g-3 mb-4">
                 <div class="col-6 col-md-4">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.created_at') }}</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.SCR0221') }}</label>
                   <div class="text-body fw-medium">{{ formatDate(modal.task?.CreatedAt) }}</div>
                 </div>
                 <div class="col-6 col-md-4">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.deadline') }}</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.SCR0208') }}</label>
                   <div class="text-body fw-medium" :class="modal.task && isOverdue(modal.task) ? 'text-danger fw-bold' : ''">
                     {{ modal.task?.Deadline ? formatDate(modal.task.Deadline) : '—' }}
                   </div>
                 </div>
                 <div class="col-6 col-md-4">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Start Date</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.SCR0253') }}</label>
                   <div class="text-body fw-medium">
                     {{ modal.task?.StartDate ? formatDate(modal.task.StartDate) : '—' }}
                   </div>
                 </div>
                 <div class="col-6 col-md-4">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Est. Hours</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.SCR0254') }}</label>
                   <div class="text-body fw-medium">
                     {{ modal.task?.EstimatedHours != null ? modal.task.EstimatedHours + 'h' : '—' }}
                   </div>
                 </div>
                 <div class="col-6 col-md-4">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Act. Hours</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.SCR0255') }}</label>
                   <div class="text-body fw-medium">
                     {{ modal.task?.ActualHours != null ? modal.task.ActualHours + 'h' : '—' }}
                   </div>
                 </div>
                 <div class="col-6 col-md-4">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Task ID</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.SCR0256') }}</label>
                   <div class="text-muted font-monospace">#{{ modal.task?.Id }}</div>
                 </div>
                 <div class="col-6 col-md-4">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Priority</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.SCR0246') }}</label>
                   <div>
                     <span v-if="modal.task?.Priority" class="badge" :class="getPriorityBadgeClass(modal.task?.Priority)">
-                      {{ modal.task?.Priority }}
+                      {{ formatPriority(modal.task?.Priority) }}
                     </span>
                     <span v-else class="text-muted">—</span>
                   </div>
                 </div>
                 <div class="col-6 col-md-4">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Column</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.SCR0257') }}</label>
                   <div v-if="projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager' || isAssignedToCurrentUser(modal.task)">
                     <select :value="modal.task?.ColumnId" @change="changeTaskColumnFromSelect($event.target.value)" class="form-select form-select-sm" style="border-radius: 8px;">
                       <option v-for="col in columns" :key="col.Id" :value="col.Id">{{ col.Name }}</option>
@@ -299,10 +299,10 @@
               <!-- Assigned Users list -->
               <div v-if="modal.task?.AssignedUsers" class="mb-2">
                 <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider d-flex align-items-center gap-2">
-                  {{ $t('tasks.assigned_to') }}
+                  {{ $t('tasks.SCR0207') }}
                   <span class="badge bg-body-secondary text-secondary border rounded-pill">{{ modal.task.AssignedUsers.length }}</span>
                 </label>
-                <div v-if="modal.task.AssignedUsers.length === 0" class="text-muted small fst-italic py-2">{{ $t('tasks.no_assignee') }}</div>
+                <div v-if="modal.task.AssignedUsers.length === 0" class="text-muted small fst-italic py-2">{{ $t('tasks.SCR0223') }}</div>
                 <div v-else class="row g-2 mt-1">
                   <div
                     v-for="user in modal.task.AssignedUsers"
@@ -392,7 +392,7 @@
                             <span class="fw-semibold text-body">{{ change.Field }}</span>:
                             <!-- Description special case -->
                             <template v-if="change.NewValue === '__description_changed__'">
-                              <span class="text-primary" style="font-style: italic; cursor: default;">Contents of changes</span>
+                              <span class="text-primary" style="font-style: italic; cursor: default;">{{ $t('tasks.SCR0258') }}</span>
                             </template>
                             <!-- Assignee added (no old value) -->
                             <template v-else-if="change.Field.includes('Assignee Added')">
@@ -424,7 +424,7 @@
                   {{ userInitial(projectStore.user?.Email || 'U') }}
                 </div>
                 <div class="flex-grow-1 position-relative">
-                  <textarea v-model="newComment" class="form-control" rows="2" placeholder="Write a comment..." style="border-radius: 12px; font-size: 0.9rem; padding-bottom: 40px; resize: none;"></textarea>
+                  <textarea v-model="newComment" class="form-control" rows="2" :placeholder="$t('tasks.SCR0262')" style="border-radius: 12px; font-size: 0.9rem; padding-bottom: 40px; resize: none;"></textarea>
                   <button class="btn btn-primary btn-sm position-absolute bottom-0 end-0 m-2" @click="submitComment" :disabled="!newComment.trim() || submittingComment" style="border-radius: 8px;">
                     <span v-if="submittingComment" class="spinner-border spinner-border-sm me-1" role="status"></span>
                     <i v-else class="bi bi-send-fill me-1"></i> Send
@@ -438,54 +438,54 @@
             <div v-else class="modal-body p-4 text-start">
               <div class="alert alert-primary bg-primary bg-opacity-10 border-0 text-primary d-flex align-items-center gap-2 rounded-3 mb-3">
                 <i class="bi bi-info-circle-fill"></i>
-                <span>Editing task <strong>#{{ modal.task?.Id }}</strong></span>
+                <span>{{ $t('tasks.SCR0259', { id: modal.task?.Id }) }}</span>
               </div>
 
               <div class="mb-3">
-                <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('taskModal.task_name') }}</label>
-                <input id="edit-title" v-model="editForm.title" type="text" class="form-control" :placeholder="$t('taskModal.task_name')" />
+                <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('taskModal.SCR0235') }}</label>
+                <input id="edit-title" v-model="editForm.title" type="text" class="form-control" :placeholder="$t('taskModal.SCR0235')" />
               </div>
 
               <div class="mb-3">
-                <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.description') }}</label>
-                <textarea id="edit-desc" v-model="editForm.description" class="form-control" rows="4" :placeholder="$t('tasks.description')"></textarea>
+                <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.SCR0211') }}</label>
+                <textarea id="edit-desc" v-model="editForm.description" class="form-control" rows="4" :placeholder="$t('tasks.SCR0211')"></textarea>
               </div>
 
               <div class="row g-3 mb-4">
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase">Start Date <span class="text-danger">*</span></label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.SCR0253') }} <span class="text-danger">*</span></label>
                   <input id="edit-startdate" v-model="editForm.startDate" type="date" class="form-control" required />
                 </div>
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.deadline') }} <span class="text-danger">*</span></label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.SCR0208') }} <span class="text-danger">*</span></label>
                   <input id="edit-deadline" v-model="editForm.deadline" type="date" class="form-control" required />
                 </div>
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase">Est. Hours</label>
-                  <input id="edit-esthours" v-model="editForm.estimatedHours" type="number" step="0.5" class="form-control" placeholder="e.g. 2.5" />
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.SCR0254') }}</label>
+                  <input id="edit-esthours" v-model="editForm.estimatedHours" type="number" step="0.5" class="form-control" :placeholder="$t('taskModal.SCR0249')" />
                 </div>
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase">Actual Hours</label>
-                  <input id="edit-acthours" v-model="editForm.actualHours" type="number" step="0.5" class="form-control" placeholder="e.g. 3.0" />
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.SCR0255') }}</label>
+                  <input id="edit-acthours" v-model="editForm.actualHours" type="number" step="0.5" class="form-control" :placeholder="$t('taskModal.SCR0250')" />
                 </div>
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase">Column</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.SCR0257') }}</label>
                   <select id="edit-status" v-model="editForm.columnId" class="form-select">
                     <option v-for="col in columns" :key="col.Id" :value="col.Id">{{ col.Name }}</option>
                   </select>
                 </div>
                 <div class="col-12 col-md-6">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase">Priority</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.SCR0246') }}</label>
                   <select id="edit-priority" v-model="editForm.priority" class="form-select">
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
+                    <option value="Low">{{ $t('tasks.SCR0224') }}</option>
+                    <option value="Medium">{{ $t('tasks.SCR0225') }}</option>
+                    <option value="High">{{ $t('tasks.SCR0226') }}</option>
                   </select>
                 </div>
               </div>
 
               <div class="mb-4">
-                <label class="form-label fw-semibold text-secondary small text-uppercase">Assignees</label>
+                <label class="form-label fw-semibold text-secondary small text-uppercase">{{ $t('tasks.SCR0260') }}</label>
                 <!-- Display currently assigned users with remove button -->
                 <div v-if="editAssignedUsers.length > 0" class="row g-2 mb-3">
                   <div v-for="user in editAssignedUsers" :key="user.UserId" class="col-12 col-md-6">
@@ -497,7 +497,7 @@
                         <div class="flex-grow-1 min-w-0 text-start">
                           <div class="small fw-semibold text-body text-truncate" :title="user.Email">{{ user.Email }}</div>
                         </div>
-                        <button v-if="projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager'" class="btn btn-sm btn-outline-danger p-1 ms-auto" @click.prevent="removeUserLocal(user.UserId)" title="Remove assignment" style="width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;">
+                        <button v-if="projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager'" class="btn btn-sm btn-outline-danger p-1 ms-auto" @click.prevent="removeUserLocal(user.UserId)" :title="$t('tasks.SCR0263')" style="width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;">
                           <i class="bi bi-trash3-fill" style="font-size:10px"></i>
                         </button>
                       </div>
@@ -508,9 +508,9 @@
                 <!-- Add Assignee section -->
                 <div v-if="projectStore.userRole === 'Owner' || projectStore.userRole === 'Manager'" class="d-flex align-items-center gap-2">
                   <select v-model="selectedAssigneeId" @change="assignUserLocal" class="form-select form-select-sm" style="border-radius: 8px;">
-                    <option :value="null">-- {{ $t('taskModal.select_assignee') }} --</option>
+                    <option :value="null">-- {{ $t('taskModal.SCR0241') }} --</option>
                     <option v-for="m in projectMembersNotAssignedToEdit" :key="m.UserId" :value="m.UserId">
-                      {{ m.Email }} ({{ m.Role }})
+                      {{ m.Email }} ({{ getRoleLabel(t, m.Role) }})
                     </option>
                   </select>
                 </div>
@@ -518,25 +518,25 @@
 
               <div class="mt-4 pt-3 border-top text-end">
                 <button class="btn btn-sm btn-outline-danger px-3 py-2 fw-semibold" @click.prevent="handleDeleteTask">
-                  <i class="bi bi-trash3 me-1"></i> {{ $t('tasks.delete_task') }}
+                  <i class="bi bi-trash3 me-1"></i> {{ $t('tasks.SCR0215') }}
                 </button>
               </div>
             </div>
 
             <!-- ── FOOTER — View mode ── -->
             <div v-if="!editMode" class="modal-footer p-4 border-top bg-body-secondary text-end">
-              <button class="btn btn-sm btn-outline-secondary px-4 py-2" @click="closeModal" style="border-radius: 8px;">{{ $t('tasks.cancel') }}</button>
+              <button class="btn btn-sm btn-outline-secondary px-4 py-2" @click="closeModal" style="border-radius: 8px;">{{ $t('tasks.SCR0220') }}</button>
             </div>
 
             <!-- ── FOOTER — Edit mode ── -->
             <div v-else class="modal-footer p-4 border-top bg-body-secondary d-flex justify-content-end gap-2">
               <button class="btn btn-sm btn-outline-secondary px-3 py-2 fw-semibold" @click="cancelEdit" style="border-radius: 8px;">
-                <i class="bi bi-x me-1"></i> {{ $t('tasks.cancel') }}
+                <i class="bi bi-x me-1"></i> {{ $t('tasks.SCR0220') }}
               </button>
               <button class="btn btn-sm btn-primary px-3 py-2 fw-semibold" @click="saveEdit" :disabled="saving" style="border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">
                 <span v-if="saving" class="spinner-border spinner-border-sm me-2" role="status"></span>
                 <i v-else class="bi bi-check2 me-1"></i>
-                {{ saving ? $t('common.loading') : $t('tasks.save') }}
+                {{ saving ? $t('common.SCR0009') : $t('tasks.SCR0219') }}
               </button>
             </div>
 
@@ -552,6 +552,7 @@
 import draggable from 'vuedraggable'
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { getRoleLabel } from '../utils/i18nLabels.js'
 import { assignTask, updateTask, removeAssignment, updateTaskColumn, deleteTask, addComment, deleteComment, getTaskFeed } from '../services/taskService.js'
 import { getMembers, addMember, updateMemberRole, removeMember, getProjectTasks, getProjectColumns, importTasks, downloadTaskTemplate } from '../services/projectService.js'
 import { useProjectStore } from '../stores/projectStore.js'
@@ -559,7 +560,7 @@ const projectStore = useProjectStore()
 import { toastSuccess, toastError, confirm, extractMessage } from '../utils/swal.js'
 import Swal from 'sweetalert2'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const tasks         = ref([])
 const loading       = ref(false)
@@ -584,10 +585,10 @@ const handleImportFile = async (event) => {
   loading.value = true
   try {
     const res = await importTasks(projectStore.currentProjectId, file)
-    toastSuccess(res.data?.message || 'Tasks imported successfully!')
+    toastSuccess(res.data?.message || t('tasks.SCR0270'))
     refreshAll()
   } catch (err) {
-    toastError(extractMessage(err, 'Failed to import tasks'))
+    toastError(extractMessage(err, t('tasks.SCR0266')))
   } finally {
     loading.value = false
     event.target.value = '' // reset
@@ -606,7 +607,7 @@ const handleDownloadTemplate = async () => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
   } catch (err) {
-    toastError('Failed to download template')
+    toastError(t('tasks.SCR0267'))
   }
 }
 
@@ -630,7 +631,7 @@ const getAssigneeName = (id) => {
   if (!id) return ''
   if (id === '00000000-0000-0000-0000-000000000000') return 'Unassigned'
   const m = members.value.find(u => u.UserId === id)
-  return m ? m.Email : 'Unknown'
+  return m ? m.Email : t('common.SCR0033')
 }
 
 const onSearchInput = () => {
@@ -721,7 +722,7 @@ const formatTimeAgo = (dateStr) => {
   if (diff < 60) return 'Just now'
   if (diff < 3600) return `${Math.floor(diff/60)}m ago`
   if (diff < 86400) return `${Math.floor(diff/3600)}h ago`
-  return d.toLocaleDateString()
+  return d.toLocaleDateString(locale.value === 'vi' ? 'vi-VN' : 'en-US')
 }
 
 const loadFeed = async (taskId) => {
@@ -762,7 +763,7 @@ const submitComment = async () => {
     newComment.value = ''
     await loadFeed(modal.task.Id)
   } catch (err) {
-    toastError('Failed to add comment')
+    toastError(t('tasks.SCR0268'))
   } finally {
     submittingComment.value = false
   }
@@ -781,7 +782,7 @@ const removeComment = async (id) => {
     await deleteComment(id)
     await loadFeed(modal.task.Id)
   } catch (err) {
-    toastError('Failed to delete comment')
+    toastError(t('tasks.SCR0269'))
   }
 }
 
@@ -833,11 +834,11 @@ const saveEdit = async () => {
     const updated = tasks.value.find(t => t.Id === modal.task.Id)
     if (updated) modal.task = updated
     editMode.value = false
-    toastSuccess('Task updated successfully!')
+    toastSuccess(t('tasks.SCR0271'))
     await loadFeed(modal.task.Id)
   } catch (err) {
     console.error(err)
-    toastError(extractMessage(err, t('errors.default')))
+    toastError(extractMessage(err, t('common.SCR0015')))
   } finally {
     saving.value = false
   }
@@ -845,21 +846,21 @@ const saveEdit = async () => {
 
 const handleDeleteTask = async () => {
   const ok = await confirm(
-    t('tasks.delete_confirm_title'),
-    t('tasks.delete_confirm_desc'),
-    t('tasks.delete_confirm_btn')
+    t('tasks.SCR0227'),
+    t('tasks.SCR0228'),
+    t('tasks.SCR0215')
   )
   if (!ok) return
   
   saving.value = true
   try {
     await deleteTask(modal.task.Id)
-    toastSuccess('Task deleted successfully!')
+    toastSuccess(t('tasks.SCR0272'))
     closeModal()
     await loadData()
   } catch (err) {
     console.error(err)
-    toastError(extractMessage(err, t('errors.default')))
+    toastError(extractMessage(err, t('common.SCR0015')))
   } finally {
     saving.value = false
   }
@@ -907,7 +908,7 @@ const loadColumnData = async (colId, append = false) => {
     }
   } catch (e) {
     console.error(e)
-    toastError(extractMessage(e, t('errors.default')))
+    toastError(extractMessage(e, t('common.SCR0015')))
   } finally {
     colState.loading = false
   }
@@ -1003,11 +1004,11 @@ const changeTaskColumnFromSelect = async (newColumnId) => {
       taskId: modal.task.Id,
       columnId: parseInt(newColumnId)
     })
-    toastSuccess('Task column updated successfully!')
+    toastSuccess(t('tasks.SCR0273'))
   } catch (err) {
     modal.task.ColumnId = oldColumnId
     console.error(err)
-    toastError(extractMessage(err, t('errors.default')))
+    toastError(extractMessage(err, t('common.SCR0015')))
   }
 }
 
@@ -1034,11 +1035,11 @@ const onChange = async (evt, colId) => {
 
     try {
       await updateTaskColumn({ taskId: task.Id, columnId: colId })
-      toastSuccess('Status updated!')
+      toastSuccess(t('tasks.SCR0274'))
     } catch (err) {
       task.ColumnId = oldColumnId
       console.error('Failed to update status, rolled back:', err)
-      toastError(extractMessage(err, t('errors.default')))
+      toastError(extractMessage(err, t('common.SCR0015')))
     }
   }
 }
@@ -1068,6 +1069,12 @@ const getPriorityBadgeClass = (priority) => {
     default: return 'bg-secondary text-white'
   }
 }
+
+const formatPriority = (priority) => ({
+  Low: t('tasks.SCR0224'),
+  Medium: t('tasks.SCR0225'),
+  High: t('tasks.SCR0226')
+})[priority] || priority
 
 const onKeydown = (e) => { if (e.key === 'Escape') closeModal() }
 const onTaskCreated = (e) => {

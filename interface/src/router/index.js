@@ -8,6 +8,7 @@ const CalendarView = () => import('../views/CalendarView.vue')
 const GanttView = () => import('../views/GanttView.vue')
 const SettingsView = () => import('../views/SettingsView.vue')
 const MembersView = () => import('../views/MembersView.vue')
+const ProjectFilesView = () => import('../views/ProjectFilesView.vue')
 const ChangePasswordView = () => import('../views/ChangePasswordView.vue')
 const ForceChangePasswordView = () => import('../views/ForceChangePasswordView.vue')
 const ForgotPasswordView = () => import('../views/ForgotPasswordView.vue')
@@ -81,6 +82,12 @@ const routes = [
     path: '/projects/:projectId/members',
     name: 'project-members',
     component: MembersView,
+    meta: { requiresAuth: true, requiresProject: true }
+  },
+  {
+    path: '/projects/:projectId/files',
+    name: 'project-files',
+    component: ProjectFilesView,
     meta: { requiresAuth: true, requiresProject: true }
   },
   // --- ADMIN ROUTES ---

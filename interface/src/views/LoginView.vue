@@ -9,7 +9,7 @@
           type="button"
           data-bs-toggle="dropdown"
           aria-expanded="false"
-          title="Change Language"
+          :title="$t('common.SCR0018')"
         >
           <span class="d-flex align-items-center justify-content-center">
             <svg v-if="locale === 'vi'" viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><circle cx="12" cy="12" r="12" fill="#da251d"/><polygon points="12,6 12.95,9.58 16.71,9.58 13.66,11.8 14.79,15.38 12,13.16 9.21,15.38 10.34,11.8 7.29,9.58 11.05,9.58" fill="#ffff00"/></svg>
@@ -20,13 +20,13 @@
           <li>
             <button class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2" @click="changeLocale('vi')">
               <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><circle cx="12" cy="12" r="12" fill="#da251d"/><polygon points="12,6 12.95,9.58 16.71,9.58 13.66,11.8 14.79,15.38 12,13.16 9.21,15.38 10.34,11.8 7.29,9.58 11.05,9.58" fill="#ffff00"/></svg>
-              <span style="font-size: 0.85rem;">Tiếng Việt</span>
+              <span style="font-size: 0.85rem;">{{ $t('common.SCR0019') }}</span>
             </button>
           </li>
           <li>
             <button class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2" @click="changeLocale('en')">
               <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><clipPath id="uk-circle-item-login"><circle cx="12" cy="12" r="12"/></clipPath><g clip-path="url(#uk-circle-item-login)"><rect width="24" height="24" fill="#012169"/><path d="M0,0 L24,24 M24,0 L0,24" stroke="#fff" stroke-width="4"/><path d="M0,0 L24,24 M24,0 L0,24" stroke="#C8102E" stroke-width="2"/><path d="M0,12 H24 M12,0 V24" stroke="#fff" stroke-width="6"/><path d="M0,12 H24 M12,0 V24" stroke="#C8102E" stroke-width="4"/></g></svg>
-              <span style="font-size: 0.85rem;">English</span>
+              <span style="font-size: 0.85rem;">{{ $t('common.SCR0020') }}</span>
             </button>
           </li>
         </ul>
@@ -64,7 +64,7 @@
           <circle cx="42" cy="38" r="6" fill="#ef4444" fill-opacity="0.7"/>
           <circle cx="58" cy="38" r="6" fill="#f59e0b" fill-opacity="0.7"/>
           <circle cx="74" cy="38" r="6" fill="#10b981" fill-opacity="0.7"/>
-          <text x="210" y="43" font-family="sans-serif" font-size="11" fill="rgba(255,255,255,0.6)" text-anchor="middle">TutaFlow — Task Board</text>
+          <text x="210" y="43" font-family="sans-serif" font-size="11" fill="rgba(255,255,255,0.6)" text-anchor="middle">TutaFlow — {{ $t('tasks.SCR0201') }}</text>
 
           <!-- Column 1: To Do -->
           <rect x="32" y="72" width="104" height="268" rx="10" fill="rgba(255,255,255,0.05)"/>
@@ -77,7 +77,7 @@
           <rect x="48" y="107" width="60" height="5" rx="2.5" fill="rgba(255,255,255,0.5)"/>
           <rect x="48" y="116" width="44" height="4" rx="2" fill="rgba(255,255,255,0.25)"/>
           <rect x="48" y="132" width="30" height="12" rx="6" fill="rgba(148,163,184,0.2)"/>
-          <text x="63" y="141" font-family="sans-serif" font-size="7" fill="rgba(255,255,255,0.4)">To Do</text>
+          <text x="63" y="141" font-family="sans-serif" font-size="7" fill="rgba(255,255,255,0.4)">{{ $t('dashboard.SCR0113') }}</text>
 
           <rect x="38" y="162" width="90" height="50" rx="8" fill="rgba(255,255,255,0.12)"/>
           <rect x="38" y="162" width="4" height="50" rx="2" fill="#94a3b8"/>
@@ -102,7 +102,7 @@
           <rect x="164" y="116" width="48" height="4" rx="2" fill="rgba(255,255,255,0.3)"/>
           <rect x="164" y="124" width="36" height="4" rx="2" fill="rgba(255,255,255,0.2)"/>
           <rect x="164" y="136" width="38" height="12" rx="6" fill="rgba(56,189,248,0.2)"/>
-          <text x="183" y="145" font-family="sans-serif" font-size="7" fill="#38bdf8">In Progress</text>
+          <text x="183" y="145" font-family="sans-serif" font-size="7" fill="#38bdf8">{{ $t('dashboard.SCR0102') }}</text>
 
           <rect x="154" y="166" width="90" height="55" rx="8" fill="rgba(56,189,248,0.08)"/>
           <rect x="154" y="166" width="4" height="55" rx="2" fill="#38bdf8"/>
@@ -151,20 +151,20 @@
         <!-- Floating feature badges -->
         <div class="feature-badge badge-top-right">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span>{{ $t('auth.realtime_sync') }}</span>
+          <span>{{ $t('auth.SCR0740') }}</span>
         </div>
         <div class="feature-badge badge-bottom-left">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span>{{ $t('auth.team_collab') }}</span>
+          <span>{{ $t('auth.SCR0741') }}</span>
         </div>
       </div>
 
       <!-- Tagline -->
       <div class="text-center mt-5 position-relative">
         <h2 class="text-white fw-bold mb-2" style="font-size: 1.6rem; line-height: 1.3;">
-          {{ $t('auth.slogan_title') }}<br><span class="text-teal-light">{{ $t('auth.slogan_highlight') }}</span>
+          {{ $t('auth.SCR0737') }}<br><span class="text-teal-light">{{ $t('auth.SCR0738') }}</span>
         </h2>
-        <p class="text-white-50 small mb-0">{{ $t('auth.slogan_subtitle') }}</p>
+        <p class="text-white-50 small mb-0">{{ $t('auth.SCR0739') }}</p>
       </div>
     </div>
 
@@ -183,21 +183,21 @@
       <div class="form-panel w-100">
         <!-- Header -->
         <div class="mb-4">
-          <h1 class="fw-bold text-body mb-1" style="font-size: 1.75rem;">{{ $t('auth.welcome_back') }}</h1>
-          <p class="text-muted small mb-0">{{ $t('auth.welcome_subtitle') }}</p>
+          <h1 class="fw-bold text-body mb-1" style="font-size: 1.75rem;">{{ $t('auth.SCR0703') }}</h1>
+          <p class="text-muted small mb-0">{{ $t('auth.SCR0704') }}</p>
         </div>
 
         <!-- Login Form -->
         <form @submit.prevent="login">
           <div class="mb-3">
-            <label class="form-label fw-semibold text-body small mb-1">{{ $t('auth.email') }}</label>
+            <label class="form-label fw-semibold text-body small mb-1">{{ $t('auth.SCR0705') }}</label>
             <div class="input-group input-group-clean">
               <span class="input-icon"><i class="bi bi-envelope"></i></span>
               <input
                 v-model="email"
                 type="email"
                 class="form-control form-control-clean"
-                placeholder="you@example.com"
+                :placeholder="$t('auth.SCR0760')"
                 required
                 tabindex="1"
               />
@@ -206,8 +206,8 @@
 
           <div class="mb-4">
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <label class="form-label fw-semibold text-body small mb-0">{{ $t('auth.password') }}</label>
-              <router-link to="/forgot-password" class="small text-decoration-none fw-medium text-primary" tabindex="4">{{ $t('auth.forgot_password') }}?</router-link>
+              <label class="form-label fw-semibold text-body small mb-0">{{ $t('auth.SCR0706') }}</label>
+              <router-link to="/forgot-password" class="small text-decoration-none fw-medium text-primary" tabindex="4">{{ $t('auth.SCR0728') }}?</router-link>
             </div>
             <div class="input-group input-group-clean">
               <span class="input-icon"><i class="bi bi-lock"></i></span>
@@ -215,7 +215,7 @@
                 v-model="password"
                 :type="showPassword ? 'text' : 'password'"
                 class="form-control form-control-clean ps-icon border-end-0"
-                placeholder="Enter your password"
+                :placeholder="$t('auth.SCR0761')"
                 @keyup.enter="login"
                 required
                 tabindex="2"
@@ -234,7 +234,7 @@
               tabindex="3"
             >
               <span v-if="loading" class="spinner-border spinner-border-sm" role="status"></span>
-              <span>{{ loading ? $t('auth.signing_in') : $t('auth.login') }}</span>
+              <span>{{ loading ? $t('auth.SCR0747') : $t('auth.SCR0701') }}</span>
               <svg v-if="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
 
@@ -326,7 +326,7 @@ const handleGoogleCredentialResponse = async (response) => {
       }
     }
   } catch (error) {
-    toastError(extractMessage(error, t('auth.google_login_failed')))
+    toastError(extractMessage(error, t('auth.SCR0758')))
   } finally {
     loading.value = false
   }
@@ -354,7 +354,7 @@ const login = async () => {
       }
     }
   } catch (error) {
-    toastError(extractMessage(error, t('errors.default')))
+    toastError(extractMessage(error, t('common.SCR0015')))
   } finally {
     loading.value = false
   }

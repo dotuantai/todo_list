@@ -3,25 +3,25 @@
     <!-- Header -->
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4" v-if="projectStore.currentProjectId">
       <div class="d-flex align-items-center gap-2">
-        <h4 class="mb-0 fw-bold text-body" style="font-size: 1.5rem; font-family: 'Inter', sans-serif; letter-spacing: -0.02em;">Sơ đồ Gantt</h4>
-        <span class="badge bg-secondary-subtle text-secondary ms-2 rounded-pill px-3">{{ filteredTasks.length }} nhiệm vụ</span>
+        <h4 class="mb-0 fw-bold text-body" style="font-size: 1.5rem; font-family: 'Inter', sans-serif; letter-spacing: -0.02em;">{{ $t('gantt.SCR1101') }}</h4>
+        <span class="badge bg-secondary-subtle text-secondary ms-2 rounded-pill px-3">{{ $t('gantt.SCR1102', { count: filteredTasks.length }) }}</span>
       </div>
       <div class="d-flex align-items-center gap-2">
         <button class="btn btn-outline-secondary btn-sm rounded-pill px-4 fw-medium shadow-sm" @click="scrollToToday">
-          <i class="bi bi-crosshair me-1"></i> Hôm nay
+          <i class="bi bi-crosshair me-1"></i> {{ $t('gantt.SCR1103') }}
         </button>
       </div>
     </div>
 
     <!-- Filter bar -->
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3" style="font-family: 'Inter', sans-serif;">
-      <span class="badge bg-secondary-subtle text-secondary me-2 py-2 px-3 rounded-pill border"><i class="bi bi-funnel"></i> DỰ ÁN</span>
+      <span class="badge bg-secondary-subtle text-secondary me-2 py-2 px-3 rounded-pill border"><i class="bi bi-funnel"></i> {{ $t('gantt.SCR1104') }}</span>
       
       <span class="badge rounded-pill px-4 py-2 border shadow-sm transition-all" 
             style="cursor: pointer; font-size: 0.85rem;" 
             :class="filterStatus === null ? 'bg-body text-primary border-primary' : 'bg-body text-secondary'" 
             @click="filterStatus = null">
-        Tất cả
+        {{ $t('gantt.SCR1105') }}
       </span>
       <span v-for="col in columns" :key="col.Id" 
             class="badge rounded-pill px-4 py-2 border shadow-sm transition-all"
@@ -42,7 +42,7 @@
           :class="filterMyTasks ? 'text-white border-0' : 'btn-outline-secondary text-secondary bg-body'"
           :style="filterMyTasks ? 'background-color: #1a8e9e; width: 36px; height: 36px;' : 'width: 36px; height: 36px;'"
           @click="filterMyTasks = !filterMyTasks"
-          title="Assign to myself"
+          :title="$t('gantt.SCR1106')"
         >
           <i class="bi bi-person-fill fs-5"></i>
         </button>
@@ -52,7 +52,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="flex-grow-1 d-flex justify-content-center align-items-center">
       <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+        <span class="visually-hidden">{{ $t('gantt.SCR1107') }}</span>
       </div>
     </div>
 
@@ -62,7 +62,7 @@
       <!-- Left Sidebar: Task Names -->
       <div class="gantt-sidebar border-end d-flex flex-column bg-body-tertiary" style="width: 280px; flex-shrink: 0; z-index: 20;">
         <div class="gantt-header p-3 border-bottom d-flex align-items-center fw-bold text-muted text-uppercase tracking-wider bg-body-secondary flex-shrink-0" style="height: 65px; font-size: 0.75rem;">
-          Tên công việc
+          {{ $t('gantt.SCR1108') }}
         </div>
         <div class="gantt-rows overflow-hidden d-flex flex-column flex-grow-1" ref="sidebarRows" @scroll="syncScroll('sidebar')">
           <div v-for="task in filteredTasks" :key="task.Id" 
@@ -72,7 +72,7 @@
                @click="openTaskDetails(task)">
             <span class="fw-semibold text-body" style="font-size: 0.9rem;">{{ task.Title }}</span>
             <span class="text-muted mt-1" style="font-size: 0.7rem;">
-              <i class="bi bi-clock"></i> {{ getTaskDuration(task) }} ngày
+              <i class="bi bi-clock"></i> {{ $t('gantt.SCR1109', { count: getTaskDuration(task) }) }}
             </span>
           </div>
         </div>
@@ -127,8 +127,10 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useProjectStore } from '../stores/projectStore.js'
 import { getProjectTasks, getProjectColumns } from '../services/projectService.js'
 import Swal from 'sweetalert2'
+import { useI18n } from 'vue-i18n'
 
 const projectStore = useProjectStore()
+const { t, locale } = useI18n()
 const tasks = ref([])
 const columns = ref([])
 const filterStatus = ref(null)
@@ -183,8 +185,8 @@ const isWeekday = (date) => {
 }
 
 const getDayName = (date) => {
-  const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
-  return days[date.getDay()]
+  const days = ['gantt.SCR1110', 'gantt.SCR1111', 'gantt.SCR1112', 'gantt.SCR1113', 'gantt.SCR1114', 'gantt.SCR1115', 'gantt.SCR1116']
+  return t(days[date.getDay()])
 }
 
 // Calculate the timeline boundaries based on tasks
@@ -325,6 +327,12 @@ const getColumnColor = (colId) => {
   return col.color
 }
 
+const formatPriority = (priority) => ({
+  Low: t('tasks.SCR0224'),
+  Medium: t('tasks.SCR0225'),
+  High: t('tasks.SCR0226')
+})[priority] || priority
+
 const openTaskDetails = (task) => {
   const col = columns.value.find(c => c.Id === task.ColumnId)
   Swal.fire({
@@ -332,24 +340,24 @@ const openTaskDetails = (task) => {
     html: `
       <div class="text-start mt-3" style="font-family: 'Inter', sans-serif;">
         <div class="mb-3">
-          <span class="badge rounded-pill px-3 py-2 text-white" style="background: ${col?.color || 'gray'}">${col?.Name || 'Unknown'}</span>
-          ${task.Priority ? `<span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2 ms-2">${task.Priority} Priority</span>` : ''}
+          <span class="badge rounded-pill px-3 py-2 text-white" style="background: ${col?.color || 'gray'}">${col?.Name || t('gantt.SCR1117')}</span>
+          ${task.Priority ? `<span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2 ms-2">${t('gantt.SCR1118', { priority: formatPriority(task.Priority) })}</span>` : ''}
         </div>
-        <div class="mt-3 text-body bg-body-secondary p-3 rounded-4" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;">${task.Description || 'No description provided.'}</div>
+        <div class="mt-3 text-body bg-body-secondary p-3 rounded-4" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;">${task.Description || t('gantt.SCR1119')}</div>
         <div class="row mt-4 pt-3 border-top g-3">
           <div class="col-6">
-            <label class="text-muted small text-uppercase fw-bold mb-1">Start Date</label>
-            <div class="fw-medium">${task.StartDate ? new Date(task.StartDate).toLocaleDateString() : new Date(task.CreatedAt).toLocaleDateString()}</div>
+            <label class="text-muted small text-uppercase fw-bold mb-1">${t('gantt.SCR1120')}</label>
+            <div class="fw-medium">${task.StartDate ? new Date(task.StartDate).toLocaleDateString(locale.value === 'vi' ? 'vi-VN' : 'en-US') : new Date(task.CreatedAt).toLocaleDateString(locale.value === 'vi' ? 'vi-VN' : 'en-US')}</div>
           </div>
           <div class="col-6">
-            <label class="text-muted small text-uppercase fw-bold mb-1">Deadline</label>
-            <div class="fw-medium text-danger">${task.Deadline ? new Date(task.Deadline).toLocaleDateString() : 'None'}</div>
+            <label class="text-muted small text-uppercase fw-bold mb-1">${t('gantt.SCR1121')}</label>
+            <div class="fw-medium text-danger">${task.Deadline ? new Date(task.Deadline).toLocaleDateString(locale.value === 'vi' ? 'vi-VN' : 'en-US') : t('gantt.SCR1122')}</div>
           </div>
         </div>
       </div>
     `,
     showConfirmButton: true,
-    confirmButtonText: 'Đóng',
+    confirmButtonText: t('gantt.SCR1123'),
     confirmButtonColor: 'var(--bs-primary)',
     width: '600px',
     customClass: {

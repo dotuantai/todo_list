@@ -4,7 +4,7 @@
       @click="toggleNotificationDropdown" 
       class="btn btn-light p-0 border rounded-3 d-flex align-items-center justify-content-center" 
       style="width: 36px; height: 36px; color: #64748b; position: relative;"
-      title="Notifications"
+      :title="$t('common.SCR0024')"
     >
       <i class="bi" :class="unreadCount > 0 ? 'bi-bell-fill text-primary' : 'bi-bell'"></i>
       <span v-if="unreadCount > 0" class="position-absolute bg-danger border border-white rounded-circle" style="width: 8px; height: 8px; top: 7px; right: 7px;"></span>
@@ -17,7 +17,7 @@
       style="width: 320px; right: 0; z-index: 1050; border-radius: 12px; overflow: hidden;"
     >
       <div class="card-header bg-white border-bottom py-2.5 px-3 d-flex align-items-center justify-content-between">
-        <span class="fw-bold text-body small text-uppercase tracking-wider mb-0" style="font-size: 11px;">Notifications</span>
+        <span class="fw-bold text-body small text-uppercase tracking-wider mb-0" style="font-size: 11px;">{{ $t('common.SCR0024') }}</span>
         <button 
           v-if="unreadCount > 0" 
           @click="handleMarkAllAsRead" 
@@ -43,7 +43,7 @@
           <div class="flex-grow-1 min-w-0">
             <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
               <span class="fw-bold text-body text-truncate" style="font-size: 12.5px;">{{ n.Title }}</span>
-              <span v-if="!n.IsRead" class="badge rounded-circle p-1 bg-primary" style="width: 6px; height: 6px;" title="Unread"></span>
+              <span v-if="!n.IsRead" class="badge rounded-circle p-1 bg-primary" style="width: 6px; height: 6px;" :title="$t('common.SCR0025')"></span>
             </div>
             <p class="text-secondary mb-1 small lh-sm" style="font-size: 12px;">{{ n.Message }}</p>
             <span class="text-muted" style="font-size: 9.5px; font-family: monospace;">{{ formatTime(n.CreatedAt) }}</span>

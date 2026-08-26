@@ -1,13 +1,13 @@
 <template>
   <div>
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h3 class="fw-bold mb-0 text-body">{{ $t('admin.projects_title') }}</h3>
+      <h3 class="fw-bold mb-0 text-body">{{ $t('admin.SCR0921') }}</h3>
     </div>
 
     <!-- Loading State -->
     <div v-if="projectStore.loading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
-      <p class="text-muted mt-3">{{ $t('admin.projects_loading') }}</p>
+      <p class="text-muted mt-3">{{ $t('admin.SCR0922') }}</p>
     </div>
 
     <!-- Data Table for Projects -->
@@ -16,11 +16,11 @@
         <table class="table table-hover mb-0 align-middle">
           <thead class="bg-light">
             <tr>
-              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('admin.projects_col_name') }}</th>
-              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('admin.projects_col_owner') }}</th>
-              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('admin.projects_col_members') }}</th>
-              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('admin.projects_col_progress') }}</th>
-              <th class="border-0 px-4 py-3 text-uppercase text-secondary text-end" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('admin.projects_col_actions') }}</th>
+              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('admin.SCR0923') }}</th>
+              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('admin.SCR0924') }}</th>
+              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('admin.SCR0925') }}</th>
+              <th class="border-0 px-4 py-3 text-uppercase text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('admin.SCR0926') }}</th>
+              <th class="border-0 px-4 py-3 text-uppercase text-secondary text-end" style="font-size: 0.75rem; letter-spacing: 0.5px;">{{ $t('admin.SCR0927') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -28,11 +28,11 @@
               <td class="px-4 py-3">
                 <div class="d-flex align-items-center gap-3">
                   <div class="project-logo text-white d-flex align-items-center justify-content-center fw-bold rounded-2 shadow-sm" :style="{ background: getProjectColor(proj.Name) }" style="width: 36px; height: 36px;">
-                    {{ proj.Name[0].toUpperCase() }}
+                    {{ (proj.Name && proj.Name[0]) ? proj.Name[0].toUpperCase() : 'P' }}
                   </div>
                   <div>
                     <h6 class="mb-0 fw-bold">{{ proj.Name }}</h6>
-                    <small class="text-muted text-truncate d-inline-block" style="max-width: 200px;">{{ proj.Description || $t('admin.projects_no_desc') }}</small>
+                    <small class="text-muted text-truncate d-inline-block" style="max-width: 200px;">{{ proj.Description || $t('admin.SCR0928') }}</small>
                   </div>
                 </div>
               </td>
@@ -53,13 +53,13 @@
               </td>
               <td class="px-4 py-3 text-end">
                 <button class="btn btn-sm btn-light border-0 text-primary fw-medium px-3" @click="goToProject(proj.Id)">
-                  {{ $t('admin.projects_enter') }} <i class="bi bi-arrow-right ms-1"></i>
+                  {{ $t('admin.SCR0929') }} <i class="bi bi-arrow-right ms-1"></i>
                 </button>
               </td>
             </tr>
             <tr v-if="projectsWithProgress.length === 0">
               <td colspan="5" class="text-center py-5 text-muted">
-                {{ $t('admin.projects_empty') }}
+                {{ $t('admin.SCR0930') }}
               </td>
             </tr>
           </tbody>

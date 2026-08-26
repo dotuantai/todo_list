@@ -18,10 +18,10 @@
           <!-- Modal Header -->
           <div class="modal-header border-bottom p-4">
             <div class="text-start">
-              <h1 class="modal-title h4 fw-bold mb-1 text-body">{{ $t('taskModal.create_title') }}</h1>
-              <p class="text-muted small mb-0">{{ $t('taskModal.btn_create') }}</p>
+              <h1 class="modal-title h4 fw-bold mb-1 text-body">{{ $t('taskModal.SCR0233') }}</h1>
+              <p class="text-muted small mb-0">{{ $t('taskModal.SCR0242') }}</p>
             </div>
-            <button type="button" class="btn-close" @click="closeModal" aria-label="Close"></button>
+            <button type="button" class="btn-close" @click="closeModal" :aria-label="$t('taskModal.SCR0255')"></button>
           </div>
 
           <div class="modal-body p-4 text-start">
@@ -29,26 +29,26 @@
 
               <!-- Task Title -->
               <div class="mb-4">
-                <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.task_name') }} <span class="text-danger">*</span></label>
+                <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.SCR0235') }} <span class="text-danger">*</span></label>
                 <input 
                   v-model="form.title"
                   type="text" 
                   class="form-control" 
-                  placeholder="e.g. Design System Implementation"
+                  :placeholder="$t('taskModal.SCR0248')"
                   required
                 />
               </div>
 
               <div class="row g-3 mb-4">
                 <div class="col-md-6 text-start">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Start Date <span class="text-danger">*</span></label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.SCR0245') }} <span class="text-danger">*</span></label>
                   <div class="input-group">
                     <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-calendar-event"></i></span>
                     <input v-model="form.startDate" type="date" class="form-control text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;" required />
                   </div>
                 </div>
                 <div class="col-md-6 text-start">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.deadline') }} <span class="text-danger">*</span></label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.SCR0237') }} <span class="text-danger">*</span></label>
                   <div class="input-group">
                     <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-calendar3"></i></span>
                     <input v-model="form.deadline" type="date" class="form-control text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;" required />
@@ -56,25 +56,25 @@
                 </div>
 
                 <div class="col-md-6 text-start">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Est. Hours</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.SCR0246') }}</label>
                   <div class="input-group">
                     <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-stopwatch"></i></span>
-                    <input v-model="form.estimatedHours" type="number" step="0.5" min="0" placeholder="e.g. 4.5" class="form-control text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;" />
+                    <input v-model="form.estimatedHours" type="number" step="0.5" min="0" :placeholder="$t('taskModal.SCR0249')" class="form-control text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;" />
                   </div>
                 </div>
                 <div class="col-md-6 text-start">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Act. Hours</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.SCR0247') }}</label>
                   <div class="input-group">
                     <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-clock-history"></i></span>
-                    <input v-model="form.actualHours" type="number" step="0.5" min="0" placeholder="e.g. 5.0" class="form-control text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;" />
+                    <input v-model="form.actualHours" type="number" step="0.5" min="0" :placeholder="$t('taskModal.SCR0250')" class="form-control text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;" />
                   </div>
                 </div>
 
                 <div class="col-md-6 text-start">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.status') }}</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.SCR0238') }}</label>
                   <div v-if="loadingColumns" class="d-flex align-items-center gap-2 py-2">
                     <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
-                    <span class="text-muted small">{{ $t('common.loading') }}</span>
+                    <span class="text-muted small">{{ $t('common.SCR0009') }}</span>
                   </div>
                   <div v-else class="input-group">
                     <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-kanban"></i></span>
@@ -84,25 +84,25 @@
                   </div>
                 </div>
                 <div class="col-md-6 text-start">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Priority</label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('tasks.SCR0246') }}</label>
                   <div class="input-group">
                     <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-flag"></i></span>
                     <select v-model="form.priority" class="form-select text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;">
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
+                      <option value="Low">{{ $t('tasks.SCR0224') }}</option>
+                      <option value="Medium">{{ $t('tasks.SCR0225') }}</option>
+                      <option value="High">{{ $t('tasks.SCR0226') }}</option>
                     </select>
                   </div>
                 </div>
 
                 <div class="col-12 text-start">
-                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">Assignee <span class="text-muted text-lowercase" style="font-size: 0.75rem;">(Optional)</span></label>
+                  <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.SCR0252') }} <span class="text-muted text-lowercase" style="font-size: 0.75rem;">({{ $t('taskModal.SCR0253') }})</span></label>
                   <div class="input-group">
                     <span class="input-group-text bg-body-secondary border-end-0 text-muted" style="border-color: var(--bs-border-color);"><i class="bi bi-person"></i></span>
                     <select v-model="form.assigneeId" class="form-select text-body border-start-0" style="border-color: var(--bs-border-color); padding-left: 0;">
-                      <option :value="null">-- Unassigned --</option>
+                    <option :value="null">{{ $t('taskModal.SCR0254') }}</option>
                       <option v-for="m in members" :key="m.UserId" :value="m.UserId">
-                        {{ m.Email }} ({{ m.Role }})
+                        {{ m.Email }} ({{ getRoleLabel(t, m.Role) }})
                       </option>
                     </select>
                   </div>
@@ -111,12 +111,12 @@
 
               <!-- Description -->
               <div class="mb-4">
-                <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.description') }}</label>
+                <label class="form-label fw-semibold text-secondary small text-uppercase tracking-wider">{{ $t('taskModal.SCR0236') }}</label>
                 <textarea 
                   v-model="form.description"
                   class="form-control text-body" 
                   rows="5"
-                  placeholder="Describe the task details here..."
+                  :placeholder="$t('taskModal.SCR0251')"
                   style="border-color: var(--bs-border-color);"
                 ></textarea>
               </div>
@@ -130,7 +130,7 @@
                   :disabled="loading"
                   style="border-radius: 8px;"
                 >
-                  {{ $t('taskModal.btn_cancel') }}
+                  {{ $t('taskModal.SCR0244') }}
                 </button>
                 <button 
                   type="submit" 
@@ -139,7 +139,7 @@
                   style="border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"
                 >
                   <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                  {{ loading ? $t('common.loading') : $t('taskModal.btn_create') }}
+                  {{ loading ? $t('common.SCR0009') : $t('taskModal.SCR0242') }}
                 </button>
               </div>
             </form>
@@ -153,6 +153,7 @@
 <script setup>
 import { ref, defineExpose } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { getRoleLabel } from '../utils/i18nLabels.js'
 import { createProjectTask, getProjectColumns, getMembers } from '../services/projectService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 const projectStore = useProjectStore()
@@ -231,17 +232,17 @@ const closeModal = () => {
 
 const handleSubmit = async () => {
   if (!form.value.title.trim()) {
-    toastWarning(t('errors.Please complete all fields'))
+    toastWarning(t('taskModal.SCR0256'))
     return
   }
 
   if (!projectStore.currentProjectId) {
-    toastWarning(t('tasks.welcome_desc'))
+    toastWarning(t('tasks.SCR0203'))
     return
   }
 
   if (!form.value.columnId) {
-    toastWarning(t('errors.Please complete all fields'))
+    toastWarning(t('taskModal.SCR0256'))
     return
   }
 
@@ -262,7 +263,7 @@ const handleSubmit = async () => {
 
     await createProjectTask(projectStore.currentProjectId, payload)
 
-    toastSuccess(t('common.success'))
+    toastSuccess(t('common.SCR0011'))
     closeModal()
 
     // Notify TaskView to reload the list
@@ -270,7 +271,7 @@ const handleSubmit = async () => {
 
   } catch (error) {
     console.error('Create task failed:', error)
-    toastError(extractMessage(error, t('errors.default')))
+    toastError(extractMessage(error, t('common.SCR0015')))
   } finally {
     loading.value = false
   }
