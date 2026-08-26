@@ -32,23 +32,32 @@
           <i class="bi bi-bell-slash d-block fs-4 opacity-50 mb-1"></i>
           No notifications
         </div>
-        <button 
-          v-else
-          v-for="n in notifications" 
-          :key="n.Id" 
-          @click="handleNotificationClick(n)"
-          class="list-group-item list-group-item-action text-start p-3 border-bottom d-flex align-items-start gap-2"
-          :style="!n.IsRead ? { backgroundColor: 'rgba(99, 102, 241, 0.03)' } : {}"
-        >
-          <div class="flex-grow-1 min-w-0">
-            <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
-              <span class="fw-bold text-body text-truncate" style="font-size: 12.5px;">{{ n.Title }}</span>
-              <span v-if="!n.IsRead" class="badge rounded-circle p-1 bg-primary" style="width: 6px; height: 6px;" :title="$t('common.SCR0025')"></span>
+        <template v-else>
+          <button 
+            v-for="n in notifications" 
+            :key="n.Id" 
+            @click="handleNotificationClick(n)"
+            class="list-group-item list-group-item-action text-start p-3 border-bottom d-flex align-items-start gap-2"
+            :style="!n.IsRead ? { backgroundColor: 'rgba(99, 102, 241, 0.03)' } : {}"
+          >
+            <div class="flex-grow-1 min-w-0">
+              <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                <span class="fw-bold text-body text-truncate" style="font-size: 12.5px;">{{ n.Title }}</span>
+                <span v-if="!n.IsRead" class="badge rounded-circle p-1 bg-primary" style="width: 6px; height: 6px;" :title="$t('common.SCR0025')"></span>
+              </div>
+              <p class="text-secondary mb-1 small lh-sm" style="font-size: 12px;">{{ n.Message }}</p>
+              <span class="text-muted" style="font-size: 9.5px; font-family: monospace;">{{ formatTime(n.CreatedAt) }}</span>
             </div>
-            <p class="text-secondary mb-1 small lh-sm" style="font-size: 12px;">{{ n.Message }}</p>
-            <span class="text-muted" style="font-size: 9.5px; font-family: monospace;">{{ formatTime(n.CreatedAt) }}</span>
-          </div>
-        </button>
+          </button>
+          <button
+            v-if="page < totalPages"
+            class="btn btn-link btn-sm w-100 py-2 text-decoration-none"
+            :disabled="loadingMore"
+            @click.stop="loadMoreNotifications"
+          >
+            {{ loadingMore ? $t('common.SCR0038') : $t('common.SCR0037') }}
+          </button>
+        </template>
       </div>
     </div>
   </div>
@@ -62,15 +71,36 @@ import { useProjectStore } from '../stores/projectStore.js'
 const projectStore = useProjectStore()
 const notifications = ref([])
 const showNotifications = ref(false)
+const page = ref(1)
+const totalPages = ref(1)
+const loadingMore = ref(false)
 const unreadCount = computed(() => notifications.value.filter(n => !n.IsRead).length)
 
 const loadNotifications = async () => {
   if (!projectStore.isAuthenticated) return
   try {
-    const res = await getNotifications()
-    notifications.value = res?.data || []
+    page.value = 1
+    const res = await getNotifications(page.value)
+    notifications.value = res?.data?.Items || []
+    totalPages.value = res?.data?.TotalPages || 1
   } catch (e) {
     console.error('Failed to load notifications:', e)
+  }
+}
+
+const loadMoreNotifications = async () => {
+  if (loadingMore.value || page.value >= totalPages.value) return
+  loadingMore.value = true
+  try {
+    const nextPage = page.value + 1
+    const res = await getNotifications(nextPage)
+    notifications.value.push(...(res?.data?.Items || []))
+    page.value = nextPage
+    totalPages.value = res?.data?.TotalPages || totalPages.value
+  } catch (e) {
+    console.error('Failed to load more notifications:', e)
+  } finally {
+    loadingMore.value = false
   }
 }
 

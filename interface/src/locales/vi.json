@@ -317,7 +317,7 @@
     "SCR0509": "Xóa",
     "SCR0510": "Bạn",
     "SCR0511": "Xóa thành viên?",
-    "SCR0512": "Bạn có chắc chắn muốn xóa <strong>{email}</strong> khỏi dự án?",
+    "SCR0512": "Bạn có chắc chắn muốn xóa {email} khỏi dự án?",
     "SCR0513": "Thêm thành viên thành công!",
     "SCR0514": "Cập nhật vai trò thành công!",
     "SCR0515": "Đã xóa thành viên khỏi dự án!"
@@ -344,7 +344,7 @@
     "SCR0619": "Workspace hiện tại:",
     "SCR0620": "Trạng thái kết nối:",
     "SCR0621": "Xóa dự án?",
-    "SCR0622": "Bạn có chắc chắn muốn xóa dự án <strong>{name}</strong>? Thao tác này sẽ xóa tất cả công việc và thành viên trong dự án và không thể hoàn tác.",
+    "SCR0622": "Bạn có chắc chắn muốn xóa dự án {name}? Thao tác này sẽ xóa tất cả công việc và thành viên trong dự án và không thể hoàn tác.",
     "SCR0624": "Cột Kanban",
     "SCR0625": "Quản lý các giai đoạn công việc trong dự án này",
     "SCR0626": "Thêm cột",
@@ -516,6 +516,21 @@
     "SCR1122": "Không có",
     "SCR1123": "Đóng"
   },
+  "errorCodes": {
+    "B13-01": "Email hoặc mật khẩu không đúng.",
+    "B13-02": "Phiên đăng nhập không hợp lệ hoặc đã hết hạn.",
+    "B13-03": "Bạn không có quyền thực hiện thao tác này.",
+    "B13-04": "Dữ liệu gửi lên không hợp lệ.",
+    "B13-05": "Không tìm thấy dữ liệu yêu cầu.",
+    "B13-06": "Dữ liệu đã thay đổi hoặc bị trùng lặp.",
+    "B13-07": "Mã OTP không hợp lệ hoặc đã hết hạn.",
+    "B14-01": "Dự án không tồn tại.",
+    "B14-02": "Bạn không có quyền truy cập dự án này.",
+    "B15-01": "Công việc không tồn tại.",
+    "B16-01": "Tệp không tồn tại.",
+    "B16-02": "Thư mục không tồn tại.",
+    "B99-01": "Có lỗi hệ thống xảy ra. Vui lòng thử lại sau."
+  },
   "common": {
     "SCR0009": "Đang tải...",
     "SCR0010": "Không có dữ liệu",
@@ -540,6 +555,8 @@
     "SCR0029": "Thành viên",
     "SCR0030": "Không gian làm việc SaaS",
     "SCR0031": "Xác nhận",
+    "SCR0037": "Xem thêm",
+    "SCR0038": "Đang tải...",
     "SCR0032": "Hủy",
     "SCR0033": "Không xác định",
     "SCR0034": "Không có",

@@ -55,6 +55,18 @@ namespace API_v2.Services
 
             await VerifyColumnBelongsToProjectAsync(req.ColumnId, projectId);
 
+            Guid? assigneeId = null;
+            if (!string.IsNullOrWhiteSpace(req.AssigneeId))
+            {
+                if (!Guid.TryParse(req.AssigneeId, out var parsedAssigneeId))
+                {
+                    throw ApiException.BadRequest("Assignee ID is invalid.");
+                }
+
+                await ValidateProjectAssigneesAsync(projectId, new[] { parsedAssigneeId });
+                assigneeId = parsedAssigneeId;
+            }
+
             var task = new TodoTask
             {
                 Title = req.Title.Trim(),
@@ -72,12 +84,12 @@ namespace API_v2.Services
             _taskRepo.Add(task);
             await _taskRepo.SaveAsync();
 
-            if (!string.IsNullOrWhiteSpace(req.AssigneeId) && Guid.TryParse(req.AssigneeId, out Guid parsedUserId))
+            if (assigneeId.HasValue)
             {
                 var assignment = new TaskAssignment
                 {
                     TaskId = task.Id,
-                    UserId = parsedUserId,
+                    UserId = assigneeId.Value,
                     AssignedAt = DateTime.UtcNow
                 };
                 _assignRepo.Add(assignment);
@@ -108,7 +120,7 @@ namespace API_v2.Services
                 var task = await _taskRepo.GetByIdWithDetailsAsync(taskId);
                 if (task is null)
                 {
-                    throw ApiException.NotFound($"Task #{taskId} does not exist.");
+                    throw ApiException.NotFound($"Task #{taskId} does not exist.", ErrorCodes.TaskNotFound);
                 }
 
                 if (task.ProjectId.HasValue)
@@ -133,6 +145,21 @@ namespace API_v2.Services
                 }
 
                 await VerifyColumnBelongsToProjectAsync(req.ColumnId, task.ProjectId);
+
+                if (task.ProjectId.HasValue && req.AssignedUserIds != null)
+                {
+                    var parsedAssigneeIds = new List<Guid>();
+                    foreach (var userId in req.AssignedUserIds.Distinct())
+                    {
+                        if (!Guid.TryParse(userId, out var parsedUserId))
+                        {
+                            throw ApiException.BadRequest($"Assignee ID '{userId}' is invalid.");
+                        }
+                        parsedAssigneeIds.Add(parsedUserId);
+                    }
+
+                    await ValidateProjectAssigneesAsync(task.ProjectId.Value, parsedAssigneeIds);
+                }
 
                 // Compute and record activity changes
                 var changes = new List<FieldChange>();
@@ -589,7 +616,7 @@ namespace API_v2.Services
             var task = await _taskRepo.GetByIdAsync(taskId);
             if (task is null)
             {
-                throw ApiException.NotFound($"Task #{taskId} does not exist.");
+                throw ApiException.NotFound($"Task #{taskId} does not exist.", ErrorCodes.TaskNotFound);
             }
             return task;
         }
@@ -636,6 +663,21 @@ namespace API_v2.Services
                     })
                     .ToList()
             };
+        }
+
+        private async Task ValidateProjectAssigneesAsync(Guid projectId, IEnumerable<Guid> assigneeIds)
+        {
+            var requestedIds = assigneeIds.Distinct().ToHashSet();
+            if (requestedIds.Count == 0) return;
+
+            var projectMemberIds = (await _projectRepo.GetProjectMembersAsync(projectId))
+                .Select(member => member.UserId)
+                .ToHashSet();
+
+            if (requestedIds.Any(id => !projectMemberIds.Contains(id)))
+            {
+                throw ApiException.BadRequest("All assignees must be members of the project.");
+            }
         }
 
         private async Task VerifyOwnerOrManagerAsync(Guid projectId, Guid userId, string errorMessage)

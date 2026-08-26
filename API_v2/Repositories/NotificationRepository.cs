@@ -18,13 +18,20 @@ namespace API_v2.Repositories
             _db = db;
         }
 
-        public async Task<List<Notification>> GetNotificationsByUserIdAsync(Guid userId)
+        public async Task<(List<Notification> Items, int TotalCount)> GetNotificationsByUserIdAsync(Guid userId, int page, int pageSize)
         {
-            return await _db.Notifications
+            var query = _db.Notifications
                 .AsNoTracking()
-                .Where(n => n.UserId == userId)
+                .Where(n => n.UserId == userId);
+
+            var totalCount = await query.CountAsync();
+            var items = await query
                 .OrderByDescending(n => n.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            return (items, totalCount);
         }
 
         public async Task<Notification?> GetNotificationByIdAndUserIdAsync(Guid notificationId, Guid userId)

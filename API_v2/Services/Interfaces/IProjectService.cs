@@ -8,7 +8,7 @@ namespace API_v2.Services.Interfaces
     public interface IProjectService
     {
         Task<ProjectResponse> CreateProjectAsync(CreateProjectRequest req, Guid currentUserId);
-        Task<List<ProjectResponse>> GetProjectsForUserAsync(Guid currentUserId);
+        Task<PagedResponse<ProjectResponse>> GetProjectsForUserAsync(Guid currentUserId, int page, int pageSize);
         Task<ProjectResponse> GetProjectDetailAsync(Guid projectId, Guid currentUserId);
         Task<ProjectResponse> UpdateProjectAsync(Guid projectId, UpdateProjectRequest req, Guid currentUserId);
         Task DeleteProjectAsync(Guid projectId, Guid currentUserId);

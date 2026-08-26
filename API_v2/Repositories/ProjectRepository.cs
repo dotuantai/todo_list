@@ -56,7 +56,7 @@ namespace API_v2.Repositories
             var member = await _dbContext.ProjectMembers
                 .FirstOrDefaultAsync(pm => pm.ProjectId == projectId && pm.UserId == userId);
                 
-            var user = await _dbContext.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _dbContext.Users.AsNoTracking().Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == userId);
             bool isAdmin = user?.Role?.Name == "Admin";
 
             if (isAdmin)
@@ -105,9 +105,9 @@ namespace API_v2.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<ProjectResponse>> GetProjectDashboardsAsync(Guid userId)
+        public async Task<PagedResponse<ProjectResponse>> GetProjectDashboardsAsync(Guid userId, int page, int pageSize)
         {
-            var user = await _dbContext.Users.Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _dbContext.Users.AsNoTracking().Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == userId);
             bool isAdmin = user?.Role?.Name == "Admin";
 
             var query = _dbContext.ProjectMembers.AsNoTracking();
@@ -121,12 +121,18 @@ namespace API_v2.Repositories
             // But Wait, if Admin, what UserRole should they see if they didn't join? Default to empty or Viewer.
             // Since ProjectResponse requires UserRole, if Admin is not a member, we can just say "Admin" or something.
             // A better way is:
-            var projects = await _dbContext.Projects
+            var projectsQuery = _dbContext.Projects
                 .AsNoTracking()
                 .Include(p => p.Owner)
                 .Include(p => p.ProjectMembers)
                 .Include(p => p.Tasks)
-                .Where(p => isAdmin || p.ProjectMembers.Any(pm => pm.UserId == userId))
+                .Where(p => isAdmin || p.ProjectMembers.Any(pm => pm.UserId == userId));
+
+            var totalCount = await projectsQuery.CountAsync();
+            var projects = await projectsQuery
+                .OrderByDescending(p => p.UpdatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(p => new ProjectResponse
                 {
                     Id = p.Id,
@@ -145,7 +151,13 @@ namespace API_v2.Repositories
                 })
                 .ToListAsync();
 
-            return projects;
+            return new PagedResponse<ProjectResponse>
+            {
+                Items = projects,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
         }
     }
 }

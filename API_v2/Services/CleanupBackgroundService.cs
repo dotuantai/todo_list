@@ -33,6 +33,7 @@ namespace API_v2.Services
                     {
                         var tokenRepo = scope.ServiceProvider.GetRequiredService<IRefreshTokenRepository>();
                         var notifRepo = scope.ServiceProvider.GetRequiredService<INotificationRepository>();
+                        var otpRepo = scope.ServiceProvider.GetRequiredService<IOtpRepository>();
                         var cutoff = DateTime.UtcNow.AddMonths(-1);
 
                         // Cleanup old RefreshTokens
@@ -40,6 +41,10 @@ namespace API_v2.Services
 
                         // Cleanup old Notifications
                         await notifRepo.DeleteOldNotificationsAsync(cutoff);
+
+                        // OTP records are short-lived; retain expired challenges for
+                        // at most 24 hours for operational troubleshooting.
+                        await otpRepo.DeleteExpiredOtpsAsync(DateTime.UtcNow.AddHours(-24));
 
                         _logger.LogInformation("Database cleanup completed. Cleaned up records older than 1 month.");
                     }

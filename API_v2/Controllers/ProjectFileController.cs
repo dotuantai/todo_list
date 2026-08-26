@@ -14,10 +14,17 @@ namespace API_v2.Controllers
     public class ProjectFileController : BaseApiController
     {
         private readonly IProjectFileService _fileService;
+        private readonly IProjectFolderService _folderService;
+        private readonly IProjectFileTransferService _transferService;
 
-        public ProjectFileController(IProjectFileService fileService)
+        public ProjectFileController(
+            IProjectFileService fileService,
+            IProjectFolderService folderService,
+            IProjectFileTransferService transferService)
         {
             _fileService = fileService;
+            _folderService = folderService;
+            _transferService = transferService;
         }
 
         // ==================== EXPLORER & FILES ====================
@@ -25,7 +32,7 @@ namespace API_v2.Controllers
         [HttpGet("explorer")]
         public async Task<ActionResult> GetExplorer(Guid projectId, [FromQuery] Guid? folderId = null, [FromQuery] int? taskId = null)
         {
-            var result = await _fileService.GetExplorerAsync(projectId, CurrentUserId, folderId, taskId);
+            var result = await _folderService.GetExplorerAsync(projectId, CurrentUserId, folderId, taskId);
             return Ok(new ApiResponse<ProjectFilesExplorerResponse>(true, "Lấy dữ liệu tệp và thư mục thành công.", result));
         }
 
@@ -58,22 +65,22 @@ namespace API_v2.Controllers
                 return BadRequest(new ApiResponse<object>(false, "Vui lòng chọn tệp mới để cập nhật phiên bản.", null));
             }
 
-            var result = await _fileService.UpdateFileVersionAsync(projectId, fileId, CurrentUserId, file, changeNote);
+            var result = await _transferService.UpdateFileVersionAsync(projectId, fileId, CurrentUserId, file, changeNote);
             return Ok(new ApiResponse<ProjectFileResponse>(true, "Cập nhật phiên bản tệp thành công.", result));
         }
 
         [HttpGet("{fileId:guid}/history")]
         public async Task<ActionResult> GetFileVersions(Guid projectId, Guid fileId)
         {
-            var versions = await _fileService.GetFileVersionsAsync(projectId, fileId, CurrentUserId);
+            var versions = await _transferService.GetFileVersionsAsync(projectId, fileId, CurrentUserId);
             return Ok(new ApiResponse<List<ProjectFileVersionResponse>>(true, "Lấy lịch sử phiên bản tệp thành công.", versions));
         }
 
         [HttpGet("{fileId:guid}/download")]
         public async Task<IActionResult> DownloadFile(Guid projectId, Guid fileId, [FromQuery] Guid? versionId = null)
         {
-            var (stream, mimeType, fileName) = await _fileService.DownloadFileAsync(projectId, fileId, CurrentUserId, versionId);
-            return File(stream, mimeType, fileName);
+            var (stream, mimeType, fileName) = await _transferService.DownloadFileAsync(projectId, fileId, CurrentUserId, versionId);
+            return File(stream, mimeType, fileName, enableRangeProcessing: true);
         }
 
         [HttpPut("{fileId:guid}/rename")]
@@ -93,7 +100,7 @@ namespace API_v2.Controllers
         [HttpPost("batch-download")]
         public async Task<IActionResult> BatchDownload(Guid projectId, [FromBody] BatchDownloadRequestDTO request)
         {
-            var (stream, mimeType, fileName) = await _fileService.DownloadMultipleFilesAsync(projectId, CurrentUserId, request.FileIds, request.FolderIds);
+            var (stream, mimeType, fileName) = await _transferService.DownloadMultipleFilesAsync(projectId, CurrentUserId, request.FileIds, request.FolderIds);
             return File(stream, mimeType, fileName);
         }
 
@@ -109,21 +116,21 @@ namespace API_v2.Controllers
         [HttpPost("folders")]
         public async Task<ActionResult> CreateFolder(Guid projectId, [FromBody] CreateProjectFolderRequest request)
         {
-            var result = await _fileService.CreateFolderAsync(projectId, CurrentUserId, request.Name, request.ParentFolderId);
+            var result = await _folderService.CreateFolderAsync(projectId, CurrentUserId, request.Name, request.ParentFolderId);
             return Ok(new ApiResponse<ProjectFolderResponse>(true, "Tạo thư mục thành công.", result));
         }
 
         [HttpPut("folders/{folderId:guid}/rename")]
         public async Task<ActionResult> RenameFolder(Guid projectId, Guid folderId, [FromBody] RenameProjectFolderRequest request)
         {
-            var result = await _fileService.RenameFolderAsync(projectId, folderId, CurrentUserId, request.Name);
+            var result = await _folderService.RenameFolderAsync(projectId, folderId, CurrentUserId, request.Name);
             return Ok(new ApiResponse<ProjectFolderResponse>(true, "Đổi tên thư mục thành công.", result));
         }
 
         [HttpDelete("folders/{folderId:guid}")]
         public async Task<ActionResult> DeleteFolder(Guid projectId, Guid folderId)
         {
-            await _fileService.DeleteFolderAsync(projectId, folderId, CurrentUserId);
+            await _folderService.DeleteFolderAsync(projectId, folderId, CurrentUserId);
             return Ok(new ApiResponse<object>(true, "Xóa thư mục thành công.", null));
         }
 

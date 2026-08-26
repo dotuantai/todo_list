@@ -8,6 +8,8 @@ using API_v2.Models.DTOs;
 using API_v2.Models.Constants;
 using API_v2.Repositories.IRepositories;
 using API_v2.Services.Interfaces;
+using API_v2.Datas;
+using Microsoft.EntityFrameworkCore;
 
 namespace API_v2.Services
 {
@@ -15,11 +17,19 @@ namespace API_v2.Services
     {
         private readonly IProjectColumnRepository _columnRepo;
         private readonly IProjectRepository _projectRepo;
+        private readonly AppDbContext _db;
+        private readonly INotificationService _notificationService;
 
-        public ProjectColumnService(IProjectColumnRepository columnRepo, IProjectRepository projectRepo)
+        public ProjectColumnService(
+            IProjectColumnRepository columnRepo,
+            IProjectRepository projectRepo,
+            AppDbContext db,
+            INotificationService notificationService)
         {
             _columnRepo = columnRepo;
             _projectRepo = projectRepo;
+            _db = db;
+            _notificationService = notificationService;
         }
 
         public async Task<List<ProjectColumnResponse>> GetColumnsAsync(Guid projectId, Guid userId)
@@ -38,26 +48,44 @@ namespace API_v2.Services
         {
             await VerifyOwnerOrManagerAsync(projectId, currentUserId, "Only Owners or Managers can create columns.");
 
-            var existingColumns = await _columnRepo.GetColumnsByProjectIdAsync(projectId);
-            var columnsToShift = existingColumns.Where(c => c.Order >= req.Order).ToList();
-            foreach (var col in columnsToShift)
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+            try
             {
-                col.Order += 1;
+                await AcquireProjectColumnLockAsync(projectId);
+                var existingColumns = await GetTrackedColumnsForUpdateAsync(projectId);
+                var newOrder = Math.Clamp(req.Order, 0, existingColumns.Count);
+
+                await MoveOrdersToTemporaryRangeAsync(existingColumns);
+
+                var column = new ProjectColumn
+                {
+                    ProjectId = projectId,
+                    Name = req.Name.Trim(),
+                    Order = newOrder,
+                    IsCompletedStage = req.IsCompletedStage,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                existingColumns.Insert(newOrder, column);
+                for (var index = 0; index < existingColumns.Count; index++)
+                {
+                    existingColumns[index].Order = index;
+                }
+
+                _columnRepo.Add(column);
+                await _columnRepo.SaveAsync();
+                await transaction.CommitAsync();
+
+                await _notificationService.SendColumnsReorderedAsync(
+                    projectId,
+                    existingColumns.Select(MapToResponse).ToList());
+                return MapToResponse(column);
             }
-
-            var column = new ProjectColumn
+            catch
             {
-                ProjectId = projectId,
-                Name = req.Name.Trim(),
-                Order = req.Order,
-                IsCompletedStage = req.IsCompletedStage,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _columnRepo.Add(column);
-            await _columnRepo.SaveAsync();
-
-            return MapToResponse(column);
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<ProjectColumnResponse> UpdateColumnAsync(int columnId, UpdateProjectColumnRequest req, Guid currentUserId)
@@ -68,35 +96,42 @@ namespace API_v2.Services
 
             await VerifyOwnerOrManagerAsync(column.ProjectId, currentUserId, "Only Owners or Managers can update columns.");
 
-            var existingColumns = await _columnRepo.GetColumnsByProjectIdAsync(column.ProjectId);
-            
-            int oldOrder = column.Order;
-            int newOrder = req.Order;
-
-            if (oldOrder != newOrder)
+            var projectId = column.ProjectId;
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+            try
             {
-                if (oldOrder < newOrder)
+                // The preliminary authorization read may be tracked; reload the
+                // authoritative ordered set only after taking the project lock.
+                _db.ChangeTracker.Clear();
+                await AcquireProjectColumnLockAsync(projectId);
+                var existingColumns = await GetTrackedColumnsForUpdateAsync(projectId);
+                column = existingColumns.SingleOrDefault(c => c.Id == columnId)
+                    ?? throw ApiException.NotFound("Column not found.");
+
+                var newOrder = Math.Clamp(req.Order, 0, existingColumns.Count - 1);
+                await MoveOrdersToTemporaryRangeAsync(existingColumns);
+
+                existingColumns.Remove(column);
+                existingColumns.Insert(newOrder, column);
+                for (var index = 0; index < existingColumns.Count; index++)
                 {
-                    foreach (var c in existingColumns.Where(x => x.Order > oldOrder && x.Order <= newOrder && x.Id != columnId))
-                    {
-                        c.Order -= 1;
-                    }
+                    existingColumns[index].Order = index;
                 }
-                else
-                {
-                    foreach (var c in existingColumns.Where(x => x.Order >= newOrder && x.Order < oldOrder && x.Id != columnId))
-                    {
-                        c.Order += 1;
-                    }
-                }
+
+                column.Name = req.Name.Trim();
+                column.IsCompletedStage = req.IsCompletedStage;
+                await _columnRepo.SaveAsync();
+                await transaction.CommitAsync();
+
+                var responses = existingColumns.Select(MapToResponse).ToList();
+                await _notificationService.SendColumnsReorderedAsync(projectId, responses);
+                return MapToResponse(column);
             }
-
-            column.Name = req.Name.Trim();
-            column.Order = req.Order;
-            column.IsCompletedStage = req.IsCompletedStage;
-
-            await _columnRepo.SaveAsync();
-            return MapToResponse(column);
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<string> DeleteColumnAsync(int columnId, Guid currentUserId)
@@ -127,6 +162,32 @@ namespace API_v2.Services
                 Order = column.Order,
                 IsCompletedStage = column.IsCompletedStage
             };
+        }
+
+        private async Task AcquireProjectColumnLockAsync(Guid projectId)
+        {
+            // A transaction-scoped PostgreSQL advisory lock also serializes the
+            // first two column creations, when there are no rows to FOR UPDATE.
+            await _db.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT pg_advisory_xact_lock(hashtextextended({projectId.ToString()}, 0))");
+        }
+
+        private async Task<List<ProjectColumn>> GetTrackedColumnsForUpdateAsync(Guid projectId)
+        {
+            return await _db.ProjectColumns
+                .FromSqlInterpolated($"SELECT * FROM \"ProjectColumns\" WHERE \"ProjectId\" = {projectId} FOR UPDATE")
+                .OrderBy(c => c.Order)
+                .ToListAsync();
+        }
+
+        private async Task MoveOrdersToTemporaryRangeAsync(IReadOnlyList<ProjectColumn> columns)
+        {
+            for (var index = 0; index < columns.Count; index++)
+            {
+                columns[index].Order = -(index + 1);
+            }
+
+            await _columnRepo.SaveAsync();
         }
 
         private async Task VerifyOwnerOrManagerAsync(Guid projectId, Guid userId, string errorMessage)

@@ -9,10 +9,12 @@ using API_v2.Datas;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Google.Apis.Auth;
+using API_v2.Models.Enums;
+using API_v2.Models.Constants;
 
 namespace API_v2.Services
 {
@@ -23,7 +25,7 @@ namespace API_v2.Services
         private readonly JwtHelper _jwtHelper;
         private readonly ILogger<AuthService> _logger;
         private readonly IEmailQueue _emailQueue;
-        private readonly IMemoryCache _memoryCache;
+        private readonly IOtpRepository _otpRepo;
         private readonly string _googleClientId;
 
         public AuthService(
@@ -32,7 +34,7 @@ namespace API_v2.Services
             JwtHelper jwtHelper,
             ILogger<AuthService> logger,
             IEmailQueue emailQueue,
-            IMemoryCache memoryCache,
+            IOtpRepository otpRepo,
             IConfiguration configuration)
         {
             _userRepo = userRepo;
@@ -40,8 +42,55 @@ namespace API_v2.Services
             _jwtHelper = jwtHelper;
             _logger = logger;
             _emailQueue = emailQueue;
-            _memoryCache = memoryCache;
+            _otpRepo = otpRepo;
             _googleClientId = configuration["Google:ClientId"] ?? string.Empty;
+        }
+
+        private async Task<string> CreateOtpAsync(string email, OtpType type)
+        {
+            var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+            await _otpRepo.InvalidateActiveOtpsAsync(email, type);
+            _otpRepo.Add(new Otp
+            {
+                Id = Guid.NewGuid(),
+                Email = email,
+                CodeHash = HashOtp(code),
+                Type = type,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(5)
+            });
+            await _otpRepo.SaveAsync();
+            return code;
+        }
+
+        private async Task ValidateAndConsumeOtpAsync(string email, string code, OtpType type)
+        {
+            var otp = await _otpRepo.GetLatestValidOtpAsync(email, type);
+            if (otp == null)
+            {
+                throw ApiException.BadRequest("Invalid or expired OTP code.", ErrorCodes.OtpInvalid);
+            }
+
+            var expectedHash = Convert.FromHexString(otp.CodeHash);
+            var actualHash = Convert.FromHexString(HashOtp(code.Trim()));
+            if (!CryptographicOperations.FixedTimeEquals(expectedHash, actualHash))
+            {
+                otp.AttemptsCount++;
+                if (otp.AttemptsCount >= 5)
+                {
+                    otp.IsUsed = true;
+                }
+                await _otpRepo.SaveAsync();
+                throw ApiException.BadRequest("Invalid or expired OTP code.", ErrorCodes.OtpInvalid);
+            }
+
+            otp.IsUsed = true;
+            await _otpRepo.SaveAsync();
+        }
+
+        private static string HashOtp(string code)
+        {
+            return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(code)));
         }
 
         private bool IsStrongPassword(string password)
@@ -104,12 +153,8 @@ namespace API_v2.Services
                 _userRepo.Create(user);
             }
 
-            // Generate secure OTP
-            var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
-            
-            // Save to memory cache (valid for 5 minutes)
-            _memoryCache.Set($"OTP_{emailLower}", otp, TimeSpan.FromMinutes(5));
             await _userRepo.SaveAsync();
+            var otp = await CreateOtpAsync(emailLower, OtpType.Register);
 
             // Send Email
             var subject = "TutaFlow - Verification Code";
@@ -131,10 +176,7 @@ namespace API_v2.Services
         {
             var emailLower = req.Email.Trim().ToLower();
 
-            if (!_memoryCache.TryGetValue($"OTP_{emailLower}", out string? storedOtp) || storedOtp != req.Otp.Trim())
-            {
-                throw ApiException.BadRequest("Invalid or expired OTP code.");
-            }
+            await ValidateAndConsumeOtpAsync(emailLower, req.Otp, OtpType.Register);
 
             var user = await _userRepo.GetByEmailAsync(emailLower);
             if (user == null)
@@ -143,7 +185,6 @@ namespace API_v2.Services
             }
 
             user.IsActive = true;
-            _memoryCache.Remove($"OTP_{emailLower}");
             await _userRepo.SaveAsync();
 
             _logger.LogInformation("AUDIT [Email Verified] User ID: {UserId}, Email: {Email} has been activated.", user.Id, emailLower);
@@ -164,10 +205,7 @@ namespace API_v2.Services
                 throw ApiException.BadRequest("Account is already active.");
             }
 
-            var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
-
-            // Save to memory cache (valid for 5 minutes)
-            _memoryCache.Set($"OTP_{emailLower}", otp, TimeSpan.FromMinutes(5));
+            var otp = await CreateOtpAsync(emailLower, OtpType.Register);
 
             var subject = "TutaFlow - Verification Code";
             var body = $@"
@@ -192,26 +230,22 @@ namespace API_v2.Services
             if (user is null)
             {
                 _logger.LogWarning("SECURITY AUDIT [Login Failed] User not found: {Email}", emailLower);
-                throw ApiException.Unauthorized("Invalid email or password.");
+                throw ApiException.Unauthorized("Invalid email or password.", ErrorCodes.InvalidCredentials);
             }
 
             if (!user.IsActive)
             {
                 _logger.LogWarning("SECURITY AUDIT [Login Failed] Deactivated account attempt: {Email} (ID: {UserId})", emailLower, user.Id);
-                throw ApiException.Unauthorized("Invalid email or password.");
+                throw ApiException.Unauthorized("Invalid email or password.", ErrorCodes.InvalidCredentials);
             }
 
             if (!PasswordHelper.VerifyPassword(req.Password, user.PasswordHash))
             {
                 _logger.LogWarning("SECURITY AUDIT [Login Failed] Incorrect password: {Email} (ID: {UserId})", emailLower, user.Id);
-                throw ApiException.Unauthorized("Invalid email or password.");
+                throw ApiException.Unauthorized("Invalid email or password.", ErrorCodes.InvalidCredentials);
             }
 
-            var activeTokens = await _refreshTokenRepo.GetActiveTokensByUserIdAsync(user.Id);
-            foreach (var token in activeTokens)
-            {
-                token.RevokedAt = DateTime.UtcNow;
-            }
+            await _refreshTokenRepo.RevokeAllUserTokensAsync(user.Id);
 
             var accessToken = _jwtHelper.GenerateAccessToken(user);
             var refreshToken = _jwtHelper.GenerateRefreshToken();
@@ -264,11 +298,37 @@ namespace API_v2.Services
                 throw ApiException.Forbidden("Account is no longer active.");
             }
 
-            _logger.LogInformation("AUDIT [Refresh Success] Refreshed AccessToken for User ID: {UserId}", user.Id);
+            var revoked = await _refreshTokenRepo.TryRevokeAsync(token.Id, DateTime.UtcNow);
+            if (!revoked)
+            {
+                _logger.LogWarning(
+                    "SECURITY AUDIT [Refresh Failed] Concurrent replay detected for token {TokenId}, User ID: {UserId}.",
+                    token.Id,
+                    token.UserId);
+                throw ApiException.Unauthorized("Refresh token has already been used. Please sign in again.");
+            }
+
+            var newRefreshToken = _jwtHelper.GenerateRefreshToken();
+            _refreshTokenRepo.Add(new RefreshToken
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                Token = newRefreshToken,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddDays(7)
+            });
+            await _refreshTokenRepo.SaveAsync();
+
+            _logger.LogInformation(
+                "AUDIT [Refresh Success] Rotated refresh token {TokenId} for User ID: {UserId}",
+                token.Id,
+                user.Id);
 
             return new LoginResponse
             {
-                AccessToken = _jwtHelper.GenerateAccessToken(user)
+                AccessToken = _jwtHelper.GenerateAccessToken(user),
+                RefreshToken = newRefreshToken,
+                RequiresPasswordChange = user.RequiresPasswordChange
             };
         }
 
@@ -318,6 +378,7 @@ namespace API_v2.Services
             user.PasswordHash = PasswordHelper.HashPassword(req.NewPassword);
             user.RequiresPasswordChange = false;
             await _userRepo.SaveAsync();
+            await _refreshTokenRepo.RevokeAllUserTokensAsync(user.Id);
 
             _logger.LogInformation("AUDIT [Password Changed] User ID: {UserId} successfully changed password.", userId);
         }
@@ -332,10 +393,7 @@ namespace API_v2.Services
                 throw ApiException.NotFound("User not found or account is inactive.");
             }
 
-            var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
-            
-            // Save to memory cache (valid for 5 minutes)
-            _memoryCache.Set($"PWD_RESET_OTP_{emailLower}", otp, TimeSpan.FromMinutes(5));
+            var otp = await CreateOtpAsync(emailLower, OtpType.ForgotPassword);
 
             var subject = "TutaFlow - Password Reset Code";
             var body = $@"
@@ -356,15 +414,12 @@ namespace API_v2.Services
         {
             var emailLower = req.Email.Trim().ToLower();
 
-            if (!_memoryCache.TryGetValue($"PWD_RESET_OTP_{emailLower}", out string? storedOtp) || storedOtp != req.Otp.Trim())
-            {
-                throw ApiException.BadRequest("Invalid or expired OTP code.");
-            }
-
             if (!IsStrongPassword(req.NewPassword))
             {
                 throw ApiException.BadRequest("New password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.");
             }
+
+            await ValidateAndConsumeOtpAsync(emailLower, req.Otp, OtpType.ForgotPassword);
 
             var user = await _userRepo.GetByEmailAsync(emailLower);
             if (user == null || !user.IsActive)
@@ -375,16 +430,9 @@ namespace API_v2.Services
             user.PasswordHash = PasswordHelper.HashPassword(req.NewPassword);
             user.RequiresPasswordChange = false;
             
-            _memoryCache.Remove($"PWD_RESET_OTP_{emailLower}");
             await _userRepo.SaveAsync();
 
-            // Revoke all refresh tokens
-            var activeTokens = await _refreshTokenRepo.GetActiveTokensByUserIdAsync(user.Id);
-            foreach (var token in activeTokens)
-            {
-                token.RevokedAt = DateTime.UtcNow;
-            }
-            await _refreshTokenRepo.SaveAsync();
+            await _refreshTokenRepo.RevokeAllUserTokensAsync(user.Id);
 
             _logger.LogInformation("AUDIT [Password Reset] Password has been reset for User ID: {UserId}, Email: {Email}", user.Id, emailLower);
         }
@@ -429,11 +477,7 @@ namespace API_v2.Services
                 }
             }
 
-            var activeTokens = await _refreshTokenRepo.GetActiveTokensByUserIdAsync(user.Id);
-            foreach (var token in activeTokens)
-            {
-                token.RevokedAt = DateTime.UtcNow;
-            }
+            await _refreshTokenRepo.RevokeAllUserTokensAsync(user.Id);
 
             var accessToken = _jwtHelper.GenerateAccessToken(user);
             var refreshToken = _jwtHelper.GenerateRefreshToken();

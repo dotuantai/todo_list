@@ -44,6 +44,7 @@ namespace API_v2.Repositories
         {
             var lower = keyword.Trim().ToLower();
             return await _db.Users
+                .AsNoTracking()
                 .Where(u => u.IsActive && u.Email.Contains(lower))
                 .OrderBy(u => u.Email)
                 .Take(10)
@@ -55,11 +56,16 @@ namespace API_v2.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<AdminUserResponse>> GetAllUsersAsync()
+        public async Task<PagedResponse<AdminUserResponse>> GetAllUsersAsync(int page, int pageSize)
         {
-            return await _db.Users
-                .Include(u => u.Role)
+            var query = _db.Users
+                .AsNoTracking()
+                .Include(u => u.Role);
+            var totalCount = await query.CountAsync();
+            var items = await query
                 .OrderByDescending(u => u.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(u => new AdminUserResponse
                 {
                     UserId = u.Id,
@@ -71,11 +77,19 @@ namespace API_v2.Repositories
                     CreatedAt = u.CreatedAt
                 })
                 .ToListAsync();
+
+            return new PagedResponse<AdminUserResponse>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
         }
 
         public async Task<Guid?> GetRoleIdByNameAsync(string roleName)
         {
-            var role = await _db.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+            var role = await _db.Roles.AsNoTracking().FirstOrDefaultAsync(r => r.Name == roleName);
             return role?.Id;
         }
 

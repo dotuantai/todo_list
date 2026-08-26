@@ -1,6 +1,7 @@
 import Swal from 'sweetalert2'
 import vi from '../locales/vi.json'
 import en from '../locales/en.json'
+import { localizeErrorCode } from './errorLocalization.js'
 
 const localeMap = { vi, en }
 const commonText = (code) => localeMap[localStorage.getItem('locale') || 'vi']?.common?.[code] || code
@@ -116,11 +117,11 @@ export const toastWarning = (message) =>
 
 /** Show success dialog (with OK button) */
 export const alertSuccess = (title, message = '') =>
-  Base.fire({ icon: 'success', title, html: message || undefined })
+  Base.fire({ icon: 'success', titleText: title, text: message || undefined })
 
 /** Show error dialog (with OK button) */
 export const alertError = (title, message = '') =>
-  Base.fire({ icon: 'error', title, html: message || undefined })
+  Base.fire({ icon: 'error', titleText: title, text: message || undefined })
 
 /**
  * Confirmation dialog (Confirm / Cancel)
@@ -129,8 +130,8 @@ export const alertError = (title, message = '') =>
 export const confirm = async (title, message = '', confirmText = commonText('SCR0031')) => {
   const result = await Base.fire({
     icon:               'warning',
-    title,
-    html:               message || undefined,
+    titleText:           title,
+    text:                message || undefined,
     showCancelButton:   true,
     confirmButtonText:  confirmText,
     cancelButtonText:   commonText('SCR0032'),
@@ -140,6 +141,10 @@ export const confirm = async (title, message = '', confirmText = commonText('SCR
 }
 
 export const extractMessage = (error, fallback = 'An error occurred.') => {
+  const errorCode = error?.errorCode || error?.response?.data?.ErrorCode
+  if (errorCode) {
+    return localizeErrorCode(errorCode, error?.localizedMessage || fallback)
+  }
   let message = ''
   const data = error?.response?.data
   if (data) {
@@ -166,7 +171,6 @@ export const extractMessage = (error, fallback = 'An error occurred.') => {
   if (!message) {
     message = error?.message || fallback
   }
-  // Backend and validation messages are intentionally shown verbatim.
   return message
 }
 

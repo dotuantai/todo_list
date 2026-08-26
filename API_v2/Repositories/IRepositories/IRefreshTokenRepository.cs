@@ -10,6 +10,8 @@ namespace API_v2.Repositories.IRepositories
         Task<RefreshToken?> GetByTokenAsync(string token);
         Task<RefreshToken?> GetActiveTokenByUserIdAsync(Guid userId);
         Task<List<RefreshToken>> GetActiveTokensByUserIdAsync(Guid userId);
+        Task<bool> TryRevokeAsync(Guid tokenId, DateTime revokedAt);
+        Task RevokeAllUserTokensAsync(Guid userId);
         void Add(RefreshToken token);
         Task DeleteExpiredTokensAsync(DateTime cutoff);
         Task SaveAsync();

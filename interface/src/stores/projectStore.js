@@ -8,6 +8,9 @@ export const useProjectStore = defineStore('project', {
     currentProject: null,
     userRole: 'Member',
     loading: false,
+    projectsPage: 1,
+    projectsTotalPages: 1,
+    projectsTotalCount: 0,
     currentUserEmail: localStorage.getItem('userEmail') || null,
     currentUserId: localStorage.getItem('userId') || null,
     token: localStorage.getItem('token') || null,
@@ -97,12 +100,15 @@ export const useProjectStore = defineStore('project', {
       }
     },
 
-    async fetchProjects() {
+    async fetchProjects(page = 1, pageSize = 100) {
       if (!this.isAuthenticated) return
       this.loading = true
       try {
-        const res = await getProjects()
-        this.setProjects(res?.data || [])
+        const res = await getProjects(page, pageSize)
+        this.setProjects(res?.data?.Items || [])
+        this.projectsPage = res?.data?.Page || page
+        this.projectsTotalPages = res?.data?.TotalPages || 1
+        this.projectsTotalCount = res?.data?.TotalCount || 0
       } catch (err) {
         console.error('Failed to fetch projects', err)
       } finally {
@@ -112,6 +118,9 @@ export const useProjectStore = defineStore('project', {
 
     clearStore() {
       this.projects = []
+      this.projectsPage = 1
+      this.projectsTotalPages = 1
+      this.projectsTotalCount = 0
       this.currentProjectId = null
       this.currentProject = null
       this.userRole = 'Member'
@@ -123,6 +132,7 @@ export const useProjectStore = defineStore('project', {
       localStorage.removeItem('userEmail')
       localStorage.removeItem('userId')
       localStorage.removeItem('appRole')
+      localStorage.removeItem('requiresPasswordChange')
       this.appRole = 'Member'
     }
   }

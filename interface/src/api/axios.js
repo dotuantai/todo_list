@@ -1,11 +1,42 @@
 import axios from 'axios'
 import { useProjectStore } from '../stores/projectStore.js'
 import { alertError } from '../utils/swal.js'
+import { localizeErrorCode } from '../utils/errorLocalization.js'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   withCredentials: true
 })
+
+let refreshPromise = null
+
+const navigateByName = async (name) => {
+  const { default: router } = await import('../router/index.js')
+  if (router.currentRoute.value.name !== name) {
+    await router.push({ name })
+  }
+}
+
+const getRefreshedAccessToken = () => {
+  if (!refreshPromise) {
+    refreshPromise = api.post('/auth/refresh')
+      .then(response => {
+        const newToken = response.data?.AccessToken
+        if (!newToken) {
+          throw new Error('No token in refresh response')
+        }
+
+        localStorage.setItem('token', newToken)
+        window.dispatchEvent(new CustomEvent('auth:token-refreshed', { detail: { token: newToken } }))
+        return newToken
+      })
+      .finally(() => {
+        refreshPromise = null
+      })
+  }
+
+  return refreshPromise
+}
 
 api.interceptors.request.use(config => {
 
@@ -33,6 +64,11 @@ api.interceptors.response.use(
     return response
   },
   async error => {
+    const errorCode = error.response?.data?.ErrorCode
+    if (errorCode) {
+      error.errorCode = errorCode
+      error.localizedMessage = localizeErrorCode(errorCode, error.response?.data?.Message)
+    }
     const originalRequest = error.config
 
     if (
@@ -42,26 +78,18 @@ api.interceptors.response.use(
       !originalRequest.url.includes('/auth/login') &&
       !originalRequest.url.includes('/auth/register')
     ) {
-      originalRequest._retry = true
-
       try {
-        const refreshResponse = await api.post('/auth/refresh')
-        
-        const newToken = refreshResponse.data?.AccessToken
-        if (!newToken) {
-          throw new Error('No token in refresh response')
-        }
-        
-        localStorage.setItem('token', newToken)
+        originalRequest._retry = true
+        const newToken = await getRefreshedAccessToken()
+        originalRequest.headers = originalRequest.headers || {}
         originalRequest.headers.Authorization = `Bearer ${newToken}`
 
         return api.request(originalRequest)
 
       } catch (refreshError) {
-        localStorage.removeItem('token')
-        if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-          window.location.href = '/login'
-        }
+        const store = useProjectStore()
+        store.clearStore()
+        await navigateByName('login')
         return Promise.reject(refreshError)
       }
     }
@@ -71,7 +99,7 @@ api.interceptors.response.use(
         const store = useProjectStore()
         store.setCurrentProjectId(null)
         await alertError('Access denied', 'You no longer have access to this project.')
-        window.location.href = '/projects'
+        await navigateByName('projects')
       }
     }
 

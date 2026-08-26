@@ -20,10 +20,12 @@ namespace API_v2.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> Get()
+        public async Task<ActionResult> Get([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            var result = await _notificationService.GetNotificationsAsync(CurrentUserId);
-            return Ok(new ApiResponse<List<NotificationResponse>>(true, "Success", result));
+            page = Math.Max(page, 1);
+            pageSize = Math.Clamp(pageSize, 1, 100);
+            var result = await _notificationService.GetNotificationsAsync(CurrentUserId, page, pageSize);
+            return Ok(new ApiResponse<PagedResponse<NotificationResponse>>(true, "Success", result));
         }
 
         [HttpPut("{id:guid}/read")]

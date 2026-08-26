@@ -4,7 +4,7 @@
       <h3 class="fw-bold mb-0 text-body">{{ $t('admin.SCR0905') }}</h3>
       <div class="d-flex align-items-center gap-3">
         <div class="text-muted small">
-          {{ $t('admin.SCR0932') }} <span class="fw-bold text-primary">{{ users.length }}</span>
+          {{ $t('admin.SCR0932') }} <span class="fw-bold text-primary">{{ totalCount }}</span>
         </div>
         <button class="btn btn-primary btn-sm d-flex align-items-center gap-2 shadow-sm" @click="showCreateModal = true">
           <i class="bi bi-person-plus-fill"></i>
@@ -99,6 +99,15 @@
           </tbody>
         </table>
       </div>
+      <div v-if="totalPages > 1" class="d-flex justify-content-center align-items-center gap-3 py-3 border-top">
+        <button class="btn btn-sm btn-outline-secondary" :disabled="page === 1" @click="fetchUsers(page - 1)">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <span class="small text-muted">{{ page }} / {{ totalPages }}</span>
+        <button class="btn btn-sm btn-outline-secondary" :disabled="page === totalPages" @click="fetchUsers(page + 1)">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -151,6 +160,10 @@ import { getRoleLabel } from '../../utils/i18nLabels.js'
 const { t, locale } = useI18n()
 const users = ref([])
 const loading = ref(false)
+const page = ref(1)
+const pageSize = 20
+const totalCount = ref(0)
+const totalPages = ref(1)
 
 const showCreateModal = ref(false)
 const creatingUser = ref(false)
@@ -164,12 +177,15 @@ onMounted(async () => {
   await fetchUsers()
 })
 
-const fetchUsers = async () => {
+const fetchUsers = async (requestedPage = page.value) => {
   loading.value = true
   try {
-    const res = await getAllUsers()
+    const res = await getAllUsers(requestedPage, pageSize)
     if (res?.data) {
-      users.value = Array.isArray(res.data) ? res.data : (res.data.Data || [])
+      users.value = res.data.Items || []
+      page.value = res.data.Page || requestedPage
+      totalCount.value = res.data.TotalCount || 0
+      totalPages.value = res.data.TotalPages || 1
     }
   } catch (error) {
     console.error('Failed to fetch users:', error)

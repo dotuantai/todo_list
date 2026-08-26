@@ -317,7 +317,7 @@
     "SCR0509": "Remove",
     "SCR0510": "You",
     "SCR0511": "Remove member?",
-    "SCR0512": "Are you sure you want to remove <strong>{email}</strong> from the project?",
+    "SCR0512": "Are you sure you want to remove {email} from the project?",
     "SCR0513": "Member added successfully!",
     "SCR0514": "Member role updated successfully!",
     "SCR0515": "Member removed from project!"
@@ -344,7 +344,7 @@
     "SCR0619": "Active Workspace:",
     "SCR0620": "Connection Status:",
     "SCR0621": "Delete project?",
-    "SCR0622": "Are you sure you want to delete project <strong>{name}</strong>? This will remove all tasks and members from this project and cannot be undone.",
+    "SCR0622": "Are you sure you want to delete project {name}? This will remove all tasks and members from this project and cannot be undone.",
     "SCR0624": "Kanban Columns",
     "SCR0625": "Manage stages for this project",
     "SCR0626": "Add Column",
@@ -516,6 +516,21 @@
     "SCR1122": "None",
     "SCR1123": "Close"
   },
+  "errorCodes": {
+    "B13-01": "Invalid email or password.",
+    "B13-02": "Your session is invalid or has expired.",
+    "B13-03": "You do not have permission to perform this action.",
+    "B13-04": "The submitted data is invalid.",
+    "B13-05": "The requested resource was not found.",
+    "B13-06": "The data has changed or already exists.",
+    "B13-07": "The OTP is invalid or has expired.",
+    "B14-01": "Project not found.",
+    "B14-02": "You do not have access to this project.",
+    "B15-01": "Task not found.",
+    "B16-01": "File not found.",
+    "B16-02": "Folder not found.",
+    "B99-01": "A system error occurred. Please try again later."
+  },
   "common": {
     "SCR0009": "Loading...",
     "SCR0010": "No data",
@@ -540,6 +555,8 @@
     "SCR0029": "Member",
     "SCR0030": "SaaS Workspace",
     "SCR0031": "Confirm",
+    "SCR0037": "Load more",
+    "SCR0038": "Loading...",
     "SCR0032": "Cancel",
     "SCR0033": "Unknown",
     "SCR0034": "None",

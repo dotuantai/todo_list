@@ -17,6 +17,9 @@ using Serilog;
 using API_v2.Hubs;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
+using System.Net;
+using Microsoft.AspNetCore.HttpOverrides;
+using API_v2.Models.Constants;
 
 // Enable Serilog self-logging to standard error to capture internal errors
 Serilog.Debugging.SelfLog.Enable(Console.Error);
@@ -50,7 +53,7 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) =>
 });
 
 // Add services to the container.
-builder.Services.AddControllers()
+builder.Services.AddControllers(options => options.Filters.Add<ApiErrorResponseFilter>())
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = null;
@@ -64,12 +67,36 @@ builder.Services.AddControllers()
                 .SelectMany(v => v.Errors)
                 .Select(e => e.ErrorMessage);
             var errorMessage = string.Join(" | ", errors);
-            var response = new ApiResponse<object>(false, errorMessage, null);
+            var response = new ApiErrorResponse
+            {
+                ErrorCode = ErrorCodes.ValidationFailed,
+                Message = "Request validation failed.",
+                Errors = errors.ToList(),
+                CorrelationId = context.HttpContext.TraceIdentifier
+            };
             return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(response);
         };
     });
 
 builder.Services.AddMemoryCache();
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardLimit = 1;
+    options.RequireHeaderSymmetry = true;
+
+    // ASP.NET Core trusts loopback proxies by default. Additional reverse proxy
+    // addresses must be explicitly configured; never trust arbitrary XFF senders.
+    foreach (var configuredProxy in builder.Configuration.GetSection("ReverseProxy:KnownProxies").Get<string[]>() ?? [])
+    {
+        if (!IPAddress.TryParse(configuredProxy, out var proxyAddress))
+        {
+            throw new InvalidOperationException($"Invalid ReverseProxy:KnownProxies address: {configuredProxy}");
+        }
+        options.KnownProxies.Add(proxyAddress);
+    }
+});
 
 // Configure Rate Limiting
 builder.Services.AddRateLimiter(options =>
@@ -118,6 +145,7 @@ builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<ITaskAssignmentRepository, TaskAssignmentRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IOtpRepository, OtpRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IProjectColumnRepository, ProjectColumnRepository>();
 builder.Services.AddScoped<IProjectFileRepository, ProjectFileRepository>();
@@ -128,6 +156,11 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ITaskCommentService, TaskCommentService>();
+builder.Services.AddScoped<ITaskFeedService, TaskFeedService>();
+builder.Services.AddScoped<ITaskActivityService, TaskActivityService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IProjectFolderService, ProjectFolderService>();
+builder.Services.AddScoped<IProjectFileTransferService, ProjectFileTransferService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IProjectColumnService, ProjectColumnService>();
 builder.Services.AddScoped<IProjectFileService, ProjectFileService>();
@@ -198,9 +231,31 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 Log.Information("========== Application Started ==========");
 // Configure HTTP request pipeline middlewares in the correct order
+app.UseForwardedHeaders();
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>(); 
 app.UseMiddleware<RequestResponseLoggingMiddleware>();
+app.UseStatusCodePages(async statusContext =>
+{
+    var response = statusContext.HttpContext.Response;
+    var errorCode = response.StatusCode switch
+    {
+        StatusCodes.Status400BadRequest => ErrorCodes.ValidationFailed,
+        StatusCodes.Status401Unauthorized => ErrorCodes.Unauthorized,
+        StatusCodes.Status403Forbidden => ErrorCodes.Forbidden,
+        StatusCodes.Status404NotFound => ErrorCodes.ResourceNotFound,
+        StatusCodes.Status409Conflict => ErrorCodes.Conflict,
+        _ => ErrorCodes.InternalServerError
+    };
+    var payload = new ApiErrorResponse
+    {
+        ErrorCode = errorCode,
+        Message = "The request could not be completed.",
+        CorrelationId = statusContext.HttpContext.TraceIdentifier
+    };
+    response.ContentType = "application/json";
+    await response.WriteAsJsonAsync(payload);
+});
 
 if (app.Environment.IsDevelopment())
 {

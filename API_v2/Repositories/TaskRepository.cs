@@ -75,6 +75,7 @@ namespace API_v2.Repositories
         public async Task<TaskStatsResponse> GetTaskStatsByProjectIdAsync(Guid projectId)
         {
             var columns = await _db.ProjectColumns
+                .AsNoTracking()
                 .Where(c => c.ProjectId == projectId)
                 .OrderBy(c => c.Order)
                 .Select(c => new

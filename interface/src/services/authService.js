@@ -46,8 +46,8 @@ export const googleLogin = (idToken) => {
   return api.post('/auth/google-login', { idToken })
 }
 
-export const getAllUsers = () => {
-  return api.get('/user')
+export const getAllUsers = (page = 1, pageSize = 20) => {
+  return api.get('/user', { params: { page, pageSize } })
 }
 
 export const createUser = (data) => {

@@ -77,6 +77,7 @@ namespace API_v2.Repositories
         public async Task<ProjectFile?> GetFileByNameAsync(Guid projectId, Guid? folderId, string fileName)
         {
             return await _dbContext.ProjectFiles
+                .AsNoTracking()
                 .Include(pf => pf.UploadedBy)
                 .Include(pf => pf.UpdatedBy)
                 .Include(pf => pf.Folder)
@@ -224,6 +225,7 @@ namespace API_v2.Repositories
         public async Task<ProjectFileVersion?> GetFileVersionByIdAsync(Guid versionId)
         {
             return await _dbContext.ProjectFileVersions
+                .AsNoTracking()
                 .Include(v => v.UploadedBy)
                 .Include(v => v.ProjectFile)
                 .FirstOrDefaultAsync(v => v.Id == versionId);

@@ -18,6 +18,6 @@ namespace API_v2.Repositories.IRepositories
         void RemoveMember(ProjectMember member);
         Task SaveAsync();
         Task<List<ProjectMember>> GetProjectMembersWithProjectsByUserIdAsync(Guid userId);
-        Task<List<ProjectResponse>> GetProjectDashboardsAsync(Guid userId);
+        Task<PagedResponse<ProjectResponse>> GetProjectDashboardsAsync(Guid userId, int page, int pageSize);
     }
 }
