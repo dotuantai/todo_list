@@ -20,6 +20,10 @@ namespace API_v2.Datas
         public DbSet<TaskComment> TaskComments { get; set; }
         public DbSet<TaskActivity> TaskActivities { get; set; }
         public DbSet<Role> Roles { get; set; }
+        public DbSet<ProjectFile> ProjectFiles { get; set; }
+        public DbSet<ProjectFolder> ProjectFolders { get; set; }
+        public DbSet<ProjectFileVersion> ProjectFileVersions { get; set; }
+        public DbSet<ProjectFileActivity> ProjectFileActivities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -176,6 +180,114 @@ namespace API_v2.Datas
                     RoleId = adminRoleId
                 }
             );
+
+            // ProjectFolder Configuration
+            modelBuilder.Entity<ProjectFolder>()
+                .HasOne(pf => pf.Project)
+                .WithMany(p => p.Folders)
+                .HasForeignKey(pf => pf.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProjectFolder>()
+                .HasOne(pf => pf.ParentFolder)
+                .WithMany(pf => pf.SubFolders)
+                .HasForeignKey(pf => pf.ParentFolderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProjectFolder>()
+                .HasOne(pf => pf.CreatedBy)
+                .WithMany()
+                .HasForeignKey(pf => pf.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProjectFolder>()
+                .HasIndex(pf => pf.ProjectId)
+                .HasDatabaseName("IX_ProjectFolders_ProjectId");
+
+            modelBuilder.Entity<ProjectFolder>()
+                .HasIndex(pf => pf.ParentFolderId)
+                .HasDatabaseName("IX_ProjectFolders_ParentFolderId");
+
+            // ProjectFile Configuration
+            modelBuilder.Entity<ProjectFile>()
+                .HasOne(pf => pf.Project)
+                .WithMany(p => p.Files)
+                .HasForeignKey(pf => pf.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProjectFile>()
+                .HasOne(pf => pf.Folder)
+                .WithMany(f => f.Files)
+                .HasForeignKey(pf => pf.FolderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProjectFile>()
+                .HasOne(pf => pf.Task)
+                .WithMany()
+                .HasForeignKey(pf => pf.TaskId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<ProjectFile>()
+                .HasOne(pf => pf.UploadedBy)
+                .WithMany()
+                .HasForeignKey(pf => pf.UploadedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProjectFile>()
+                .HasOne(pf => pf.UpdatedBy)
+                .WithMany()
+                .HasForeignKey(pf => pf.UpdatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProjectFile>()
+                .HasIndex(pf => pf.ProjectId)
+                .HasDatabaseName("IX_ProjectFiles_ProjectId");
+
+            modelBuilder.Entity<ProjectFile>()
+                .HasIndex(pf => pf.FolderId)
+                .HasDatabaseName("IX_ProjectFiles_FolderId");
+
+            modelBuilder.Entity<ProjectFile>()
+                .HasIndex(pf => pf.TaskId)
+                .HasDatabaseName("IX_ProjectFiles_TaskId");
+
+            modelBuilder.Entity<ProjectFile>()
+                .HasIndex(pf => pf.UploadedById)
+                .HasDatabaseName("IX_ProjectFiles_UploadedById");
+
+            // ProjectFileVersion Configuration
+            modelBuilder.Entity<ProjectFileVersion>()
+                .HasOne(pfv => pfv.ProjectFile)
+                .WithMany(pf => pf.Versions)
+                .HasForeignKey(pfv => pfv.ProjectFileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProjectFileVersion>()
+                .HasOne(pfv => pfv.UploadedBy)
+                .WithMany()
+                .HasForeignKey(pfv => pfv.UploadedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProjectFileVersion>()
+                .HasIndex(pfv => pfv.ProjectFileId)
+                .HasDatabaseName("IX_ProjectFileVersions_ProjectFileId");
+
+            // ProjectFileActivity Configuration
+            modelBuilder.Entity<ProjectFileActivity>()
+                .HasOne(pfa => pfa.Project)
+                .WithMany(p => p.FileActivities)
+                .HasForeignKey(pfa => pfa.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProjectFileActivity>()
+                .HasOne(pfa => pfa.User)
+                .WithMany()
+                .HasForeignKey(pfa => pfa.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ProjectFileActivity>()
+                .HasIndex(pfa => pfa.ProjectId)
+                .HasDatabaseName("IX_ProjectFileActivities_ProjectId");
 
             base.OnModelCreating(modelBuilder);
         }

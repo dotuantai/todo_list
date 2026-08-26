@@ -6,33 +6,33 @@
           <div class="bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
             <i class="bi bi-shield-lock-fill fs-2"></i>
           </div>
-          <h4 class="fw-bold text-body">{{ $t('auth.force_change_title') }}</h4>
-          <p class="text-muted small">{{ $t('auth.force_change_subtitle') }}</p>
+          <h4 class="fw-bold text-body">{{ $t('auth.SCR0709') }}</h4>
+          <p class="text-muted small">{{ $t('auth.SCR0710') }}</p>
         </div>
 
         <form @submit.prevent="handleSubmit">
           <div class="mb-3">
-            <label class="form-label fw-semibold small">{{ $t('auth.temp_password') }} <span class="text-danger">*</span></label>
-            <input type="password" class="form-control" v-model="form.currentPassword" required :placeholder="$t('auth.enter_temp_password')">
+            <label class="form-label fw-semibold small">{{ $t('auth.SCR0711') }} <span class="text-danger">*</span></label>
+            <input type="password" class="form-control" v-model="form.currentPassword" required :placeholder="$t('auth.SCR0712')">
           </div>
 
           <div class="mb-3">
-            <label class="form-label fw-semibold small">{{ $t('auth.new_password') }} <span class="text-danger">*</span></label>
-            <input type="password" class="form-control" v-model="form.newPassword" required :placeholder="$t('auth.enter_new_password')">
+            <label class="form-label fw-semibold small">{{ $t('auth.SCR0713') }} <span class="text-danger">*</span></label>
+            <input type="password" class="form-control" v-model="form.newPassword" required :placeholder="$t('auth.SCR0714')">
             <div class="form-text small mt-2">
-              {{ $t('auth.password_hint') }}
+              {{ $t('auth.SCR0708') }}
             </div>
           </div>
 
           <div class="mb-4">
-            <label class="form-label fw-semibold small">{{ $t('auth.confirm_new_password') }} <span class="text-danger">*</span></label>
-            <input type="password" class="form-control" v-model="form.confirmPassword" required :placeholder="$t('auth.re_enter_new_password')">
+            <label class="form-label fw-semibold small">{{ $t('auth.SCR0715') }} <span class="text-danger">*</span></label>
+            <input type="password" class="form-control" v-model="form.confirmPassword" required :placeholder="$t('auth.SCR0716')">
           </div>
 
           <button type="submit" class="btn btn-primary w-100 fw-bold py-2" :disabled="loading">
             <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
             <span v-if="loading">...</span>
-            <span v-else>{{ $t('auth.change_pwd_continue') }}</span>
+            <span v-else>{{ $t('auth.SCR0717') }}</span>
           </button>
         </form>
       </div>
@@ -61,7 +61,7 @@ const form = reactive({
 
 const handleSubmit = async () => {
   if (form.newPassword !== form.confirmPassword) {
-    toastError(t('errors.default')) // Mật khẩu mới và xác nhận không khớp
+    toastError(t('common.SCR0016'))
     return
   }
 
@@ -74,7 +74,7 @@ const handleSubmit = async () => {
     
     // Xóa cờ requiresPasswordChange khỏi localStorage
     localStorage.removeItem('requiresPasswordChange')
-    toastSuccess(t('changePassword.success'))
+    toastSuccess(t('changePassword.SCR0812'))
     
     // Redirect based on role
     if (store.appRole === 'Admin') {
@@ -83,7 +83,7 @@ const handleSubmit = async () => {
       router.push('/projects')
     }
   } catch (error) {
-    toastError(extractMessage(error, t('errors.default')))
+    toastError(extractMessage(error, t('common.SCR0015')))
   } finally {
     loading.value = false
   }

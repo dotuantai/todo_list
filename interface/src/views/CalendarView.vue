@@ -5,26 +5,26 @@
       <div class="d-flex align-items-center gap-2">
         <button class="btn btn-outline-secondary btn-sm rounded-3 shadow-sm" style="width: 32px; height: 32px;" @click="prevMonth"><i class="bi bi-chevron-left"></i></button>
         <button class="btn btn-outline-secondary btn-sm rounded-3 shadow-sm" style="width: 32px; height: 32px;" @click="nextMonth"><i class="bi bi-chevron-right"></i></button>
-        <h4 class="mb-0 fw-bold mx-2 text-body" style="font-size: 1.25rem;">Tháng {{ currentMonth + 1 }}, {{ currentYear }}</h4>
-        <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm fw-medium" @click="goToToday">Hôm nay</button>
+        <h4 class="mb-0 fw-bold mx-2 text-body" style="font-size: 1.25rem;">{{ $t('calendar.SCR1001', { month: currentMonth + 1, year: currentYear }) }}</h4>
+        <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm fw-medium" @click="goToToday">{{ $t('calendar.SCR1002') }}</button>
       </div>
       <div class="d-flex align-items-center gap-3">
         <div class="d-flex flex-column align-items-end lh-1">
           <span class="text-primary fw-bold" style="font-size: 1.5rem;">{{ filteredTasks.length }}</span>
-          <span class="text-muted" style="font-size: 0.75rem;">nhiệm vụ</span>
+          <span class="text-muted" style="font-size: 0.75rem;">{{ $t('calendar.SCR1003') }}</span>
         </div>
       </div>
     </div>
 
     <!-- Filter bar -->
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-      <span class="badge bg-secondary-subtle text-secondary me-2 py-2 px-3 rounded-pill border"><i class="bi bi-funnel"></i> DỰ ÁN</span>
+      <span class="badge bg-secondary-subtle text-secondary me-2 py-2 px-3 rounded-pill border"><i class="bi bi-funnel"></i> {{ $t('calendar.SCR1004') }}</span>
       
       <span class="badge rounded-pill px-3 py-2 border shadow-sm transition-all" 
             style="cursor: pointer; font-size: 0.8rem;" 
             :class="filterStatus === null ? 'bg-body text-primary border-primary' : 'bg-body text-secondary'" 
             @click="filterStatus = null">
-        Tất cả
+        {{ $t('calendar.SCR1005') }}
       </span>
       <span v-for="col in columns" :key="col.Id" 
             class="badge rounded-pill px-3 py-2 border shadow-sm transition-all"
@@ -44,7 +44,7 @@
           :class="filterMyTasks ? 'text-white border-0' : 'btn-outline-secondary text-secondary bg-body'"
           :style="filterMyTasks ? 'background-color: #1a8e9e; width: 36px; height: 36px;' : 'width: 36px; height: 36px;'"
           @click="filterMyTasks = !filterMyTasks"
-          title="Assign to myself"
+          :title="$t('calendar.SCR1006')"
         >
           <i class="bi bi-person-fill fs-5"></i>
         </button>
@@ -54,7 +54,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="flex-grow-1 d-flex justify-content-center align-items-center">
       <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+        <span class="visually-hidden">{{ $t('calendar.SCR1007') }}</span>
       </div>
     </div>
 
@@ -62,13 +62,13 @@
     <div v-else class="calendar-wrapper flex-grow-1 bg-body rounded-4 shadow-sm border overflow-hidden d-flex flex-column">
       <!-- Weekdays Header -->
       <div class="calendar-header d-flex border-bottom text-center py-3 text-muted fw-bold text-uppercase bg-body-tertiary" style="font-size: 0.8rem; letter-spacing: 1px;">
-        <div class="flex-grow-1" style="flex-basis: 0;">T2</div>
-        <div class="flex-grow-1" style="flex-basis: 0;">T3</div>
-        <div class="flex-grow-1" style="flex-basis: 0;">T4</div>
-        <div class="flex-grow-1" style="flex-basis: 0;">T5</div>
-        <div class="flex-grow-1" style="flex-basis: 0;">T6</div>
-        <div class="flex-grow-1" style="flex-basis: 0;">T7</div>
-        <div class="flex-grow-1 text-danger" style="flex-basis: 0;">CN</div>
+        <div class="flex-grow-1" style="flex-basis: 0;">{{ $t('calendar.SCR1008') }}</div>
+        <div class="flex-grow-1" style="flex-basis: 0;">{{ $t('calendar.SCR1009') }}</div>
+        <div class="flex-grow-1" style="flex-basis: 0;">{{ $t('calendar.SCR1010') }}</div>
+        <div class="flex-grow-1" style="flex-basis: 0;">{{ $t('calendar.SCR1011') }}</div>
+        <div class="flex-grow-1" style="flex-basis: 0;">{{ $t('calendar.SCR1012') }}</div>
+        <div class="flex-grow-1" style="flex-basis: 0;">{{ $t('calendar.SCR1013') }}</div>
+        <div class="flex-grow-1 text-danger" style="flex-basis: 0;">{{ $t('calendar.SCR1014') }}</div>
       </div>
       
       <!-- Days Grid -->
@@ -114,8 +114,10 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useProjectStore } from '../stores/projectStore.js'
 import { getProjectTasks, getProjectColumns } from '../services/projectService.js'
 import Swal from 'sweetalert2'
+import { useI18n } from 'vue-i18n'
 
 const projectStore = useProjectStore()
+const { t, locale } = useI18n()
 const currentDate = ref(new Date())
 const tasks = ref([])
 const columns = ref([])
@@ -247,24 +249,30 @@ const getColumnColor = (colId) => {
   return col.color
 }
 
+const formatPriority = (priority) => ({
+  Low: t('tasks.SCR0224'),
+  Medium: t('tasks.SCR0225'),
+  High: t('tasks.SCR0226')
+})[priority] || priority
+
 const openTaskDetails = (task) => {
   const col = columns.value.find(c => c.Id === task.ColumnId)
   Swal.fire({
     title: task.Title,
     html: `
       <div class="text-start mt-3">
-        <div class="mb-2"><span class="badge" style="background: ${col?.color || 'gray'}">${col?.Name || 'Unknown'}</span>
-        ${task.Priority ? `<span class="badge bg-secondary ms-1">${task.Priority} Priority</span>` : ''}</div>
-        <div class="mt-3 text-muted" style="white-space: pre-wrap; font-size: 0.9rem;">${task.Description || 'No description provided.'}</div>
+        <div class="mb-2"><span class="badge" style="background: ${col?.color || 'gray'}">${col?.Name || t('calendar.SCR1015')}</span>
+        ${task.Priority ? `<span class="badge bg-secondary ms-1">${t('calendar.SCR1016', { priority: formatPriority(task.Priority) })}</span>` : ''}</div>
+        <div class="mt-3 text-muted" style="white-space: pre-wrap; font-size: 0.9rem;">${task.Description || t('calendar.SCR1017')}</div>
         <hr>
         <div class="d-flex justify-content-between small text-muted">
-          <span><strong>Deadline:</strong> ${task.Deadline ? new Date(task.Deadline).toLocaleDateString() : 'None'}</span>
-          <span><strong>Est. Hours:</strong> ${task.EstimatedHours || 0}h</span>
+          <span><strong>${t('calendar.SCR1018')}</strong> ${task.Deadline ? new Date(task.Deadline).toLocaleDateString(locale.value === 'vi' ? 'vi-VN' : 'en-US') : t('calendar.SCR1019')}</span>
+          <span><strong>${t('calendar.SCR1020')}</strong> ${task.EstimatedHours || 0}h</span>
         </div>
       </div>
     `,
     showConfirmButton: true,
-    confirmButtonText: 'Đóng',
+    confirmButtonText: t('calendar.SCR1021'),
     confirmButtonColor: 'var(--bs-primary)',
     width: '500px'
   })

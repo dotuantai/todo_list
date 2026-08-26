@@ -3,7 +3,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
-      <p class="text-muted mt-3">{{ $t('admin.projects_loading') }}</p>
+      <p class="text-muted mt-3">{{ $t('admin.SCR0922') }}</p>
     </div>
 
     <div v-else-if="stats" class="row g-4">
@@ -16,13 +16,13 @@
                 <i class="bi bi-clipboard2-check-fill fs-5"></i>
               </div>
               <div>
-                <h6 class="fw-semibold text-secondary mb-1" style="font-size: 0.85rem;">Tổng nhiệm vụ</h6>
+                <h6 class="fw-semibold text-secondary mb-1" style="font-size: 0.85rem;">{{ $t('admin.SCR0976') }}</h6>
                 <h2 class="fw-bold mb-0 text-dark lh-1" style="font-size: 2rem;">{{ stats.TotalTasks }}</h2>
               </div>
             </div>
             <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center" style="border-color: rgba(2, 132, 199, 0.1) !important;">
-              <span class="text-primary small fw-medium">{{ Math.round((stats.TaskStatusDistribution?.Done / (stats.TotalTasks || 1)) * 100) }}% hoàn thành</span>
-              <router-link to="/admin/projects" class="text-primary small fw-bold text-decoration-none">Xem &rarr;</router-link>
+              <span class="text-primary small fw-medium">{{ $t('admin.SCR0977', { percent: Math.round((stats.TaskStatusDistribution?.Done / (stats.TotalTasks || 1)) * 100) }) }}</span>
+              <router-link to="/admin/projects" class="text-primary small fw-bold text-decoration-none">{{ $t('admin.SCR0978') }}</router-link>
             </div>
           </div>
         </div>
@@ -36,13 +36,13 @@
                 <i class="bi bi-clock-fill fs-5"></i>
               </div>
               <div>
-                <h6 class="fw-semibold text-secondary mb-1" style="font-size: 0.85rem;">Đang thực hiện</h6>
+                <h6 class="fw-semibold text-secondary mb-1" style="font-size: 0.85rem;">{{ $t('admin.SCR0979') }}</h6>
                 <h2 class="fw-bold mb-0 text-dark lh-1" style="font-size: 2rem;">{{ stats.TaskStatusDistribution?.InProgress || 0 }}</h2>
               </div>
             </div>
             <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center" style="border-color: rgba(202, 138, 4, 0.1) !important;">
-              <span class="text-warning small fw-medium" style="color: #CA8A04 !important;"><i class="bi bi-activity"></i> Cần theo dõi</span>
-              <router-link to="/admin/projects" class="text-warning small fw-bold text-decoration-none" style="color: #CA8A04 !important;">Xem &rarr;</router-link>
+              <span class="text-warning small fw-medium" style="color: #CA8A04 !important;"><i class="bi bi-activity"></i> {{ $t('admin.SCR0980') }}</span>
+              <router-link to="/admin/projects" class="text-warning small fw-bold text-decoration-none" style="color: #CA8A04 !important;">{{ $t('admin.SCR0978') }}</router-link>
             </div>
           </div>
         </div>
@@ -56,13 +56,13 @@
                 <i class="bi bi-check-circle-fill fs-5"></i>
               </div>
               <div>
-                <h6 class="fw-semibold text-secondary mb-1" style="font-size: 0.85rem;">Hoàn thành</h6>
+                <h6 class="fw-semibold text-secondary mb-1" style="font-size: 0.85rem;">{{ $t('admin.SCR0981') }}</h6>
                 <h2 class="fw-bold mb-0 text-dark lh-1" style="font-size: 2rem;">{{ stats.TaskStatusDistribution?.Done || 0 }}</h2>
               </div>
             </div>
             <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center" style="border-color: rgba(22, 163, 74, 0.1) !important;">
-              <span class="text-success small fw-medium"><i class="bi bi-check2-all"></i> Đã hoàn tất</span>
-              <router-link to="/admin/projects" class="text-success small fw-bold text-decoration-none">Xem &rarr;</router-link>
+              <span class="text-success small fw-medium"><i class="bi bi-check2-all"></i> {{ $t('admin.SCR0982') }}</span>
+              <router-link to="/admin/projects" class="text-success small fw-bold text-decoration-none">{{ $t('admin.SCR0978') }}</router-link>
             </div>
           </div>
         </div>
@@ -76,13 +76,13 @@
                 <i class="bi bi-exclamation-triangle-fill fs-5"></i>
               </div>
               <div>
-                <h6 class="fw-semibold text-secondary mb-1" style="font-size: 0.85rem;">Quá hạn</h6>
+                <h6 class="fw-semibold text-secondary mb-1" style="font-size: 0.85rem;">{{ $t('admin.SCR0983') }}</h6>
                 <h2 class="fw-bold mb-0 text-dark lh-1" style="font-size: 2rem;">0</h2>
               </div>
             </div>
             <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center" style="border-color: rgba(220, 38, 38, 0.1) !important;">
-              <span class="text-danger small fw-medium"><i class="bi bi-exclamation-circle"></i> Cần đôn đốc ngay</span>
-              <router-link to="/admin/projects" class="text-danger small fw-bold text-decoration-none">Xem &rarr;</router-link>
+              <span class="text-danger small fw-medium"><i class="bi bi-exclamation-circle"></i> {{ $t('admin.SCR0984') }}</span>
+              <router-link to="/admin/projects" class="text-danger small fw-bold text-decoration-none">{{ $t('admin.SCR0978') }}</router-link>
             </div>
           </div>
         </div>
@@ -95,11 +95,11 @@
             <div class="d-flex align-items-center justify-content-between mb-1">
               <div class="d-flex align-items-center gap-2">
                 <i class="bi bi-bar-chart-fill text-primary"></i>
-                <h5 class="fw-bold mb-0 text-dark">{{ $t('admin.dashboard_project_health_chart') }}</h5>
+                <h5 class="fw-bold mb-0 text-dark">{{ $t('admin.SCR0914') }}</h5>
               </div>
-              <small class="text-muted d-none d-md-block"><i class="bi bi-arrows-expand"></i> Trượt ngang để xem thêm</small>
+              <small class="text-muted d-none d-md-block"><i class="bi bi-arrows-expand"></i> {{ $t('admin.SCR0985') }}</small>
             </div>
-            <p class="text-muted small mb-4">{{ $t('admin.dashboard_project_health_desc') }}</p>
+            <p class="text-muted small mb-4">{{ $t('admin.SCR0915') }}</p>
             <div class="chart-scroll-wrapper custom-scrollbar">
               <div class="chart-container" :style="{ position: 'relative', height: '320px', minWidth: chartMinWidth }">
                 <Bar v-if="!loading" :data="healthChartData" :options="healthChartOptions" />
@@ -114,9 +114,9 @@
           <div class="card-body p-4 p-md-5">
             <div class="d-flex align-items-center gap-2 mb-1">
               <i class="bi bi-pie-chart-fill text-success"></i>
-              <h6 class="fw-bold text-dark mb-0">{{ $t('admin.dashboard_tasks_status') }}</h6>
+              <h6 class="fw-bold text-dark mb-0">{{ $t('admin.SCR0916') }}</h6>
             </div>
-            <p class="text-muted small mb-4">Tỷ lệ phân bổ trạng thái hiện tại</p>
+            <p class="text-muted small mb-4">{{ $t('admin.SCR0986') }}</p>
             <div class="chart-container d-flex justify-content-center align-items-center" style="position: relative; height: 320px; width: 100%">
               <Doughnut v-if="!loading" :data="doughnutChartData" :options="doughnutChartOptions" />
             </div>
@@ -162,14 +162,14 @@ ChartJS.register(
   Filler
 )
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const loading = ref(true)
 const stats = ref(null)
 const projectStore = useProjectStore()
 
 const formattedDate = computed(() => {
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
-  return new Intl.DateTimeFormat('vi-VN', options).format(new Date())
+  return new Intl.DateTimeFormat(locale.value === 'vi' ? 'vi-VN' : 'en-US', options).format(new Date())
 })
 
 const chartMinWidth = computed(() => {
@@ -191,7 +191,7 @@ const fetchStats = async () => {
       stats.value = res.data
     }
   } catch (error) {
-    toastError(extractMessage(error, 'Failed to load dashboard data'))
+    toastError(extractMessage(error, t('common.SCR0015')))
   } finally {
     loading.value = false
   }
@@ -207,25 +207,25 @@ const healthChartData = computed(() => {
     labels,
     datasets: [
       {
-        label: t('admin.dashboard_tasks_done'),
+        label: t('admin.SCR0919'),
         backgroundColor: '#22C55E', // Green
         data: stats.value.ProjectHealthList.map(p => p.Done),
         borderRadius: 4
       },
       {
-        label: t('admin.dashboard_tasks_in_progress'),
+        label: t('admin.SCR0918'),
         backgroundColor: '#FACC15', // Yellow
         data: stats.value.ProjectHealthList.map(p => p.InProgress),
         borderRadius: 4
       },
       {
-        label: t('admin.dashboard_tasks_todo'),
+        label: t('admin.SCR0917'),
         backgroundColor: '#94A3B8', // Slate (Grey)
         data: stats.value.ProjectHealthList.map(p => p.ToDo),
         borderRadius: 4
       },
       {
-        label: 'Quá hạn (Overdue)',
+        label: t('admin.SCR0983'),
         backgroundColor: '#EF4444', // Red
         data: stats.value.ProjectHealthList.map(p => p.Overdue),
         borderRadius: 4
@@ -250,11 +250,8 @@ const healthChartOptions = {
       position: 'top',
       labels: {
         usePointStyle: true,
-        boxWidth: 8,
-        font: {
-          family: "'Nunito Sans', sans-serif",
-          size: 12
-        }
+        padding: 15,
+        font: { family: "'Nunito Sans', sans-serif", size: 12 }
       }
     },
     tooltip: {
@@ -264,41 +261,30 @@ const healthChartOptions = {
       borderColor: '#E2E8F0',
       borderWidth: 1,
       padding: 12,
-      boxPadding: 6,
       usePointStyle: true,
-      titleFont: { family: "'Nunito Sans', sans-serif", size: 13, weight: 'bold' },
-      bodyFont: { family: "'Nunito Sans', sans-serif", size: 13 }
+      boxPadding: 6,
+      titleFont: { weight: 'bold', size: 13 },
+      bodyFont: { size: 12 }
     }
   },
   scales: {
+    x: {
+      grid: { display: false },
+      ticks: {
+        font: { family: "'Nunito Sans', sans-serif", size: 11 },
+        maxRotation: 45,
+        minRotation: 0,
+        autoSkip: false
+      }
+    },
     y: {
       beginAtZero: true,
-      grid: {
-        color: '#F1F5F9',
-        drawBorder: false
-      },
+      grid: { color: '#F1F5F9', borderDash: [5, 5] },
       ticks: {
         precision: 0,
-        font: { family: "'Nunito Sans', sans-serif", size: 11 },
-        color: '#94A3B8'
-      },
-      stacked: true
-    },
-    x: {
-      grid: {
-        display: false,
-        drawBorder: false
-      },
-      ticks: {
-        font: { family: "'Nunito Sans', sans-serif", size: 11 },
-        color: '#64748B'
-      },
-      stacked: true
+        font: { family: "'Nunito Sans', sans-serif", size: 11 }
+      }
     }
-  },
-  interaction: {
-    mode: 'index',
-    intersect: false,
   }
 }
 
@@ -307,13 +293,13 @@ const doughnutChartData = computed(() => {
   
   return {
     labels: [
-      t('admin.dashboard_tasks_todo'), 
-      t('admin.dashboard_tasks_in_progress'), 
-      t('admin.dashboard_tasks_done')
+      t('admin.SCR0917'),
+      t('admin.SCR0918'),
+      t('admin.SCR0919')
     ],
     datasets: [
       {
-        label: t('admin.dashboard_total_tasks'),
+        label: t('admin.SCR0913'),
         backgroundColor: ['#94A3B8', '#3B82F6', '#22C55E'],
         borderWidth: 0,
         hoverOffset: 4,
@@ -348,8 +334,9 @@ const doughnutChartOptions = {
       borderWidth: 1,
       padding: 12,
       usePointStyle: true,
-      titleFont: { family: "'Nunito Sans', sans-serif", size: 13, weight: 'bold' },
-      bodyFont: { family: "'Nunito Sans', sans-serif", size: 13 }
+      boxPadding: 6,
+      titleFont: { weight: 'bold', size: 13 },
+      bodyFont: { size: 12 }
     }
   }
 }
@@ -357,41 +344,21 @@ const doughnutChartOptions = {
 
 <style scoped>
 .dashboard-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .dashboard-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-}
-.icon-box {
-  width: 48px;
-  height: 48px;
-  font-size: 20px;
-}
-.card-decoration {
-  position: absolute;
-  top: -20px;
-  right: -20px;
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  z-index: 0;
-  transition: transform 0.3s ease;
-}
-.dashboard-card:hover .card-decoration {
-  transform: scale(1.1);
+  box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.05) !important;
 }
 
 .chart-scroll-wrapper {
-  width: 100%;
   overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 10px;
+  padding-bottom: 8px;
 }
 
-/* Custom Scrollbar for a modern look */
 .custom-scrollbar::-webkit-scrollbar {
-  height: 8px;
+  height: 6px;
+  width: 6px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
   background: #F1F5F9;

@@ -6,8 +6,8 @@
     <div class="card border-0 shadow-sm p-4 rounded-3 bg-body">
       <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div class="text-start">
-          <h4 class="fw-bold mb-1 text-body h5">{{ $t('members.title') }}</h4>
-          <p class="text-muted small mb-0">{{ $t('members.subtitle') }}</p>
+          <h4 class="fw-bold mb-1 text-body h5">{{ $t('members.SCR0501') }}</h4>
+          <p class="text-muted small mb-0">{{ $t('members.SCR0502') }}</p>
         </div>
         
         <!-- Add member form (only visible to Owner) -->
@@ -16,7 +16,7 @@
             v-model="memberEmail" 
             type="email" 
             class="form-control rounded-2" 
-            :placeholder="$t('members.add_member_email')"
+            :placeholder="$t('members.SCR0503')"
             style="width: 250px;"
           />
           <select 
@@ -24,16 +24,16 @@
             class="form-select rounded-2" 
             style="width: 120px;"
           >
-            <option value="Owner">Owner</option>
-            <option value="Manager">Manager</option>
-            <option value="Member">Member</option>
+            <option value="Owner">{{ $t('common.SCR0027') }}</option>
+            <option value="Manager">{{ $t('common.SCR0028') }}</option>
+            <option value="Member">{{ $t('common.SCR0029') }}</option>
           </select>
           <button 
             class="btn btn-primary fw-semibold rounded-2 d-flex align-items-center justify-content-center px-3" 
             @click="addProjectMember"
             :disabled="!memberEmail"
           >
-            {{ $t('members.add_btn') }}
+            {{ $t('members.SCR0504') }}
           </button>
         </div>
       </div>
@@ -48,10 +48,10 @@
         <table class="table table-hover align-middle border-0 mb-0">
           <thead class="table-light">
             <tr>
-              <th scope="col" class="border-0 rounded-start text-start px-3 py-3">{{ $t('members.member_col') }}</th>
-              <th scope="col" class="border-0 text-start px-3 py-3">{{ $t('members.role_col') }}</th>
-              <th scope="col" class="border-0 text-start px-3 py-3">{{ $t('members.joined_col') }}</th>
-              <th scope="col" class="border-0 rounded-end text-end px-3 py-3" style="width: 120px;" v-if="projectStore.userRole === 'Owner'">{{ $t('members.actions_col') }}</th>
+              <th scope="col" class="border-0 rounded-start text-start px-3 py-3">{{ $t('members.SCR0505') }}</th>
+              <th scope="col" class="border-0 text-start px-3 py-3">{{ $t('members.SCR0506') }}</th>
+              <th scope="col" class="border-0 text-start px-3 py-3">{{ $t('members.SCR0507') }}</th>
+              <th scope="col" class="border-0 rounded-end text-end px-3 py-3" style="width: 120px;" v-if="projectStore.userRole === 'Owner'">{{ $t('members.SCR0508') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -69,7 +69,7 @@
                   <div class="text-start">
                     <div class="fw-semibold text-body">
                       {{ user.Email }}
-                      <span v-if="user.Email?.toLowerCase() === projectStore.currentUserEmail?.toLowerCase()" class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-0.5 ms-1.5" style="font-size:0.65rem; text-transform: none; font-weight: 600;">{{ $t('members.you_badge') }}</span>
+                      <span v-if="user.Email?.toLowerCase() === projectStore.currentUserEmail?.toLowerCase()" class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2 py-0.5 ms-1.5" style="font-size:0.65rem; text-transform: none; font-weight: 600;">{{ $t('members.SCR0510') }}</span>
                     </div>
                     <div class="text-muted font-monospace" style="font-size:10px;">ID: {{ user.UserId }}</div>
                   </div>
@@ -83,12 +83,12 @@
                   class="form-select form-select-sm rounded-2"
                   style="width: 110px;"
                 >
-                  <option value="Owner">Owner</option>
-                  <option value="Manager">Manager</option>
-                  <option value="Member">Member</option>
+                  <option value="Owner">{{ $t('common.SCR0027') }}</option>
+                  <option value="Manager">{{ $t('common.SCR0028') }}</option>
+                  <option value="Member">{{ $t('common.SCR0029') }}</option>
                 </select>
                 <span v-else class="badge text-uppercase font-monospace" :class="getRoleBadgeClass(user.Role)" style="font-size: 10px; padding: 4px 8px;">
-                  {{ user.Role }}
+                  {{ getRoleLabel(t, user.Role) }}
                 </span>
               </td>
               <td class="text-muted small text-start p-3">
@@ -100,7 +100,7 @@
                   class="btn btn-sm btn-outline-danger rounded-2 px-2 py-1" 
                   @click="removeProjectMember(user)"
                 >
-                  {{ $t('members.remove_btn') }}
+                  {{ $t('members.SCR0509') }}
                 </button>
               </td>
             </tr>
@@ -115,6 +115,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { getRoleLabel } from '../utils/i18nLabels.js'
 import { getMembers, addMember, updateMemberRole, removeMember } from '../services/projectService.js'
 import { useProjectStore } from '../stores/projectStore.js'
 import { toastSuccess, toastError, confirm, extractMessage } from '../utils/swal.js'
@@ -146,12 +147,12 @@ const addProjectMember = async () => {
   if (!memberEmail.value || !memberEmail.value.trim() || !projectId.value) return
   try {
     await addMember(projectId.value, memberEmail.value.trim(), memberRole.value)
-    toastSuccess('Member added successfully!')
+    toastSuccess(t('members.SCR0513'))
     memberEmail.value = ''
     await loadMembers()
     window.dispatchEvent(new CustomEvent('project-members-changed'))
   } catch (err) {
-    toastError(extractMessage(err, t('errors.default')))
+    toastError(extractMessage(err, t('common.SCR0015')))
   }
 }
 
@@ -159,28 +160,28 @@ const changeMemberRole = async (user, newRole) => {
   if (!projectId.value) return
   try {
     await updateMemberRole(projectId.value, user.UserId, newRole)
-    toastSuccess('Member role updated successfully!')
+    toastSuccess(t('members.SCR0514'))
     await loadMembers()
   } catch (err) {
-    toastError(extractMessage(err, t('errors.default')))
+    toastError(extractMessage(err, t('common.SCR0015')))
   }
 }
 
 const removeProjectMember = async (user) => {
   if (!projectId.value) return
   const ok = await confirm(
-    t('members.remove_confirm_title'),
-    t('members.remove_confirm_desc', { email: user.Email }),
-    t('members.remove_confirm_btn')
+    t('members.SCR0511'),
+    t('members.SCR0512', { email: user.Email }),
+    t('members.SCR0509')
   )
   if (!ok) return
   try {
     await removeMember(projectId.value, user.UserId)
-    toastSuccess('Member removed from project!')
+    toastSuccess(t('members.SCR0515'))
     await loadMembers()
     window.dispatchEvent(new CustomEvent('project-members-changed'))
   } catch (err) {
-    toastError(extractMessage(err, t('errors.default')))
+    toastError(extractMessage(err, t('common.SCR0015')))
   }
 }
 

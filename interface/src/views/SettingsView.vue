@@ -11,8 +11,8 @@
               <i class="bi bi-sliders fs-5"></i>
             </div>
             <div>
-              <h4 class="fw-bold text-body h5 mb-0">{{ $t('settings.title') }}</h4>
-              <p class="text-muted small mb-0">{{ $t('settings.desc_subtitle') }}</p>
+              <h4 class="fw-bold text-body h5 mb-0">{{ $t('settings.SCR0601') }}</h4>
+              <p class="text-muted small mb-0">{{ $t('settings.SCR0602') }}</p>
             </div>
           </div>
           
@@ -20,20 +20,20 @@
 
           <form @submit.prevent="handleUpdateProject">
             <div class="mb-3">
-              <label class="form-label small fw-semibold text-muted">{{ $t('settings.proj_name') }}</label>
+              <label class="form-label small fw-semibold text-muted">{{ $t('settings.SCR0603') }}</label>
               <input v-model="editForm.name" type="text" class="form-control" required style="border-radius: 8px; height: 40px;" />
             </div>
             <div class="mb-3">
-              <label class="form-label small fw-semibold text-muted">{{ $t('settings.proj_desc') }}</label>
+              <label class="form-label small fw-semibold text-muted">{{ $t('settings.SCR0604') }}</label>
               <textarea v-model="editForm.description" class="form-control" rows="3" style="border-radius: 8px;"></textarea>
             </div>
             <div class="d-flex align-items-center justify-content-between pt-2">
               <button type="submit" class="btn btn-primary fw-semibold" style="border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;">
-                {{ $t('settings.save_changes') }}
+                {{ $t('settings.SCR0605') }}
               </button>
               
               <button type="button" class="btn btn-outline-danger fw-semibold" @click="handleDeleteProject" style="border-radius: 8px;">
-                <i class="bi bi-trash me-1"></i> {{ $t('settings.delete_proj') }}
+                <i class="bi bi-trash me-1"></i> {{ $t('settings.SCR0606') }}
               </button>
             </div>
           </form>
@@ -47,12 +47,12 @@
                 <i class="bi bi-layout-three-columns fs-5"></i>
               </div>
               <div>
-                <h4 class="fw-bold text-body h5 mb-0">{{ $t('settings.columns_title') }}</h4>
-                <p class="text-muted small mb-0">{{ $t('settings.columns_desc') }}</p>
+                <h4 class="fw-bold text-body h5 mb-0">{{ $t('settings.SCR0624') }}</h4>
+                <p class="text-muted small mb-0">{{ $t('settings.SCR0625') }}</p>
               </div>
             </div>
             <button type="button" class="btn btn-sm btn-primary fw-semibold" style="border-radius: 8px;" @click="openColModal()">
-              <i class="bi bi-plus-lg me-1"></i> {{ $t('settings.add_column') }}
+              <i class="bi bi-plus-lg me-1"></i> {{ $t('settings.SCR0626') }}
             </button>
           </div>
           
@@ -65,7 +65,7 @@
             <div v-for="col in columns" :key="col.Id" class="list-group-item d-flex justify-content-between align-items-center border-0 border-bottom px-0 py-3">
               <div>
                 <h6 class="mb-1 fw-bold text-body">{{ col.Name }}</h6>
-                <small class="text-muted">{{ $t('settings.order') }}: {{ col.Order }} <span v-if="col.IsCompletedStage" class="badge bg-success-subtle text-success ms-2">{{ $t('settings.completed_stage') }}</span></small>
+                <small class="text-muted">{{ $t('settings.SCR0627') }}: {{ col.Order }} <span v-if="col.IsCompletedStage" class="badge bg-success-subtle text-success ms-2">{{ $t('settings.SCR0628') }}</span></small>
               </div>
               <div class="btn-group gap-2">
                 <button class="btn btn-sm btn-light border" style="border-radius: 6px;" @click="openColModal(col)">
@@ -86,8 +86,8 @@
               <i class="bi bi-palette-fill fs-5"></i>
             </div>
             <div>
-              <h4 class="fw-bold text-body h5 mb-0">{{ $t('settings.app_theme') }}</h4>
-              <p class="text-muted small mb-0">{{ $t('settings.theme_subtitle') }}</p>
+              <h4 class="fw-bold text-body h5 mb-0">{{ $t('settings.SCR0607') }}</h4>
+              <p class="text-muted small mb-0">{{ $t('settings.SCR0608') }}</p>
             </div>
           </div>
           
@@ -95,8 +95,8 @@
 
           <div class="d-flex align-items-center justify-content-between py-2">
             <div>
-              <div class="fw-semibold text-body">{{ $t('settings.dark_mode') }}</div>
-              <p class="text-muted small mb-0">{{ $t('settings.dark_mode_desc') }}</p>
+              <div class="fw-semibold text-body">{{ $t('settings.SCR0609') }}</div>
+              <p class="text-muted small mb-0">{{ $t('settings.SCR0610') }}</p>
             </div>
             <div class="form-check form-switch fs-4">
               <input 
@@ -121,23 +121,23 @@
           </div>
           <h4 class="fw-bold text-body mb-1 text-truncate" :title="userEmail">{{ userEmail }}</h4>
           <span class="badge text-uppercase font-monospace bg-light text-secondary border rounded-pill px-3 py-1.5" style="font-size: 10px;">
-            {{ $t('dashboard.member_role', { role: projectStore.userRole }) }}
+            {{ $t('dashboard.SCR0116', { role: getRoleLabel(t, projectStore.userRole) }) }}
           </span>
 
           <hr class="my-4" />
 
           <div class="text-start">
             <div class="mb-3">
-              <span class="text-secondary small d-block">{{ $t('settings.account_name') }}</span>
+              <span class="text-secondary small d-block">{{ $t('settings.SCR0618') }}</span>
               <span class="text-body fw-medium">{{ userEmail.split('@')[0] }}</span>
             </div>
             <div class="mb-3">
-              <span class="text-secondary small d-block">{{ $t('settings.active_workspace') }}</span>
-              <span class="text-body fw-medium">{{ projectStore.currentProject?.Name || 'None' }}</span>
+              <span class="text-secondary small d-block">{{ $t('settings.SCR0619') }}</span>
+              <span class="text-body fw-medium">{{ projectStore.currentProject?.Name || $t('common.SCR0034') }}</span>
             </div>
             <div>
-              <span class="text-secondary small d-block">{{ $t('settings.connection_status') }}</span>
-              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">{{ $t('common.active') }}</span>
+              <span class="text-secondary small d-block">{{ $t('settings.SCR0620') }}</span>
+              <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">{{ $t('common.SCR0013') }}</span>
             </div>
           </div>
         </div>
@@ -151,29 +151,29 @@
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header border-bottom p-4">
-              <h5 class="modal-title fw-bold text-body">{{ colModal.isEdit ? $t('settings.edit_column') : $t('settings.add_column') }}</h5>
-              <button type="button" class="btn-close" @click="closeColModal" aria-label="Close"></button>
+              <h5 class="modal-title fw-bold text-body">{{ colModal.isEdit ? $t('settings.SCR0629') : $t('settings.SCR0626') }}</h5>
+              <button type="button" class="btn-close" @click="closeColModal" :aria-label="$t('common.SCR0023')"></button>
             </div>
             <div class="modal-body p-4">
               <form @submit.prevent="saveColumn">
                 <div class="mb-3">
-                  <label class="form-label small fw-semibold text-muted">{{ $t('settings.col_name') }}</label>
+                  <label class="form-label small fw-semibold text-muted">{{ $t('settings.SCR0630') }}</label>
                   <input v-model="colForm.Name" type="text" class="form-control" required style="border-radius: 8px;" />
                 </div>
                 <div class="mb-3">
-                  <label class="form-label small fw-semibold text-muted">{{ $t('settings.col_order') }}</label>
+                  <label class="form-label small fw-semibold text-muted">{{ $t('settings.SCR0631') }}</label>
                   <input v-model.number="colForm.Order" type="number" min="0" class="form-control" required style="border-radius: 8px;" />
                 </div>
                 <div class="mb-3 form-check">
                   <input v-model="colForm.IsCompletedStage" type="checkbox" class="form-check-input" id="isCompletedStage" />
-                  <label class="form-check-label small fw-semibold text-muted" for="isCompletedStage">{{ $t('settings.is_completed_stage') }}</label>
-                  <div class="form-text small">{{ $t('settings.completed_stage_desc') }}</div>
+                  <label class="form-check-label small fw-semibold text-muted" for="isCompletedStage">{{ $t('settings.SCR0632') }}</label>
+                  <div class="form-text small">{{ $t('settings.SCR0633') }}</div>
                 </div>
                 <div class="d-flex justify-content-end gap-2 mt-4 pt-2">
-                  <button type="button" class="btn btn-outline-secondary" @click="closeColModal" style="border-radius: 8px;">{{ $t('settings.cancel') }}</button>
+                  <button type="button" class="btn btn-outline-secondary" @click="closeColModal" style="border-radius: 8px;">{{ $t('settings.SCR0635') }}</button>
                   <button type="submit" class="btn btn-primary" :disabled="colSaving" style="border-radius: 8px;">
                     <span v-if="colSaving" class="spinner-border spinner-border-sm me-1" role="status"></span>
-                    {{ $t('settings.save') }}
+                    {{ $t('settings.SCR0634') }}
                   </button>
                 </div>
               </form>
@@ -189,6 +189,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { getRoleLabel } from '../utils/i18nLabels.js'
 import { useProjectStore } from '../stores/projectStore.js'
 import { updateProject, deleteProject, getProjectColumns, createProjectColumn, updateProjectColumn, deleteProjectColumn } from '../services/projectService.js'
 import { toastSuccess, toastError, confirm, extractMessage } from '../utils/swal.js'
@@ -256,29 +257,29 @@ const saveColumn = async () => {
   try {
     if (colModal.value.isEdit) {
       await updateProjectColumn(projectStore.currentProjectId, colModal.value.colId, colForm.value)
-      toastSuccess(t('settings.col_updated'))
+      toastSuccess(t('settings.SCR0636'))
     } else {
       await createProjectColumn(projectStore.currentProjectId, colForm.value)
-      toastSuccess(t('settings.col_added'))
+      toastSuccess(t('settings.SCR0637'))
     }
     closeColModal()
     await loadColumns()
   } catch(e) {
-    toastError(extractMessage(e, t('errors.default')))
+    toastError(extractMessage(e, t('common.SCR0015')))
   } finally {
     colSaving.value = false
   }
 }
 
 const handleDeleteColumn = async (colId) => {
-  const ok = await confirm(t('settings.del_col_title'), t('settings.del_col_desc'), t('settings.del_col_btn'))
+  const ok = await confirm(t('settings.SCR0639'), t('settings.SCR0640'), t('settings.SCR0641'))
   if (!ok) return
   try {
     await deleteProjectColumn(projectStore.currentProjectId, colId)
-    toastSuccess(t('settings.col_deleted'))
+    toastSuccess(t('settings.SCR0638'))
     await loadColumns()
   } catch(e) {
-    toastError(extractMessage(e, t('errors.default')))
+    toastError(extractMessage(e, t('common.SCR0015')))
   }
 }
 
@@ -287,7 +288,7 @@ const handleThemeToggle = () => {
   document.documentElement.setAttribute('data-bs-theme', theme)
   localStorage.setItem('theme', theme)
   window.dispatchEvent(new CustomEvent('theme-changed', { detail: theme }))
-  toastSuccess(`Switched to ${isDarkMode.value ? 'Dark' : 'Light'} mode!`)
+  toastSuccess(t('settings.SCR0642', { mode: t(isDarkMode.value ? 'settings.SCR0643' : 'settings.SCR0644') }))
 }
 
 const handleUpdateProject = async () => {
@@ -299,10 +300,10 @@ const handleUpdateProject = async () => {
       description: editForm.value.description.trim()
     }
     await updateProject(projectStore.currentProjectId, payload)
-    toastSuccess('Project updated successfully!')
+    toastSuccess(t('settings.SCR0645'))
     await projectStore.fetchProjects()
   } catch (err) {
-    toastError(extractMessage(err, t('errors.default')))
+    toastError(extractMessage(err, t('common.SCR0015')))
   }
 }
 
@@ -311,21 +312,21 @@ const handleDeleteProject = async () => {
   const currentProj = projectStore.currentProject
 
   const ok = await confirm(
-    t('settings.delete_confirm_title'),
-    t('settings.delete_confirm_desc', { name: currentProj.Name }),
-    t('settings.delete_confirm_btn')
+    t('settings.SCR0621'),
+    t('settings.SCR0622', { name: currentProj.Name }),
+    t('settings.SCR0606')
   )
   if (!ok) return
 
   try {
     await deleteProject(currentProj.Id)
-    toastSuccess('Project deleted successfully!')
+    toastSuccess(t('settings.SCR0646'))
     projectStore.setCurrentProjectId(null)
     await projectStore.fetchProjects()
     router.push('/projects')
   } catch (err) {
     console.error(err)
-    toastError(extractMessage(err, t('errors.default')))
+    toastError(extractMessage(err, t('common.SCR0015')))
   }
 }
 

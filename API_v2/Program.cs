@@ -120,14 +120,17 @@ builder.Services.AddScoped<ITaskAssignmentRepository, TaskAssignmentRepository>(
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IProjectColumnRepository, ProjectColumnRepository>();
+builder.Services.AddScoped<IProjectFileRepository, ProjectFileRepository>();
 
 // Register Services
+builder.Services.AddSingleton<IGoogleDriveService, GoogleDriveService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ITaskCommentService, TaskCommentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IProjectColumnService, ProjectColumnService>();
+builder.Services.AddScoped<IProjectFileService, ProjectFileService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddHttpClient<IEmailService, EmailService>()
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });

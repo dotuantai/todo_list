@@ -14,18 +14,18 @@
         </div>
         <div class="text-start min-w-0">
           <h1 class="mb-0 fs-6 fw-bold text-body lh-1 text-truncate" style="max-width: 140px;" id="sidebarMenuLabel">
-            {{ projectStore.currentProject?.Name || 'Project' }}
+            {{ projectStore.currentProject?.Name || $t('common.SCR0035') }}
           </h1>
-          <p class="small text-muted mb-0 mt-1" style="font-size: 10px;">{{ $t('sidebar.switch_workspace') }}</p>
+          <p class="small text-muted mb-0 mt-1" style="font-size: 10px;">{{ $t('sidebar.SCR0008') }}</p>
         </div>
       </router-link>
       <!-- Close button visible only on mobile/tablet -->
-      <button type="button" class="btn-close d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu" aria-label="Close"></button>
+      <button type="button" class="btn-close d-lg-none" data-bs-dismiss="offcanvas" data-bs-target="#sidebarMenu" :aria-label="$t('sidebar.SCR0012')"></button>
     </div>
 
     <div class="px-3 py-3" v-if="projectStore.currentProjectId && projectStore.userRole !== 'Member'">
       <button class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2 shadow-sm" style="border-radius: 10px; background: linear-gradient(135deg, #059669, #10b981); border: none;" @click="$emit('create-task'); closeMobileMenu()">
-        <i class="bi bi-plus-lg"></i> {{ $t('sidebar.create_task') }}
+        <i class="bi bi-plus-lg"></i> {{ $t('sidebar.SCR0007') }}
       </button>
     </div>
 
@@ -36,42 +36,49 @@
         <li class="nav-item">
           <router-link :to="`/projects/${projectStore.currentProjectId}/dashboard`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm" @click="closeMobileMenu">
             <i class="bi bi-grid-1x2-fill fs-6"></i>
-            <span class="small fw-medium">{{ $t('sidebar.dashboard') }}</span>
+            <span class="small fw-medium">{{ $t('sidebar.SCR0001') }}</span>
           </router-link>
         </li>
         <!-- Task Board link -->
         <li class="nav-item">
           <router-link :to="`/projects/${projectStore.currentProjectId}/tasks`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm" @click="closeMobileMenu">
             <i class="bi bi-kanban fs-6"></i>
-            <span class="small fw-medium">{{ $t('sidebar.task_board') }}</span>
+            <span class="small fw-medium">{{ $t('sidebar.SCR0002') }}</span>
           </router-link>
         </li>
         <!-- Calendar link -->
         <li class="nav-item">
           <router-link :to="`/projects/${projectStore.currentProjectId}/calendar`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm" @click="closeMobileMenu">
             <i class="bi bi-calendar3 fs-6"></i>
-            <span class="small fw-medium">Lịch</span>
+            <span class="small fw-medium">{{ $t('sidebar.SCR0009') }}</span>
           </router-link>
         </li>
         <!-- Gantt link -->
         <li class="nav-item">
           <router-link :to="`/projects/${projectStore.currentProjectId}/gantt`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm" @click="closeMobileMenu">
             <i class="bi bi-bar-chart-steps fs-6"></i>
-            <span class="small fw-medium">Sơ đồ Gantt</span>
+            <span class="small fw-medium">{{ $t('sidebar.SCR0010') }}</span>
+          </router-link>
+        </li>
+        <!-- Files / Documents link -->
+        <li class="nav-item">
+          <router-link :to="`/projects/${projectStore.currentProjectId}/files`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm" @click="closeMobileMenu">
+            <i class="bi bi-folder2-open fs-6"></i>
+            <span class="small fw-medium">{{ $t('sidebar.SCR0003') }}</span>
           </router-link>
         </li>
         <!-- Members link -->
         <li class="nav-item">
           <router-link :to="`/projects/${projectStore.currentProjectId}/members`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm" @click="closeMobileMenu">
             <i class="bi bi-people-fill fs-6"></i>
-            <span class="small fw-medium">{{ $t('sidebar.members') }}</span>
+            <span class="small fw-medium">{{ $t('sidebar.SCR0004') }}</span>
           </router-link>
         </li>
         <!-- Settings link -->
         <li class="nav-item">
           <router-link :to="`/projects/${projectStore.currentProjectId}/settings`" class="nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3" active-class="active-project bg-primary text-white shadow-sm" @click="closeMobileMenu">
             <i class="bi bi-gear-fill fs-6"></i>
-            <span class="small fw-medium">{{ $t('sidebar.settings') }}</span>
+            <span class="small fw-medium">{{ $t('sidebar.SCR0005') }}</span>
           </router-link>
         </li>
       </ul>
@@ -86,7 +93,7 @@
             @click="closeMobileMenu"
             class="btn btn-link nav-link sidebar-link d-flex align-items-center gap-2 px-3 py-2 rounded-3 w-100 text-start text-decoration-none border-0 bg-transparent text-primary">
             <i class="bi bi-shield-lock-fill fs-6"></i>
-            <span class="small fw-bold">Admin Dashboard</span>
+            <span class="small fw-bold">{{ $t('sidebar.SCR0011') }}</span>
           </router-link>
         </li>
         <li class="nav-item">
@@ -94,7 +101,7 @@
             @click="handleLogout(); closeMobileMenu()"
             class="btn btn-link nav-link sidebar-link-danger d-flex align-items-center gap-2 px-3 py-2 rounded-3 w-100 text-start text-decoration-none border-0 bg-transparent">
             <i class="bi bi-box-arrow-right fs-6"></i>
-            <span class="small fw-medium">{{ $t('sidebar.sign_out') }}</span>
+            <span class="small fw-medium">{{ $t('sidebar.SCR0006') }}</span>
           </button>
         </li>
       </ul>

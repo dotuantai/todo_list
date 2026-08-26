@@ -8,7 +8,7 @@
         </div>
         <div class="text-start">
           <h1 class="mb-0 fs-5 fw-bold text-body lh-1">TutaFlow</h1>
-          <p class="small text-muted mb-0 mt-1" style="font-size: 11px;">{{ $t('sidebar.switch_workspace') }}</p>
+          <p class="small text-muted mb-0 mt-1" style="font-size: 11px;">{{ $t('sidebar.SCR0008') }}</p>
         </div>
       </div>
       <div class="d-flex align-items-center gap-3">
@@ -20,7 +20,7 @@
             type="button"
             data-bs-toggle="dropdown"
             aria-expanded="false"
-            title="Change Language"
+            :title="$t('common.SCR0018')"
           >
             <span class="d-flex align-items-center justify-content-center">
               <svg v-if="locale === 'vi'" viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><circle cx="12" cy="12" r="12" fill="#da251d"/><polygon points="12,6 12.95,9.58 16.71,9.58 13.66,11.8 14.79,15.38 12,13.16 9.21,15.38 10.34,11.8 7.29,9.58 11.05,9.58" fill="#ffff00"/></svg>
@@ -31,20 +31,20 @@
             <li>
               <button class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2" @click="changeLocale('vi')">
                 <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><circle cx="12" cy="12" r="12" fill="#da251d"/><polygon points="12,6 12.95,9.58 16.71,9.58 13.66,11.8 14.79,15.38 12,13.16 9.21,15.38 10.34,11.8 7.29,9.58 11.05,9.58" fill="#ffff00"/></svg>
-                <span style="font-size: 0.85rem;">Tiếng Việt</span>
+                <span style="font-size: 0.85rem;">{{ $t('common.SCR0019') }}</span>
               </button>
             </li>
             <li>
               <button class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2" @click="changeLocale('en')">
                 <svg viewBox="0 0 24 24" width="18" height="18" xmlns="http://www.w3.org/2000/svg" class="rounded-circle"><clipPath id="uk-circle-item-proj"><circle cx="12" cy="12" r="12"/></clipPath><g clip-path="url(#uk-circle-item-proj)"><rect width="24" height="24" fill="#012169"/><path d="M0,0 L24,24 M24,0 L0,24" stroke="#fff" stroke-width="4"/><path d="M0,0 L24,24 M24,0 L0,24" stroke="#C8102E" stroke-width="2"/><path d="M0,12 H24 M12,0 V24" stroke="#fff" stroke-width="6"/><path d="M0,12 H24 M12,0 V24" stroke="#C8102E" stroke-width="4"/></g></svg>
-                <span style="font-size: 0.85rem;">English</span>
+                <span style="font-size: 0.85rem;">{{ $t('common.SCR0020') }}</span>
               </button>
             </li>
           </ul>
         </div>
 
         <!-- Theme Toggle -->
-        <button class="btn btn-light border-0 p-2 d-flex align-items-center justify-content-center" style="border-radius: 8px; width: 36px; height: 36px;" @click="toggleTheme" title="Toggle Theme">
+        <button class="btn btn-light border-0 p-2 d-flex align-items-center justify-content-center" style="border-radius: 8px; width: 36px; height: 36px;" @click="toggleTheme" :title="$t('common.SCR0021')">
           <i class="bi" :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-fill'"></i>
         </button>
         <!-- User Profile Dropdown -->
@@ -61,24 +61,24 @@
             </div>
             <div class="d-none d-md-block text-start" style="line-height: 1.2;">
               <div class="fw-semibold small text-body text-truncate" style="max-width: 150px;">{{ projectStore.currentUserEmail }}</div>
-              <div class="text-muted" style="font-size: 10px; margin-top: 1px;">SaaS Workspace</div>
+              <div class="text-muted" style="font-size: 10px; margin-top: 1px;">{{ $t('common.SCR0030') }}</div>
             </div>
           </button>
           <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-2 rounded-3" style="min-width: 200px; font-size: 0.9rem; z-index: 1060;">
             <li class="px-3 py-2 border-bottom mb-1">
               <span class="d-block fw-bold text-truncate text-body" :title="projectStore.currentUserEmail">{{ projectStore.currentUserEmail }}</span>
-              <span class="text-muted small">{{ $t('settings.account_card') }}</span>
+              <span class="text-muted small">{{ $t('settings.SCR0617') }}</span>
             </li>
             <li>
               <router-link to="/change-password" class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2">
                 <i class="bi bi-shield-lock-fill text-primary"></i>
-                <span>{{ $t('changePassword.title') }}</span>
+                <span>{{ $t('changePassword.SCR0801') }}</span>
               </router-link>
             </li>
             <li>
               <button @click="handleLogout" class="dropdown-item d-flex align-items-center gap-2 py-2 rounded-2 text-danger">
                 <i class="bi bi-box-arrow-right"></i>
-                <span>{{ $t('sidebar.sign_out') }}</span>
+                <span>{{ $t('sidebar.SCR0006') }}</span>
               </button>
             </li>
           </ul>
@@ -91,8 +91,8 @@
       <!-- Section Header -->
       <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div class="text-start">
-          <h2 class="fw-bold mb-1 text-body">{{ $t('projects.title') }}</h2>
-          <p class="text-muted small mb-0">{{ $t('projects.subtitle') }}</p>
+          <h2 class="fw-bold mb-1 text-body">{{ $t('projects.SCR0301') }}</h2>
+          <p class="text-muted small mb-0">{{ $t('projects.SCR0302') }}</p>
         </div>
         <button 
           v-if="projectStore.appRole !== 'Member'"
@@ -100,28 +100,28 @@
           @click="handleCreateProject"
           style="border-radius: 8px; height: 40px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"
         >
-          <i class="bi bi-plus-lg"></i> {{ $t('projects.create_btn') }}
+          <i class="bi bi-plus-lg"></i> {{ $t('projects.SCR0303') }}
         </button>
       </div>
 
       <!-- Loading State -->
       <div v-if="loading && projectsWithProgress.length === 0" class="text-center py-5 my-5">
         <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
-        <p class="text-muted mt-3">{{ $t('common.loading') }}</p>
+        <p class="text-muted mt-3">{{ $t('common.SCR0009') }}</p>
       </div>
 
       <!-- Empty State -->
       <div v-else-if="projectsWithProgress.length === 0" class="text-center py-5 bg-body rounded-4 shadow-sm border border-dashed p-5">
         <i class="bi bi-folder2-open text-primary" style="font-size: 4.5rem;"></i>
-        <h3 class="fw-bold text-body mt-3">{{ $t('projects.no_projects') }}</h3>
-        <p class="text-muted mx-auto mb-4" style="max-width: 480px;">{{ $t('projects.no_projects_desc') }}</p>
+        <h3 class="fw-bold text-body mt-3">{{ $t('projects.SCR0305') }}</h3>
+        <p class="text-muted mx-auto mb-4" style="max-width: 480px;">{{ $t('projects.SCR0306') }}</p>
         <button 
           v-if="projectStore.appRole !== 'Member'"
           class="btn btn-primary fw-semibold px-4 py-2.5" 
           @click="handleCreateProject"
           style="border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #6366f1); border: none;"
         >
-          {{ $t('projects.create_btn') }}
+          {{ $t('projects.SCR0303') }}
         </button>
       </div>
 
@@ -142,7 +142,7 @@
               <!-- Header: Logo, Name, Role -->
               <div class="d-flex align-items-center gap-3 mb-3">
                 <div class="project-logo text-white d-flex align-items-center justify-content-center fw-bold fs-4 rounded-3 shadow-sm" :style="{ background: getProjectColor(proj.Name) }" style="width: 48px; height: 48px; min-width: 48px;">
-                  {{ proj.Name[0].toUpperCase() }}
+                  {{ (proj.Name && proj.Name[0]) ? proj.Name[0].toUpperCase() : 'P' }}
                 </div>
                 <div class="text-start min-w-0 flex-grow-1">
                   <h3 class="fw-bold text-body h5 mb-1 text-truncate" :title="proj.Name">
@@ -156,17 +156,17 @@
 
               <!-- Description -->
               <p class="text-muted small text-start mb-4 text-wrap description-text">
-                {{ proj.Description || $t('projects.no_desc') }}
+                {{ proj.Description || $t('projects.SCR0318') }}
               </p>
 
               <!-- Meta Row: Members, Updated time -->
               <div class="d-flex align-items-center justify-content-between border-top pt-3 pb-3 mb-3" style="font-size: 0.8rem;">
                 <div class="d-flex align-items-center gap-1.5 text-secondary">
                   <i class="bi bi-people-fill"></i>
-                  <span>{{ $t('projects.members_count', { count: proj.memberCount || 1 }) }}</span>
+                  <span>{{ $t('projects.SCR0307', { count: proj.memberCount || 1 }) }}</span>
                 </div>
                 <div class="text-secondary small">
-                  {{ $t('projects.updated_at', { date: formatDateShort(proj.UpdatedAt || proj.CreatedAt) }) }}
+                  {{ $t('projects.SCR0310', { date: formatDateShort(proj.UpdatedAt || proj.CreatedAt) }) }}
                 </div>
               </div>
             </div>
@@ -174,7 +174,7 @@
             <!-- Footer: Progress & Click indicator -->
             <div>
               <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="text-secondary small">{{ $t('projects.tasks_completed', { completed: proj.completedTasks, total: proj.totalTasks }) }}</span>
+                <span class="text-secondary small">{{ $t('projects.SCR0308', { completed: proj.completedTasks, total: proj.totalTasks }) }}</span>
                 <span class="fw-bold text-body small">{{ proj.percent }}%</span>
               </div>
               <div class="progress mb-3" style="height: 6px; border-radius: 3px;">
@@ -190,7 +190,7 @@
 
               <div class="d-flex align-items-center justify-content-end gap-2 mt-2 pt-2">
                 <span class="text-primary small fw-semibold enter-workspace-text">
-                  {{ $t('projects.enter_workspace') }} <i class="bi bi-arrow-right ms-1"></i>
+                  {{ $t('projects.SCR0309') }} <i class="bi bi-arrow-right ms-1"></i>
                 </span>
               </div>
             </div>
@@ -220,20 +220,28 @@ const changeLocale = (lang) => {
   locale.value = lang
   localStorage.setItem('locale', lang)
 }
-const loading = ref(false)
+
+const isDarkMode = ref(document.documentElement.getAttribute('data-bs-theme') === 'dark')
+
+const toggleTheme = () => {
+  isDarkMode.value = !isDarkMode.value
+  const theme = isDarkMode.value ? 'dark' : 'light'
+  document.documentElement.setAttribute('data-bs-theme', theme)
+  localStorage.setItem('theme', theme)
+}
+
 const projectsWithProgress = ref([])
-const isDarkMode = ref(false)
+const loading = ref(false)
 
 const loadProjectsWithProgress = async () => {
   loading.value = true
   try {
     const res = await getProjects()
-    const list = res?.data || []
-    projectStore.setProjects(list)
+    const rawList = res.data || []
 
-    projectsWithProgress.value = list.map((proj) => {
-      const completed = proj.CompletedTasks || proj.completedTasks || 0
-      const total = proj.TotalTasks || proj.totalTasks || 0
+    projectsWithProgress.value = rawList.map(proj => {
+      const completed = proj.CompletedTasks ?? proj.completedTasks ?? proj.CompletedTasksCount ?? proj.completedTasksCount ?? 0
+      const total = proj.TotalTasks ?? proj.totalTasks ?? proj.TotalTasksCount ?? proj.totalTasksCount ?? 0
       const percent = total > 0 ? Math.round((completed / total) * 100) : 0
       
       return {
@@ -241,12 +249,12 @@ const loadProjectsWithProgress = async () => {
         percent,
         totalTasks: total,
         completedTasks: completed,
-        memberCount: proj.MemberCount || proj.memberCount || 0
+        memberCount: proj.MemberCount ?? proj.memberCount ?? 0
       }
     })
   } catch (err) {
     console.error('Error loading projects list', err)
-    toastError('Failed to load project list.')
+    toastError(t('common.SCR0015'))
   } finally {
     loading.value = false
   }
@@ -258,16 +266,16 @@ const goToProject = (projectId) => {
 
 const handleCreateProject = async () => {
   const { value: formValues } = await Swal.fire({
-    title: t('projects.create_popup_title'),
+    title: t('projects.SCR0303'),
     html:
-      `<div class="text-start mb-2"><label class="small fw-semibold text-muted">${t('projects.proj_name_label')}</label></div>` +
-      `<input id="swal-proj-name" class="form-control mb-3" placeholder="${t('projects.proj_name_placeholder')}" style="border-radius:10px; height:42px;">` +
-      `<div class="text-start mb-2"><label class="small fw-semibold text-muted">${t('projects.proj_desc_label')}</label></div>` +
-      `<textarea id="swal-proj-desc" class="form-control" placeholder="${t('projects.proj_desc_placeholder')}" rows="3" style="border-radius:10px;"></textarea>`,
+      `<div class="text-start mb-2"><label class="small fw-semibold text-muted">${t('projects.SCR0312')}</label></div>` +
+      `<input id="swal-proj-name" class="form-control mb-3" placeholder="${t('projects.SCR0313')}" style="border-radius:10px; height:42px;">` +
+      `<div class="text-start mb-2"><label class="small fw-semibold text-muted">${t('projects.SCR0314')}</label></div>` +
+      `<textarea id="swal-proj-desc" class="form-control" placeholder="${t('projects.SCR0315')}" rows="3" style="border-radius:10px;"></textarea>`,
     focusConfirm: false,
     showCancelButton: true,
-    confirmButtonText: t('projects.create_confirm_btn'),
-    cancelButtonText: t('projects.cancel'),
+    confirmButtonText: t('projects.SCR0316'),
+    cancelButtonText: t('projects.SCR0317'),
     customClass: {
       popup: 'swal-popup',
       confirmButton: 'swal-btn swal-btn--confirm',
@@ -287,13 +295,13 @@ const handleCreateProject = async () => {
   if (formValues) {
     try {
       const res = await createProject(formValues)
-      toastSuccess('Project created successfully!')
+      toastSuccess(t('projects.SCR0319'))
       await loadProjectsWithProgress()
       if (res?.data?.Id) {
         goToProject(res.data.Id)
       }
     } catch (err) {
-      toastError(extractMessage(err, t('errors.default')))
+      toastError(extractMessage(err, t('common.SCR0015')))
     }
   }
 }
@@ -318,85 +326,67 @@ const getProjectColor = (name) => {
     'linear-gradient(135deg, #f59e0b, #d97706)',
     'linear-gradient(135deg, #ef4444, #dc2626)',
     'linear-gradient(135deg, #ec4899, #db2777)',
-    'linear-gradient(135deg, #06b6d4, #0891b2)',
-    'linear-gradient(135deg, #8b5cf6, #7c3aed)'
+    'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+    'linear-gradient(135deg, #06b6d4, #0891b2)'
   ]
   let hash = 0
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash)
   }
-  const index = Math.abs(hash) % colors.length
-  return colors[index]
+  return colors[Math.abs(hash) % colors.length]
 }
 
-const toggleTheme = () => {
-  isDarkMode.value = !isDarkMode.value
-  const theme = isDarkMode.value ? 'dark' : 'light'
-  document.documentElement.setAttribute('data-bs-theme', theme)
-  localStorage.setItem('theme', theme)
-  toastSuccess(`Switched to ${isDarkMode.value ? 'Dark' : 'Light'} mode!`)
+const formatDateShort = (dateStr) => {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return d.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  })
 }
 
-const handleLogout = async () => {
-  try {
-    await logout()
-  } catch (error) {
-    console.error(error)
-  } finally {
-    localStorage.removeItem('token')
-    projectStore.clearStore()
-    router.push('/login')
-  }
+const handleLogout = () => {
+  logout()
+  projectStore.clearStore()
+  router.push('/login')
 }
 
-const formatDateShort = (d) => d ? new Date(d).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
-
-onMounted(() => {
-  const currentTheme = document.documentElement.getAttribute('data-bs-theme') || localStorage.getItem('theme') || 'light'
-  isDarkMode.value = (currentTheme === 'dark')
-  loadProjectsWithProgress()
+onMounted(async () => {
+  projectStore.decodeToken()
+  await loadProjectsWithProgress()
 })
 </script>
 
 <style scoped>
 .project-card {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
-  border: 1px solid var(--bs-border-color) !important;
-  box-shadow: var(--shadow-sm) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid var(--bs-border-color-translucent) !important;
 }
 
 .project-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-card-hover) !important;
-  border-color: rgba(13, 148, 136, 0.25) !important;
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.15) !important;
+  border-color: var(--bs-primary-border-subtle) !important;
 }
 
 .description-text {
-  font-size: 0.875rem;
-  line-height: 1.5;
-  min-height: 48px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  color: var(--bs-secondary-color);
+  height: 38px;
 }
 
 .enter-workspace-text {
-  opacity: 0.8;
-  transform: translateX(-4px);
-  transition: opacity 0.2s ease, transform 0.2s ease, color 0.2s ease;
+  opacity: 0;
+  transform: translateX(-5px);
+  transition: all 0.2s ease;
 }
 
 .project-card:hover .enter-workspace-text {
   opacity: 1;
   transform: translateX(0);
-  color: var(--bs-primary) !important;
-}
-
-.border-dashed {
-  border-style: dashed !important;
-  border-color: var(--bs-border-color) !important;
 }
 </style>
