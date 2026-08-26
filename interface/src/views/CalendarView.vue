@@ -115,6 +115,7 @@ import { useProjectStore } from '../stores/projectStore.js'
 import { getProjectTasks, getProjectColumns } from '../services/projectService.js'
 import Swal from 'sweetalert2'
 import { useI18n } from 'vue-i18n'
+import { escapeHtml } from '../utils/sanitize.js'
 
 const projectStore = useProjectStore()
 const { t, locale } = useI18n()
@@ -258,12 +259,12 @@ const formatPriority = (priority) => ({
 const openTaskDetails = (task) => {
   const col = columns.value.find(c => c.Id === task.ColumnId)
   Swal.fire({
-    title: task.Title,
+    titleText: String(task.Title || ''),
     html: `
       <div class="text-start mt-3">
-        <div class="mb-2"><span class="badge" style="background: ${col?.color || 'gray'}">${col?.Name || t('calendar.SCR1015')}</span>
-        ${task.Priority ? `<span class="badge bg-secondary ms-1">${t('calendar.SCR1016', { priority: formatPriority(task.Priority) })}</span>` : ''}</div>
-        <div class="mt-3 text-muted" style="white-space: pre-wrap; font-size: 0.9rem;">${task.Description || t('calendar.SCR1017')}</div>
+        <div class="mb-2"><span class="badge" style="background: ${col?.color || 'gray'}">${escapeHtml(col?.Name || t('calendar.SCR1015'))}</span>
+        ${task.Priority ? `<span class="badge bg-secondary ms-1">${escapeHtml(t('calendar.SCR1016', { priority: formatPriority(task.Priority) }))}</span>` : ''}</div>
+        <div class="mt-3 text-muted" style="white-space: pre-wrap; font-size: 0.9rem;">${escapeHtml(task.Description || t('calendar.SCR1017'))}</div>
         <hr>
         <div class="d-flex justify-content-between small text-muted">
           <span><strong>${t('calendar.SCR1018')}</strong> ${task.Deadline ? new Date(task.Deadline).toLocaleDateString(locale.value === 'vi' ? 'vi-VN' : 'en-US') : t('calendar.SCR1019')}</span>

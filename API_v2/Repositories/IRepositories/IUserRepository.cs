@@ -13,7 +13,7 @@ namespace API_v2.Repositories.IRepositories
         void Create(User user);
         Task SaveAsync();
         Task<List<UserSearchResponse>> SearchUsersAsync(string keyword);
-        Task<List<AdminUserResponse>> GetAllUsersAsync();
+        Task<PagedResponse<AdminUserResponse>> GetAllUsersAsync(int page, int pageSize);
         Task<Guid?> GetRoleIdByNameAsync(string roleName);
         Task<bool> UpdateUserRoleAsync(Guid userId, string newRole);
         Task<bool> UpdateUserStatusAsync(Guid userId, bool isActive);

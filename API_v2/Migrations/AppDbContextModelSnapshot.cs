@@ -62,6 +62,47 @@ namespace API_v2.Migrations
                     b.ToTable("Notifications");
                 });
 
+            modelBuilder.Entity("API_v2.Models.Otp", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("IX_Otps_ExpiresAt");
+
+                    b.HasIndex("Email", "Type", "ExpiresAt")
+                        .HasDatabaseName("IX_Otps_Email_Type_ExpiresAt");
+
+                    b.ToTable("Otps");
+                });
+
             modelBuilder.Entity("API_v2.Models.Project", b =>
                 {
                     b.Property<Guid>("Id")
@@ -121,7 +162,9 @@ namespace API_v2.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProjectId");
+                    b.HasIndex("ProjectId", "Order")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_ProjectColumns_ProjectId_Order");
 
                     b.ToTable("ProjectColumns");
                 });
@@ -265,10 +308,11 @@ namespace API_v2.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProjectFileId")
-                        .HasDatabaseName("IX_ProjectFileVersions_ProjectFileId");
-
                     b.HasIndex("UploadedById");
+
+                    b.HasIndex("ProjectFileId", "VersionNumber")
+                        .IsUnique()
+                        .HasDatabaseName("UQ_ProjectFileVersions_FileId_Version");
 
                     b.ToTable("ProjectFileVersions");
                 });
@@ -485,9 +529,10 @@ namespace API_v2.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TaskId");
-
                     b.HasIndex("UserId");
+
+                    b.HasIndex("TaskId", "CreatedAt")
+                        .HasDatabaseName("IX_TaskComments_TaskId_CreatedAt");
 
                     b.ToTable("TaskComments");
                 });
@@ -547,6 +592,9 @@ namespace API_v2.Migrations
                     b.HasIndex("ProjectId")
                         .HasDatabaseName("IX_Tasks_ProjectId");
 
+                    b.HasIndex("ProjectId", "ColumnId", "Priority")
+                        .HasDatabaseName("IX_Tasks_ProjectId_ColumnId_Priority");
+
                     b.ToTable("Tasks");
                 });
 
@@ -598,7 +646,7 @@ namespace API_v2.Migrations
                             FullName = "",
                             IsActive = true,
                             PasswordHash = "$2a$11$X3uPA9Yy730DZgeFEHKiiuSfcUtkQRjEDfRuPzDVbFwUGYio17M92",
-                            RequiresPasswordChange = false,
+                            RequiresPasswordChange = true,
                             RoleId = new Guid("11111111-1111-1111-1111-111111111111")
                         });
                 });

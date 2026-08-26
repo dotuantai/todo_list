@@ -27,6 +27,7 @@ namespace API_v2.Repositories
         public async Task<List<TaskAssignment>> GetAssignedTasksAsync(Guid userId)
         {
             return await _db.TaskAssignments
+                .AsNoTracking()
                 .Include(x => x.Task)
                 .Where(x => x.UserId == userId)
                 .OrderByDescending(x => x.AssignedAt)

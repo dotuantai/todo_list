@@ -1,7 +1,7 @@
 import api from '../api/axios'
 
-export const getNotifications = () => {
-  return api.get('/notifications')
+export const getNotifications = (page = 1, pageSize = 20) => {
+  return api.get('/notifications', { params: { page, pageSize } })
 }
 
 export const markAsRead = (id) => {

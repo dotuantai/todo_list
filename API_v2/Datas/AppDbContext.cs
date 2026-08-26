@@ -13,6 +13,7 @@ namespace API_v2.Datas
         public DbSet<TodoTask> Tasks { get; set; }
         public DbSet<TaskAssignment> TaskAssignments { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<Otp> Otps { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectMember> ProjectMembers { get; set; }
         public DbSet<Notification> Notifications { get; set; }
@@ -49,6 +50,18 @@ namespace API_v2.Datas
             modelBuilder.Entity<RefreshToken>()
                 .HasIndex(rt => rt.Token)
                 .IsUnique();
+
+            modelBuilder.Entity<Otp>()
+                .Property(otp => otp.Type)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<Otp>()
+                .HasIndex(otp => new { otp.Email, otp.Type, otp.ExpiresAt })
+                .HasDatabaseName("IX_Otps_Email_Type_ExpiresAt");
+
+            modelBuilder.Entity<Otp>()
+                .HasIndex(otp => otp.ExpiresAt)
+                .HasDatabaseName("IX_Otps_ExpiresAt");
 
             modelBuilder.Entity<TaskAssignment>()
                 .HasKey(ta => new { ta.TaskId, ta.UserId });
@@ -89,6 +102,11 @@ namespace API_v2.Datas
                 .HasForeignKey(c => c.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<ProjectColumn>()
+                .HasIndex(c => new { c.ProjectId, c.Order })
+                .IsUnique()
+                .HasDatabaseName("UQ_ProjectColumns_ProjectId_Order");
+
             modelBuilder.Entity<TodoTask>()
                 .Property(t => t.Priority)
                 .HasDefaultValue(API_v2.Models.Enums.TaskPriority.Medium)
@@ -102,6 +120,10 @@ namespace API_v2.Datas
             modelBuilder.Entity<TodoTask>()
                 .HasIndex(t => t.CreatorId)
                 .HasDatabaseName("IX_Tasks_CreatorId");
+
+            modelBuilder.Entity<TodoTask>()
+                .HasIndex(t => new { t.ProjectId, t.ColumnId, t.Priority })
+                .HasDatabaseName("IX_Tasks_ProjectId_ColumnId_Priority");
 
             modelBuilder.Entity<Notification>()
                 .HasIndex(n => n.UserId)
@@ -134,6 +156,10 @@ namespace API_v2.Datas
                 .WithMany(u => u.Comments)
                 .HasForeignKey(tc => tc.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskComment>()
+                .HasIndex(tc => new { tc.TaskId, tc.CreatedAt })
+                .HasDatabaseName("IX_TaskComments_TaskId_CreatedAt");
 
             modelBuilder.Entity<TaskActivity>()
                 .HasOne(ta => ta.Task)
@@ -176,6 +202,7 @@ namespace API_v2.Datas
                     Email = "admin@gmail.com",
                     PasswordHash = "$2a$11$X3uPA9Yy730DZgeFEHKiiuSfcUtkQRjEDfRuPzDVbFwUGYio17M92",
                     IsActive = true,
+                    RequiresPasswordChange = true,
                     CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
                     RoleId = adminRoleId
                 }
@@ -269,8 +296,9 @@ namespace API_v2.Datas
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<ProjectFileVersion>()
-                .HasIndex(pfv => pfv.ProjectFileId)
-                .HasDatabaseName("IX_ProjectFileVersions_ProjectFileId");
+                .HasIndex(pfv => new { pfv.ProjectFileId, pfv.VersionNumber })
+                .IsUnique()
+                .HasDatabaseName("UQ_ProjectFileVersions_FileId_Version");
 
             // ProjectFileActivity Configuration
             modelBuilder.Entity<ProjectFileActivity>()

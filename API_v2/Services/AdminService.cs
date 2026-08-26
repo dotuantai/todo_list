@@ -7,6 +7,7 @@ using API_v2.Repositories.IRepositories;
 using API_v2.Services.Interfaces;
 using System.Text.Json;
 using API_v2.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace API_v2.Services
 {
@@ -21,9 +22,9 @@ namespace API_v2.Services
 
         public async Task<AdminDashboardResponse> GetDashboardStatsAsync()
         {
-            var totalUsers = _context.Users.Count();
-            var totalProjects = _context.Projects.Count();
-            var totalTasks = _context.Tasks.Count();
+            var totalUsers = await _context.Users.CountAsync();
+            var totalProjects = await _context.Projects.CountAsync();
+            var totalTasks = await _context.Tasks.CountAsync();
 
             var response = new AdminDashboardResponse
             {
@@ -35,104 +36,87 @@ namespace API_v2.Services
                 UsersOverTime = new List<UserRegistrationData>()
             };
 
-            // Task Distribution
-            var taskDist = _context.Tasks
-                .Select(t => new { t.Column.IsCompletedStage, t.Column.Order })
-                .ToList();
-
-            foreach (var t in taskDist)
-            {
-                if (t.IsCompletedStage) response.TaskStatusDistribution.Done++;
-                else if (t.Order == 0) response.TaskStatusDistribution.ToDo++;
-                else response.TaskStatusDistribution.InProgress++;
-            }
+            var taskDistribution = await _context.Tasks
+                .GroupBy(_ => 1)
+                .Select(group => new TaskStatusDistribution
+                {
+                    Done = group.Count(task => task.Column.IsCompletedStage),
+                    ToDo = group.Count(task => !task.Column.IsCompletedStage && task.Column.Order == 0),
+                    InProgress = group.Count(task => !task.Column.IsCompletedStage && task.Column.Order != 0)
+                })
+                .FirstOrDefaultAsync();
+            response.TaskStatusDistribution = taskDistribution ?? new TaskStatusDistribution();
 
             // Group by Date for the last 7 days
             var today = DateTime.UtcNow.Date;
             
-            // Bring dates into memory to group easily
-            var projectDates = _context.Projects
+            var projectCountsByDate = await _context.Projects
                 .Where(p => p.CreatedAt >= today.AddDays(-6))
-                .Select(p => p.CreatedAt.Date)
-                .ToList();
+                .GroupBy(p => p.CreatedAt.Date)
+                .Select(group => new { Date = group.Key, Count = group.Count() })
+                .ToDictionaryAsync(item => item.Date, item => item.Count);
 
-            var userDates = _context.Users
+            var userCountsByDate = await _context.Users
                 .Where(u => u.CreatedAt >= today.AddDays(-6))
-                .Select(u => u.CreatedAt.Date)
-                .ToList();
+                .GroupBy(u => u.CreatedAt.Date)
+                .Select(group => new { Date = group.Key, Count = group.Count() })
+                .ToDictionaryAsync(item => item.Date, item => item.Count);
 
             for (int i = 6; i >= 0; i--)
             {
                 var date = today.AddDays(-i);
                 var dateStr = date.ToString("dd/MM");
 
-                var projectsOnDate = projectDates.Count(d => d == date);
-                var usersOnDate = userDates.Count(d => d == date);
+                var projectsOnDate = projectCountsByDate.GetValueOrDefault(date);
+                var usersOnDate = userCountsByDate.GetValueOrDefault(date);
 
                 response.ProjectsOverTime.Add(new ProjectRegistrationData { Date = dateStr, Count = projectsOnDate });
                 response.UsersOverTime.Add(new UserRegistrationData { Date = dateStr, Count = usersOnDate });
                 response.Last7Days.Add(dateStr);
             }
-            response.Last7Days.Reverse(); // Older to newer
 
             // Project Health Chart (Top 15 active projects)
-            var topProjects = _context.Projects
+            var topProjects = await _context.Projects
+                .AsNoTracking()
                 .OrderByDescending(p => p.Tasks.Count)
                 .Take(15)
-                .Select(p => new { 
-                    p.Id, 
-                    p.Name, 
-                    Tasks = p.Tasks.Select(t => new { 
-                        t.Deadline,
-                        IsCompletedStage = t.Column != null ? t.Column.IsCompletedStage : false,
-                        Order = t.Column != null ? t.Column.Order : 0
-                    }).ToList() 
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Name
                 })
-                .ToList();
+                .ToListAsync();
 
             var now = DateTime.UtcNow;
-
-            foreach (var p in topProjects)
-            {
-                int todo = 0;
-                int inProgress = 0;
-                int done = 0;
-                int overdue = 0;
-
-                foreach(var task in p.Tasks)
+            var topProjectIds = topProjects.Select(project => project.Id).ToList();
+            var healthByProject = await _context.Tasks
+                .Where(task => task.ProjectId.HasValue && topProjectIds.Contains(task.ProjectId.Value))
+                .GroupBy(task => task.ProjectId!.Value)
+                .Select(group => new
                 {
-                    if (task.IsCompletedStage)
-                    {
-                        done++;
-                    }
-                    else
-                    {
-                        if (task.Deadline != default && task.Deadline < now)
-                        {
-                            overdue++;
-                        }
-                        else if (task.Order == 0)
-                        {
-                            todo++;
-                        }
-                        else
-                        {
-                            inProgress++;
-                        }
-                    }
-                }
+                    ProjectId = group.Key,
+                    Done = group.Count(task => task.Column.IsCompletedStage),
+                    Overdue = group.Count(task => !task.Column.IsCompletedStage && task.Deadline < now),
+                    ToDo = group.Count(task => !task.Column.IsCompletedStage && task.Deadline >= now && task.Column.Order == 0),
+                    InProgress = group.Count(task => !task.Column.IsCompletedStage && task.Deadline >= now && task.Column.Order != 0)
+                })
+                .ToDictionaryAsync(item => item.ProjectId);
+
+            foreach (var project in topProjects)
+            {
+                healthByProject.TryGetValue(project.Id, out var health);
 
                 response.ProjectHealthList.Add(new ProjectHealthData
                 {
-                    ProjectName = p.Name,
-                    ToDo = todo,
-                    InProgress = inProgress,
-                    Done = done,
-                    Overdue = overdue
+                    ProjectName = project.Name,
+                    ToDo = health?.ToDo ?? 0,
+                    InProgress = health?.InProgress ?? 0,
+                    Done = health?.Done ?? 0,
+                    Overdue = health?.Overdue ?? 0
                 });
             }
 
-            return await Task.FromResult(response);
+            return response;
         }
     }
 }

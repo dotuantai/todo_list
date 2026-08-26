@@ -20,10 +20,12 @@ namespace API_v2.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> GetMyProjects()
+        public async Task<ActionResult> GetMyProjects([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
-            var result = await _projectService.GetProjectsForUserAsync(CurrentUserId);
-            return Ok(new ApiResponse<List<ProjectResponse>>(true, "Success", result));
+            page = Math.Max(page, 1);
+            pageSize = Math.Clamp(pageSize, 1, 100);
+            var result = await _projectService.GetProjectsForUserAsync(CurrentUserId, page, pageSize);
+            return Ok(new ApiResponse<PagedResponse<ProjectResponse>>(true, "Success", result));
         }
 
         [HttpPost]

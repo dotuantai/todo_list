@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using API_v2.Exceptions;
 using API_v2.Models.DTOs;
+using API_v2.Models.Constants;
 
 namespace API_v2.Helpers
 {
@@ -36,6 +37,7 @@ namespace API_v2.Helpers
         {
             HttpStatusCode statusCode;
             string message;
+            string errorCode;
 
             // Retrieve Correlation ID from response headers
             var correlationId = context.Response.Headers["X-Correlation-ID"].ToString();
@@ -48,6 +50,7 @@ namespace API_v2.Helpers
             {
                 statusCode = apiEx.StatusCode;
                 message = apiEx.Message;
+                errorCode = apiEx.ErrorCode;
                 _logger.LogWarning("API Exception occurred: {Message} | Status: {Status} | CorrelationID: {CorrelationId}", 
                     message, statusCode, correlationId);
             }
@@ -59,14 +62,15 @@ namespace API_v2.Helpers
                 
                 statusCode = HttpStatusCode.InternalServerError;
                 message = "A system error occurred. Please try again later.";
+                errorCode = ErrorCodes.InternalServerError;
             }
 
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)statusCode;
 
-            var response = new
+            var response = new ApiErrorResponse
             {
-                Success = false,
+                ErrorCode = errorCode,
                 Message = message,
                 CorrelationId = correlationId
             };

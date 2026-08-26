@@ -21,6 +21,7 @@ namespace API_v2.Repositories
         public async Task<List<ProjectColumn>> GetColumnsByProjectIdAsync(Guid projectId)
         {
             return await _db.ProjectColumns
+                .AsNoTracking()
                 .Where(c => c.ProjectId == projectId)
                 .OrderBy(c => c.Order)
                 .ToListAsync();

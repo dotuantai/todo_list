@@ -14,6 +14,28 @@ namespace API_v2.Middleware
 {
     public class RequestResponseLoggingMiddleware
     {
+        private const int MaxLogBodySizeBytes = 32 * 1024;
+        private const string MaskedValue = "***MASKED***";
+        private static readonly HashSet<string> SensitiveKeys = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "password",
+            "currentPassword",
+            "newPassword",
+            "temporaryPassword",
+            "otp",
+            "code",
+            "token",
+            "refreshToken",
+            "accessToken",
+            "idToken",
+            "id_token",
+            "access_token",
+            "secret",
+            "clientSecret",
+            "cardNumber",
+            "cvv"
+        };
+
         private readonly RequestDelegate _next;
         private readonly ILogger<RequestResponseLoggingMiddleware> _logger;
         private readonly int _slowRequestThresholdMs;
@@ -30,17 +52,7 @@ namespace API_v2.Middleware
             var sw = Stopwatch.StartNew();
             var request = context.Request;
 
-            // Enable buffering and read request body safely
-            var requestBody = string.Empty;
-            if (request.ContentLength > 0)
-            {
-                request.EnableBuffering();
-                using (var reader = new StreamReader(request.Body, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, bufferSize: 4096, leaveOpen: true))
-                {
-                    requestBody = await reader.ReadToEndAsync();
-                    request.Body.Position = 0; // Reset stream position for model binders
-                }
-            }
+            var requestBody = await ReadRequestBodyForLoggingAsync(request);
 
             var path = request.Path;
             var method = request.Method;
@@ -65,10 +77,8 @@ namespace API_v2.Middleware
                 user = context.User.Identity.Name ?? "authenticated";
             }
 
-            var maskedRequestBody = MaskSensitiveFields(requestBody);
-
             _logger.LogInformation(">>> REQUEST  {Method} {Path} | Query: {Query} | IP: {IP} | User: {User} | UA: {UA} | Body: {Body}", 
-                method, path, query, ip, user, userAgent, maskedRequestBody);
+                method, path, query, ip, user, userAgent, requestBody);
 
             try
             {
@@ -107,15 +117,58 @@ namespace API_v2.Middleware
 
         private string GetClientIp(HttpContext context)
         {
-            var forwardedFor = context.Request.Headers["X-Forwarded-For"].ToString();
-            if (!string.IsNullOrEmpty(forwardedFor))
-            {
-                return forwardedFor.Split(',')[0].Trim();
-            }
-
             var ip = context.Connection.RemoteIpAddress?.ToString();
             if (ip == "::1") return "127.0.0.1";
             return ip ?? "unknown";
+        }
+
+        private static async Task<string> ReadRequestBodyForLoggingAsync(HttpRequest request)
+        {
+            if (request.ContentLength == 0)
+            {
+                return "[Empty body]";
+            }
+
+            var contentType = request.ContentType ?? string.Empty;
+            if (contentType.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase) ||
+                contentType.StartsWith("application/octet-stream", StringComparison.OrdinalIgnoreCase))
+            {
+                return $"[Binary or multipart payload omitted - Length: {request.ContentLength ?? 0} bytes]";
+            }
+
+            if (request.Path.StartsWithSegments("/api/auth", StringComparison.OrdinalIgnoreCase))
+            {
+                return "[Sensitive authentication payload omitted]";
+            }
+
+            if (request.ContentLength is null)
+            {
+                return "[Payload with unknown length omitted]";
+            }
+
+            if (request.ContentLength > MaxLogBodySizeBytes)
+            {
+                return $"[Payload exceeds {MaxLogBodySizeBytes / 1024}KB log limit - Length: {request.ContentLength} bytes]";
+            }
+
+            var isJson = contentType.StartsWith("application/json", StringComparison.OrdinalIgnoreCase) ||
+                         contentType.Contains("+json", StringComparison.OrdinalIgnoreCase);
+            if (!isJson)
+            {
+                return $"[Non-JSON payload omitted - Content-Type: {contentType}]";
+            }
+
+            request.EnableBuffering();
+            using var reader = new StreamReader(
+                request.Body,
+                Encoding.UTF8,
+                detectEncodingFromByteOrderMarks: false,
+                bufferSize: 4096,
+                leaveOpen: true);
+            var body = await reader.ReadToEndAsync();
+            request.Body.Position = 0;
+
+            return MaskSensitiveFields(body);
         }
 
         private static string MaskSensitiveFields(string body)
@@ -124,42 +177,37 @@ namespace API_v2.Middleware
             try
             {
                 var node = JsonNode.Parse(body);
-                if (node is JsonObject obj)
-                {
-                    MaskKeys(obj);
-                    return obj.ToJsonString();
-                }
-                return body;
+                if (node is null) return "[Empty JSON body]";
+                MaskNode(node);
+                return node.ToJsonString();
             }
             catch
             {
-                return body;
+                return "[Malformed JSON payload omitted]";
             }
         }
 
-        private static void MaskKeys(JsonObject obj)
+        private static void MaskNode(JsonNode node)
         {
-            var sensitiveKeys = new[] { "password", "token", "secret", "cardnumber", "cvv", "idtoken", "id_token", "accesstoken", "access_token" };
-            foreach (var property in obj.ToList())
+            if (node is JsonObject obj)
             {
-                var keyLower = property.Key.ToLower();
-                if (sensitiveKeys.Contains(keyLower))
+                foreach (var property in obj.ToList())
                 {
-                    obj[property.Key] = "***";
-                }
-                else if (property.Value is JsonObject childObj)
-                {
-                    MaskKeys(childObj);
-                }
-                else if (property.Value is JsonArray childArray)
-                {
-                    foreach (var element in childArray)
+                    if (SensitiveKeys.Contains(property.Key))
                     {
-                        if (element is JsonObject arrayObj)
-                        {
-                            MaskKeys(arrayObj);
-                        }
+                        obj[property.Key] = MaskedValue;
                     }
+                    else if (property.Value is not null)
+                    {
+                        MaskNode(property.Value);
+                    }
+                }
+            }
+            else if (node is JsonArray array)
+            {
+                foreach (var item in array)
+                {
+                    if (item is not null) MaskNode(item);
                 }
             }
         }

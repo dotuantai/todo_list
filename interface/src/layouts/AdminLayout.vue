@@ -159,7 +159,6 @@ const handleLogout = async () => {
   } catch (error) {
     console.error(error)
   } finally {
-    localStorage.removeItem('token')
     projectStore.clearStore()
     router.push('/login')
   }

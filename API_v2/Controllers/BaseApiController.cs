@@ -33,7 +33,7 @@ namespace API_v2.Controllers
             }
             catch (ApiException ex)
             {
-                return StatusCode((int)ex.StatusCode, new ApiResponse<object>(false, ex.Message, null));
+                return StatusCode((int)ex.StatusCode, CreateErrorResponse(ex));
             }
         }
 
@@ -46,8 +46,15 @@ namespace API_v2.Controllers
             }
             catch (ApiException ex)
             {
-                return StatusCode((int)ex.StatusCode, new ApiResponse<object>(false, ex.Message, null));
+                return StatusCode((int)ex.StatusCode, CreateErrorResponse(ex));
             }
         }
+
+        private ApiErrorResponse CreateErrorResponse(ApiException exception) => new()
+        {
+            ErrorCode = exception.ErrorCode,
+            Message = exception.Message,
+            CorrelationId = HttpContext.TraceIdentifier
+        };
     }
 }

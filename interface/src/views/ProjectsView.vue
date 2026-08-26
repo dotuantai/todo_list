@@ -236,8 +236,8 @@ const loading = ref(false)
 const loadProjectsWithProgress = async () => {
   loading.value = true
   try {
-    const res = await getProjects()
-    const rawList = res.data || []
+    const res = await getProjects(1, 100)
+    const rawList = res.data?.Items || []
 
     projectsWithProgress.value = rawList.map(proj => {
       const completed = proj.CompletedTasks ?? proj.completedTasks ?? proj.CompletedTasksCount ?? proj.completedTasksCount ?? 0

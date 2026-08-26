@@ -81,9 +81,9 @@ namespace API_v2.Services
             return MapToProjectResponse(dbProject!, ProjectRoles.Owner);
         }
 
-        public async Task<List<ProjectResponse>> GetProjectsForUserAsync(Guid currentUserId)
+        public async Task<PagedResponse<ProjectResponse>> GetProjectsForUserAsync(Guid currentUserId, int page, int pageSize)
         {
-            return await _projectRepo.GetProjectDashboardsAsync(currentUserId);
+            return await _projectRepo.GetProjectDashboardsAsync(currentUserId, page, pageSize);
         }
 
         public async Task<ProjectResponse> GetProjectDetailAsync(Guid projectId, Guid currentUserId)

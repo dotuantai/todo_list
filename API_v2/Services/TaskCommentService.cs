@@ -1,22 +1,94 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using API_v2.Datas;
 using API_v2.Models;
 using API_v2.Models.DTOs;
 using API_v2.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace API_v2.Services
 {
     public class TaskCommentService : ITaskCommentService
     {
-        private readonly AppDbContext _context;
+        private static readonly Regex MentionRegex = new(
+            @"(?<![\w@])@(?<email>[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,})",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-        public TaskCommentService(AppDbContext context)
+        private readonly AppDbContext _context;
+        private readonly INotificationService _notificationService;
+        private readonly ILogger<TaskCommentService> _logger;
+
+        public TaskCommentService(
+            AppDbContext context,
+            INotificationService notificationService,
+            ILogger<TaskCommentService> logger)
         {
             _context = context;
+            _notificationService = notificationService;
+            _logger = logger;
+        }
+
+        private async Task SendMentionNotificationsAsync(
+            int taskId,
+            string content,
+            Guid currentUserId,
+            string authorEmail)
+        {
+            var mentionedEmails = MentionRegex.Matches(content)
+                .Select(match => match.Groups["email"].Value.ToLowerInvariant())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (mentionedEmails.Count == 0)
+            {
+                return;
+            }
+
+            var task = await _context.Tasks
+                .AsNoTracking()
+                .Where(t => t.Id == taskId)
+                .Select(t => new { t.ProjectId, t.Title })
+                .FirstOrDefaultAsync();
+
+            if (task?.ProjectId == null)
+            {
+                return;
+            }
+
+            var recipients = await _context.ProjectMembers
+                .AsNoTracking()
+                .Where(pm => pm.ProjectId == task.ProjectId.Value
+                    && pm.UserId != currentUserId
+                    && pm.User.IsActive
+                    && mentionedEmails.Contains(pm.User.Email.ToLower()))
+                .Select(pm => pm.UserId)
+                .Distinct()
+                .ToListAsync();
+
+            foreach (var userId in recipients)
+            {
+                try
+                {
+                    await _notificationService.CreateAndSendNotificationAsync(
+                        userId,
+                        "You were mentioned in a comment",
+                        $"{authorEmail} mentioned you in task '{task.Title}'.",
+                        "Mention",
+                        taskId.ToString());
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Failed to send mention notification for task {TaskId} to user {UserId}.",
+                        taskId,
+                        userId);
+                }
+            }
         }
 
         private async Task ValidateUserAccessToTask(int taskId, Guid currentUserId)
@@ -102,13 +174,20 @@ namespace API_v2.Services
             await _context.SaveChangesAsync();
 
             var user = await _context.Users.FindAsync(currentUserId);
+            var authorEmail = user?.Email ?? "Unknown";
+
+            await SendMentionNotificationsAsync(
+                taskId,
+                comment.Content,
+                currentUserId,
+                authorEmail);
 
             return new TaskCommentResponse
             {
                 Id = comment.Id,
                 TaskId = comment.TaskId,
                 UserId = comment.UserId,
-                UserName = user?.Email ?? "Unknown",
+                UserName = authorEmail,
                 Content = comment.Content,
                 CreatedAt = comment.CreatedAt
             };

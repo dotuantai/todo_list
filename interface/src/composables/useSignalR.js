@@ -8,15 +8,21 @@ export function useSignalR() {
 
   const initSignalR = async () => {
     if (signalRConnection) return
-    const token = localStorage.getItem('token')
-    if (!token) return
+    if (!localStorage.getItem('token')) return
 
     const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7087/api'
     const hubUrl = baseUrl.replace('/api', '/hubs/notifications')
 
     signalRConnection = new HubConnectionBuilder()
       .withUrl(hubUrl, {
-        accessTokenFactory: () => token
+        // SignalR calls this factory again for reconnect/negotiation, so always
+        // read the latest token produced by the Axios refresh flow.
+        accessTokenFactory: () => {
+          const latestToken = localStorage.getItem('token')
+          return latestToken && latestToken !== 'null' && latestToken !== 'undefined'
+            ? latestToken
+            : ''
+        }
       })
       .withAutomaticReconnect()
       .build()
@@ -40,7 +46,7 @@ export function useSignalR() {
     signalRConnection.onreconnected(async (connectionId) => {
       console.log(`SignalR reconnected: ${connectionId}`)
       if (projectStore.currentUserId) {
-        await signalRConnection.invoke('RegisterUser', projectStore.currentUserId)
+        await signalRConnection.invoke('RegisterUser')
       }
       if (projectStore.currentProjectId) {
         await signalRConnection.invoke('JoinProject', projectStore.currentProjectId)
@@ -51,7 +57,7 @@ export function useSignalR() {
       await signalRConnection.start()
       console.log('SignalR connected.')
       if (projectStore.currentUserId) {
-        await signalRConnection.invoke('RegisterUser', projectStore.currentUserId)
+        await signalRConnection.invoke('RegisterUser')
       }
       if (projectStore.currentProjectId) {
         await signalRConnection.invoke('JoinProject', projectStore.currentProjectId)

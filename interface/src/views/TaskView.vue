@@ -367,7 +367,12 @@
                           Delete
                         </button>
                       </div>
-                      <div class="text-body bg-body-secondary p-2 rounded-3 border" style="font-size: 0.9rem; white-space: pre-wrap;">{{ item.Content }}</div>
+                      <div class="text-body bg-body-secondary p-2 rounded-3 border comment-content" style="font-size: 0.9rem; white-space: pre-wrap;">
+                        <template v-for="(part, partIndex) in parseCommentContent(item.Content)" :key="partIndex">
+                          <span v-if="part.isMention" class="comment-mention">{{ part.text }}</span>
+                          <span v-else>{{ part.text }}</span>
+                        </template>
+                      </div>
                     </div>
                   </div>
 
@@ -424,7 +429,45 @@
                   {{ userInitial(projectStore.user?.Email || 'U') }}
                 </div>
                 <div class="flex-grow-1 position-relative">
-                  <textarea v-model="newComment" class="form-control" rows="2" :placeholder="$t('tasks.SCR0262')" style="border-radius: 12px; font-size: 0.9rem; padding-bottom: 40px; resize: none;"></textarea>
+                  <textarea
+                    ref="commentTextarea"
+                    v-model="newComment"
+                    class="form-control"
+                    rows="2"
+                    :placeholder="$t('tasks.SCR0262')"
+                    style="border-radius: 12px; font-size: 0.9rem; padding-bottom: 40px; resize: none;"
+                    @input="handleCommentInput"
+                    @keydown="handleCommentKeydown"
+                    @blur="closeMentionMenu"
+                  ></textarea>
+                  <div
+                    v-if="mentionOpen && mentionCandidates.length > 0"
+                    class="mention-menu card shadow-lg border overflow-hidden"
+                    role="listbox"
+                  >
+                    <button
+                      v-for="(member, index) in mentionCandidates"
+                      :key="member.UserId"
+                      type="button"
+                      class="mention-option btn border-0 rounded-0 d-flex align-items-center gap-2 text-start px-3 py-2"
+                      :class="{ active: index === activeMentionIndex }"
+                      role="option"
+                      :aria-selected="index === activeMentionIndex"
+                      @mousedown.prevent="insertMention(member)"
+                      @mouseenter="activeMentionIndex = index"
+                    >
+                      <span
+                        class="user-avatar text-white d-flex align-items-center justify-content-center fw-bold rounded-circle flex-shrink-0"
+                        :style="{ background: getUserColor(member.Email), width: '28px', height: '28px', fontSize: '11px' }"
+                      >
+                        {{ userInitial(member.Email) }}
+                      </span>
+                      <span class="min-w-0">
+                        <span class="d-block text-body fw-semibold text-truncate" style="font-size: 0.85rem;">{{ member.Email }}</span>
+                        <span class="d-block text-secondary" style="font-size: 0.72rem;">{{ getRoleLabel(t, member.Role) }}</span>
+                      </span>
+                    </button>
+                  </div>
                   <button class="btn btn-primary btn-sm position-absolute bottom-0 end-0 m-2" @click="submitComment" :disabled="!newComment.trim() || submittingComment" style="border-radius: 8px;">
                     <span v-if="submittingComment" class="spinner-border spinner-border-sm me-1" role="status"></span>
                     <i v-else class="bi bi-send-fill me-1"></i> Send
@@ -550,7 +593,7 @@
 
 <script setup>
 import draggable from 'vuedraggable'
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getRoleLabel } from '../utils/i18nLabels.js'
 import { assignTask, updateTask, removeAssignment, updateTaskColumn, deleteTask, addComment, deleteComment, getTaskFeed } from '../services/taskService.js'
@@ -709,10 +752,106 @@ const openModal = (task) => {
 // Unified Feed logic
 const unifiedFeed = ref([])
 const newComment = ref('')
+const commentTextarea = ref(null)
 const loadingFeed = ref(false)
 const submittingComment = ref(false)
 const feedPage = ref(1)
 const hasMoreFeed = ref(false)
+const mentionOpen = ref(false)
+const mentionQuery = ref('')
+const mentionStart = ref(-1)
+const activeMentionIndex = ref(0)
+
+const mentionCandidates = computed(() => {
+  const query = mentionQuery.value.toLowerCase()
+  const currentUserId = projectStore.user?.Id
+
+  return members.value
+    .filter(member => member.UserId !== currentUserId && member.Email)
+    .filter(member => !query || member.Email.toLowerCase().includes(query))
+    .slice(0, 6)
+})
+
+const closeMentionMenu = () => {
+  mentionOpen.value = false
+  mentionQuery.value = ''
+  mentionStart.value = -1
+  activeMentionIndex.value = 0
+}
+
+const handleCommentInput = (event) => {
+  const cursorPosition = event.target.selectionStart
+  const textBeforeCursor = event.target.value.slice(0, cursorPosition)
+  const match = textBeforeCursor.match(/(^|[\s(])@([^\s]*)$/)
+
+  if (!match) {
+    closeMentionMenu()
+    return
+  }
+
+  mentionStart.value = textBeforeCursor.length - match[0].length + match[1].length
+  mentionQuery.value = match[2]
+  activeMentionIndex.value = 0
+  mentionOpen.value = true
+}
+
+const insertMention = async (member) => {
+  if (!member?.Email || mentionStart.value < 0) return
+
+  const textarea = commentTextarea.value
+  const cursorPosition = textarea?.selectionStart ?? newComment.value.length
+  const beforeMention = newComment.value.slice(0, mentionStart.value)
+  const afterCursor = newComment.value.slice(cursorPosition)
+  const insertedText = `@${member.Email} `
+
+  newComment.value = beforeMention + insertedText + afterCursor
+  const nextCursorPosition = beforeMention.length + insertedText.length
+  closeMentionMenu()
+
+  await nextTick()
+  textarea?.focus()
+  textarea?.setSelectionRange(nextCursorPosition, nextCursorPosition)
+}
+
+const handleCommentKeydown = (event) => {
+  if (!mentionOpen.value || mentionCandidates.value.length === 0) return
+
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    activeMentionIndex.value = (activeMentionIndex.value + 1) % mentionCandidates.value.length
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    activeMentionIndex.value = (activeMentionIndex.value - 1 + mentionCandidates.value.length) % mentionCandidates.value.length
+  } else if (event.key === 'Enter' || event.key === 'Tab') {
+    event.preventDefault()
+    insertMention(mentionCandidates.value[activeMentionIndex.value])
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    event.stopPropagation()
+    closeMentionMenu()
+  }
+}
+
+const parseCommentContent = (content) => {
+  const text = content || ''
+  const parts = []
+  const mentionPattern = /@[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/gi
+  let lastIndex = 0
+
+  for (const match of text.matchAll(mentionPattern)) {
+    if (match.index > lastIndex) {
+      parts.push({ text: text.slice(lastIndex, match.index), isMention: false })
+    }
+    parts.push({ text: match[0], isMention: true })
+    lastIndex = match.index + match[0].length
+  }
+
+  if (lastIndex < text.length || parts.length === 0) {
+    parts.push({ text: text.slice(lastIndex), isMention: false })
+  }
+
+  return parts
+}
 
 const formatTimeAgo = (dateStr) => {
   if (!dateStr) return ''
@@ -761,6 +900,7 @@ const submitComment = async () => {
   try {
     await addComment(modal.task.Id, { content: newComment.value })
     newComment.value = ''
+    closeMentionMenu()
     await loadFeed(modal.task.Id)
   } catch (err) {
     toastError(t('tasks.SCR0268'))
@@ -789,6 +929,7 @@ const removeComment = async (id) => {
 const closeModal = () => {
   modal.open = false
   editMode.value = false
+  closeMentionMenu()
   document.body.style.overflow = ''
   selectedAssigneeId.value = null
 }
@@ -1186,5 +1327,32 @@ const userInitial     = (email) => email ? email[0].toUpperCase() : '?'
 }
 .modal {
   z-index: 1050;
+}
+.comment-mention {
+  display: inline-block;
+  padding: 0 0.28rem;
+  border-radius: 0.35rem;
+  background: rgba(13, 110, 253, 0.12);
+  color: var(--bs-primary);
+  font-weight: 600;
+}
+.mention-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 1060;
+  max-height: 240px;
+  overflow-y: auto !important;
+  background: var(--bs-body-bg);
+  border-color: var(--bs-border-color) !important;
+}
+.mention-option {
+  background: transparent;
+  color: var(--bs-body-color);
+}
+.mention-option:hover,
+.mention-option.active {
+  background: rgba(13, 110, 253, 0.1);
 }
 </style>

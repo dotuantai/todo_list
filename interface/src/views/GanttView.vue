@@ -128,6 +128,7 @@ import { useProjectStore } from '../stores/projectStore.js'
 import { getProjectTasks, getProjectColumns } from '../services/projectService.js'
 import Swal from 'sweetalert2'
 import { useI18n } from 'vue-i18n'
+import { escapeHtml } from '../utils/sanitize.js'
 
 const projectStore = useProjectStore()
 const { t, locale } = useI18n()
@@ -336,14 +337,14 @@ const formatPriority = (priority) => ({
 const openTaskDetails = (task) => {
   const col = columns.value.find(c => c.Id === task.ColumnId)
   Swal.fire({
-    title: `<div style="font-family: 'Inter', sans-serif;">${task.Title}</div>`,
+    titleText: String(task.Title || ''),
     html: `
       <div class="text-start mt-3" style="font-family: 'Inter', sans-serif;">
         <div class="mb-3">
-          <span class="badge rounded-pill px-3 py-2 text-white" style="background: ${col?.color || 'gray'}">${col?.Name || t('gantt.SCR1117')}</span>
-          ${task.Priority ? `<span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2 ms-2">${t('gantt.SCR1118', { priority: formatPriority(task.Priority) })}</span>` : ''}
+          <span class="badge rounded-pill px-3 py-2 text-white" style="background: ${col?.color || 'gray'}">${escapeHtml(col?.Name || t('gantt.SCR1117'))}</span>
+          ${task.Priority ? `<span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2 ms-2">${escapeHtml(t('gantt.SCR1118', { priority: formatPriority(task.Priority) }))}</span>` : ''}
         </div>
-        <div class="mt-3 text-body bg-body-secondary p-3 rounded-4" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;">${task.Description || t('gantt.SCR1119')}</div>
+        <div class="mt-3 text-body bg-body-secondary p-3 rounded-4" style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;">${escapeHtml(task.Description || t('gantt.SCR1119'))}</div>
         <div class="row mt-4 pt-3 border-top g-3">
           <div class="col-6">
             <label class="text-muted small text-uppercase fw-bold mb-1">${t('gantt.SCR1120')}</label>

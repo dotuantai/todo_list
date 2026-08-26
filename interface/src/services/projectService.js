@@ -1,7 +1,7 @@
 import api from '../api/axios'
 
-export const getProjects = () => {
-  return api.get('/projects')
+export const getProjects = (page = 1, pageSize = 20) => {
+  return api.get('/projects', { params: { page, pageSize } })
 }
 
 export const createProject = (data) => {

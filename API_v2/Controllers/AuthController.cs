@@ -17,7 +17,17 @@ namespace API_v2.Controllers
             _authService = authService;
         }
 
-
+        private void SetRefreshTokenCookie(string refreshToken)
+        {
+            Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                Path = "/",
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.AddDays(7)
+            });
+        }
 
         [HttpPost("verify-otp")]
         [AllowAnonymous]
@@ -59,15 +69,7 @@ namespace API_v2.Controllers
 
             var result = await _authService.LoginAsync(req);
 
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                Path = "/",
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.AddDays(7)
-            };
-            Response.Cookies.Append("refreshToken", result.RefreshToken ?? string.Empty, cookieOptions);
+            SetRefreshTokenCookie(result.RefreshToken ?? string.Empty);
 
             return Ok(new ApiResponse<object>(true, "Sign-in successful.", new { AccessToken = result.AccessToken, RequiresPasswordChange = result.RequiresPasswordChange }));
         }
@@ -83,15 +85,7 @@ namespace API_v2.Controllers
 
             var result = await _authService.LoginWithGoogleAsync(req);
 
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                Path = "/",
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.AddDays(7)
-            };
-            Response.Cookies.Append("refreshToken", result.RefreshToken ?? string.Empty, cookieOptions);
+            SetRefreshTokenCookie(result.RefreshToken ?? string.Empty);
 
             return Ok(new ApiResponse<object>(true, "Google sign-in successful.", new { AccessToken = result.AccessToken, RequiresPasswordChange = result.RequiresPasswordChange }));
         }
@@ -118,6 +112,7 @@ namespace API_v2.Controllers
             }
 
             var result = await _authService.RefreshAsync(refreshToken);
+            SetRefreshTokenCookie(result.RefreshToken ?? string.Empty);
             return Ok(new ApiResponse<object>(true, "Token refreshed successfully.", new { AccessToken = result.AccessToken }));
         }
 

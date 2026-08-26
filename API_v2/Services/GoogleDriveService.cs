@@ -183,7 +183,7 @@ namespace API_v2.Services
             }
 
             var request = service.Files.Create(fileMetadata, fileStream, string.IsNullOrWhiteSpace(mimeType) ? "application/octet-stream" : mimeType);
-            request.Fields = "id, name, webViewLink, size, mimeType";
+            request.Fields = "id, name, size, mimeType";
             request.SupportsAllDrives = true;
 
             var progress = await request.UploadAsync();
@@ -194,25 +194,14 @@ namespace API_v2.Services
             }
 
             var uploadedFile = request.ResponseBody;
-            _logger.LogInformation("File '{Name}' successfully uploaded to Google Drive with ID: {Id}", fileName, uploadedFile.Id);
+            _logger.LogInformation(
+                "File '{Name}' successfully uploaded privately to Google Drive with ID: {Id}",
+                fileName,
+                uploadedFile.Id);
 
-            try
-            {
-                var permission = new Google.Apis.Drive.v3.Data.Permission
-                {
-                    Type = "anyone",
-                    Role = "reader"
-                };
-                var permReq = service.Permissions.Create(permission, uploadedFile.Id);
-                permReq.SupportsAllDrives = true;
-                await permReq.ExecuteAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Could not set reader permission on file {FileId}", uploadedFile.Id);
-            }
-
-            return (uploadedFile.Id, uploadedFile.WebViewLink);
+            // Files remain private. Clients access content only through the
+            // authorized project download endpoint.
+            return (uploadedFile.Id, null);
         }
 
         public async Task<(Stream ContentStream, string MimeType, string FileName)> DownloadFileAsync(string fileId)
@@ -224,11 +213,32 @@ namespace API_v2.Services
             getRequest.SupportsAllDrives = true;
             var fileMetadata = await getRequest.ExecuteAsync();
 
-            var memoryStream = new MemoryStream();
-            await getRequest.DownloadAsync(memoryStream);
-            memoryStream.Position = 0;
+            // Google.Apis downloads into a caller-provided stream. Use a temporary,
+            // seekable file instead of buffering the complete payload in managed RAM.
+            // DeleteOnClose guarantees cleanup after ASP.NET disposes FileStreamResult.
+            var temporaryPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            var outputStream = new FileStream(
+                temporaryPath,
+                FileMode.CreateNew,
+                FileAccess.ReadWrite,
+                FileShare.Read,
+                bufferSize: 64 * 1024,
+                FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.DeleteOnClose);
 
-            return (memoryStream, fileMetadata.MimeType ?? "application/octet-stream", fileMetadata.Name);
+            try
+            {
+                var downloadRequest = service.Files.Get(fileId);
+                downloadRequest.SupportsAllDrives = true;
+                await downloadRequest.DownloadAsync(outputStream);
+                outputStream.Position = 0;
+
+                return (outputStream, fileMetadata.MimeType ?? "application/octet-stream", fileMetadata.Name);
+            }
+            catch
+            {
+                await outputStream.DisposeAsync();
+                throw;
+            }
         }
 
         public async Task<bool> DeleteFileAsync(string fileId, bool permanent = false)

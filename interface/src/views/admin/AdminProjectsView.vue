@@ -65,6 +65,15 @@
           </tbody>
         </table>
       </div>
+      <div v-if="projectStore.projectsTotalPages > 1" class="d-flex justify-content-center align-items-center gap-3 py-3 border-top">
+        <button class="btn btn-sm btn-outline-secondary" :disabled="projectStore.projectsPage === 1" @click="changePage(projectStore.projectsPage - 1)">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <span class="small text-muted">{{ projectStore.projectsPage }} / {{ projectStore.projectsTotalPages }}</span>
+        <button class="btn btn-sm btn-outline-secondary" :disabled="projectStore.projectsPage === projectStore.projectsTotalPages" @click="changePage(projectStore.projectsPage + 1)">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -78,8 +87,10 @@ const router = useRouter()
 const projectStore = useProjectStore()
 
 onMounted(() => {
-  projectStore.fetchProjects()
+  projectStore.fetchProjects(1, 20)
 })
+
+const changePage = (page) => projectStore.fetchProjects(page, 20)
 
 const projectsWithProgress = computed(() => {
   return projectStore.projects.map(p => {

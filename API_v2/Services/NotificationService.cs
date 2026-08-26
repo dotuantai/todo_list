@@ -23,19 +23,25 @@ namespace API_v2.Services
             _hubContext = hubContext;
         }
 
-        public async Task<List<NotificationResponse>> GetNotificationsAsync(Guid userId)
+        public async Task<PagedResponse<NotificationResponse>> GetNotificationsAsync(Guid userId, int page, int pageSize)
         {
-            var notifications = await _notificationRepo.GetNotificationsByUserIdAsync(userId);
-            return notifications.Select(n => new NotificationResponse
+            var (notifications, totalCount) = await _notificationRepo.GetNotificationsByUserIdAsync(userId, page, pageSize);
+            return new PagedResponse<NotificationResponse>
             {
-                Id = n.Id,
-                Title = n.Title,
-                Message = n.Message,
-                IsRead = n.IsRead,
-                CreatedAt = n.CreatedAt,
-                Type = n.Type,
-                ReferenceId = n.ReferenceId
-            }).ToList();
+                Items = notifications.Select(n => new NotificationResponse
+                {
+                    Id = n.Id,
+                    Title = n.Title,
+                    Message = n.Message,
+                    IsRead = n.IsRead,
+                    CreatedAt = n.CreatedAt,
+                    Type = n.Type,
+                    ReferenceId = n.ReferenceId
+                }).ToList(),
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
         }
 
         public async Task MarkAsReadAsync(Guid notificationId, Guid userId)
@@ -105,6 +111,11 @@ namespace API_v2.Services
         public async Task SendTaskDeletedAsync(Guid projectId, int taskId)
         {
             await _hubContext.Clients.Group($"Project_{projectId}").SendAsync("TaskDeleted", taskId);
+        }
+
+        public async Task SendColumnsReorderedAsync(Guid projectId, IReadOnlyList<ProjectColumnResponse> columns)
+        {
+            await _hubContext.Clients.Group($"Project_{projectId}").SendAsync("ColumnsReordered", columns);
         }
     }
 }

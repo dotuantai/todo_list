@@ -349,7 +349,7 @@
                       </div>
                       <div class="text-truncate" style="max-width: 280px;">
                         <div class="d-flex align-items-center gap-2">
-                          <!-- Click file name opens Google Drive preview directly -->
+                          <!-- Preview is loaded through the authorized backend endpoint. -->
                           <span 
                             class="fw-semibold text-body text-truncate cursor-pointer file-link d-inline-flex align-items-center gap-1.5" 
                             :title="$t('files.SCR0476', { name: file.FileName })" 
@@ -792,7 +792,7 @@
                   <span class="fw-semibold text-body small text-truncate" style="max-width: 260px;">{{ v.FileName }}</span>
                 </div>
                 <div class="d-flex align-items-center gap-1.5">
-                  <!-- Open version on Drive -->
+                  <!-- Open version through the authorized backend endpoint. -->
                   <button 
                     class="btn btn-sm btn-light bg-body border-0 rounded-2 px-2 py-0.5 fw-medium small text-success"
                     @click="handleOpenVersionPreview(v)"
@@ -975,7 +975,6 @@ const fetchExplorer = async () => {
       FolderId: f.FolderId || f.folderId,
       TaskId: f.TaskId || f.taskId,
       TaskTitle: f.TaskTitle || f.taskTitle,
-      GoogleDriveFileId: f.GoogleDriveFileId || f.googleDriveFileId,
       FileName: f.FileName || f.fileName || t('files.SCR0481'),
       FileSize: f.FileSize || f.fileSize || 0,
       MimeType: f.MimeType || f.mimeType || 'application/octet-stream',
@@ -1079,48 +1078,48 @@ const handleFileInputChange = async (e) => {
   }
 }
 
-// Build direct Google Docs/Sheets/Slides/Viewer link like Google Drive web app
-const getGoogleDriveOpenUrl = (fileOrVersion) => {
-  if (!fileOrVersion || !fileOrVersion.GoogleDriveFileId) return ''
-  const id = fileOrVersion.GoogleDriveFileId
-  const ext = getFileExtension(fileOrVersion.FileName).toLowerCase()
-
-  // Google Sheets (Excel, CSV)
-  if (['xlsx', 'xls', 'csv'].includes(ext)) {
-    return `https://docs.google.com/spreadsheets/d/${id}/edit`
-  }
-
-  // Google Docs (Word, RTF)
-  if (['docx', 'doc', 'rtf'].includes(ext)) {
-    return `https://docs.google.com/document/d/${id}/edit`
-  }
-
-  // Google Slides (PowerPoint)
-  if (['pptx', 'ppt'].includes(ext)) {
-    return `https://docs.google.com/presentation/d/${id}/edit`
-  }
-
-  // All other files (PDF, images, video, text, zip, etc.)
-  return `https://drive.google.com/file/d/${id}/view?usp=sharing`
-}
-
-// OPEN PREVIEW IN GOOGLE DRIVE
-const handleOpenFilePreview = (file) => {
-  const url = getGoogleDriveOpenUrl(file)
-  if (!url) {
+const openSecurePreview = async (file, versionId = null) => {
+  if (!file?.Id) {
     toastError(t('files.SCR0483'))
     return
   }
-  window.open(url, '_blank', 'noopener,noreferrer')
+
+  // Open synchronously so popup protection does not block the tab while the
+  // authenticated backend request is in progress.
+  const previewWindow = window.open('', '_blank')
+
+  try {
+    const response = await downloadProjectFile(projectId.value, file.Id, versionId)
+    const blob = new Blob([response.data], {
+      type: response.headers?.['content-type'] || file.MimeType || 'application/octet-stream'
+    })
+    const blobUrl = window.URL.createObjectURL(blob)
+
+    if (previewWindow) {
+      previewWindow.opener = null
+      previewWindow.location.replace(blobUrl)
+    } else {
+      window.open(blobUrl, '_blank', 'noopener,noreferrer')
+    }
+
+    window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60_000)
+  } catch (error) {
+    previewWindow?.close()
+    console.error('Secure file preview error:', error)
+    toastError(extractMessage(error, t('common.SCR0015')))
+  }
 }
 
-const handleOpenVersionPreview = (version) => {
-  const url = getGoogleDriveOpenUrl(version)
-  if (!url) {
+const handleOpenFilePreview = async (file) => {
+  await openSecurePreview(file)
+}
+
+const handleOpenVersionPreview = async (version) => {
+  if (!selectedFileForHistory.value) {
     toastError(t('files.SCR0484'))
     return
   }
-  window.open(url, '_blank', 'noopener,noreferrer')
+  await openSecurePreview(selectedFileForHistory.value, version.Id)
 }
 
 // Single Download
