@@ -55,7 +55,7 @@
     "SCR0757": "\"TutaFlow transformed how our team ships projects.\"",
     "SCR0758": "Google sign-in failed.",
     "SCR0759": "Google sign-up failed.",
-    "SCR0760": "you@example.com",
+    "SCR0760": "you{'@'}example.com",
     "SCR0761": "Enter your password"
   },
   "sidebar": {
@@ -466,7 +466,7 @@
     "SCR0985": "Scroll horizontally to see more",
     "SCR0986": "Current status distribution",
     "SCR0987": "Example: Nguyen Van A",
-    "SCR0988": "email@company.com"
+    "SCR0988": "email{'@'}company.com"
   },
   "calendar": {
     "SCR1001": "{month}/{year}",

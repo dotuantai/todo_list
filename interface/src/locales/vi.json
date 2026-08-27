@@ -55,7 +55,7 @@
     "SCR0757": "\"TutaFlow đã thay đổi hoàn toàn cách nhóm chúng tôi bàn giao dự án.\"",
     "SCR0758": "Đăng nhập bằng Google thất bại.",
     "SCR0759": "Đăng ký bằng Google thất bại.",
-    "SCR0760": "you@example.com",
+    "SCR0760": "you{'@'}example.com",
     "SCR0761": "Nhập mật khẩu của bạn"
   },
   "sidebar": {
@@ -466,7 +466,7 @@
     "SCR0985": "Trượt ngang để xem thêm",
     "SCR0986": "Tỷ lệ phân bổ trạng thái hiện tại",
     "SCR0987": "Ví dụ: Nguyễn Văn A",
-    "SCR0988": "email@company.com"
+    "SCR0988": "email{'@'}company.com"
   },
   "calendar": {
     "SCR1001": "Tháng {month}, {year}",
