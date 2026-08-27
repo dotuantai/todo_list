@@ -229,6 +229,25 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+// Automatically apply pending database migrations on startup
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var db = services.GetRequiredService<AppDbContext>();
+        Log.Information("Applying Database Migrations...");
+        db.Database.Migrate();
+        Log.Information("Database Migrations applied successfully.");
+    }
+    catch (Exception ex)
+    {
+        Log.Fatal(ex, "An error occurred while applying database migrations on startup.");
+        throw;
+    }
+}
+
 Log.Information("========== Application Started ==========");
 // Configure HTTP request pipeline middlewares in the correct order
 app.UseForwardedHeaders();
