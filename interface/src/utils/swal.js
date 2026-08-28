@@ -19,12 +19,15 @@ const commonText = (code) => localeMap[localStorage.getItem('locale') || 'vi']?.
       color: var(--bs-body-color, #1e293b) !important;
       border-radius: 18px !important;
       padding: 28px 32px 24px !important;
-      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif !important;
+      font-family: var(--font-family, 'JetBrains Mono', monospace) !important;
       box-shadow: 0 25px 70px rgba(0,0,0,.18) !important;
     }
     .swal-title {
+      font-family: var(--font-heading, 'Orbitron', monospace) !important;
       font-size: 1.15rem !important;
       font-weight: 700 !important;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
       color: var(--bs-heading-color, #0f172a) !important;
       margin-bottom: 4px !important;
     }

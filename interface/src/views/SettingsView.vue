@@ -191,13 +191,14 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { getRoleLabel } from '../utils/i18nLabels.js'
 import { useProjectStore } from '../stores/projectStore.js'
+import { useTheme } from '../composables/useTheme.js'
 import { updateProject, deleteProject, getProjectColumns, createProjectColumn, updateProjectColumn, deleteProjectColumn } from '../services/projectService.js'
 import { toastSuccess, toastError, confirm, extractMessage } from '../utils/swal.js'
 
 const router = useRouter()
 const projectStore = useProjectStore()
 const { t } = useI18n()
-const isDarkMode = ref(false)
+const { isDarkMode, applyTheme } = useTheme()
 
 const userEmail = computed(() => projectStore.currentUserEmail || 'User@example.com')
 const userInitial = computed(() => projectStore.currentInitial)
@@ -284,10 +285,7 @@ const handleDeleteColumn = async (colId) => {
 }
 
 const handleThemeToggle = () => {
-  const theme = isDarkMode.value ? 'dark' : 'light'
-  document.documentElement.setAttribute('data-bs-theme', theme)
-  localStorage.setItem('theme', theme)
-  window.dispatchEvent(new CustomEvent('theme-changed', { detail: theme }))
+  applyTheme(isDarkMode.value ? 'dark' : 'light')
   toastSuccess(t('settings.SCR0642', { mode: t(isDarkMode.value ? 'settings.SCR0643' : 'settings.SCR0644') }))
 }
 
@@ -331,8 +329,6 @@ const handleDeleteProject = async () => {
 }
 
 onMounted(() => {
-  const currentTheme = document.documentElement.getAttribute('data-bs-theme') || localStorage.getItem('theme') || 'light'
-  isDarkMode.value = (currentTheme === 'dark')
   initProjectForm()
 })
 </script>

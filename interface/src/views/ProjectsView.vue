@@ -2,16 +2,19 @@
   <div class="min-vh-100 bg-body-tertiary">
     <!-- Top Landing Header -->
     <header class="bg-body border-bottom px-4 py-3 d-flex align-items-center justify-content-between">
-      <div class="d-flex align-items-center gap-3">
-        <div class="logo-box text-white d-flex align-items-center justify-content-center fw-bold fs-5 rounded-3" style="width: 38px; height: 38px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
+      <!-- Left Brand / Logo -->
+      <div class="d-flex align-items-center gap-3 flex-grow-1" style="min-width: 0;">
+        <div class="logo-box text-white d-flex align-items-center justify-content-center fw-bold fs-5 rounded-3 flex-shrink-0" style="width: 38px; height: 38px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
           TT
         </div>
-        <div class="text-start">
-          <h1 class="mb-0 fs-5 fw-bold text-body lh-1">TutaFlow</h1>
+        <div class="text-start min-w-0">
+          <h1 class="mb-0 fs-5 fw-bold text-body lh-1 text-truncate">TutaFlow</h1>
           <p class="small text-muted mb-0 mt-1" style="font-size: 11px;">{{ $t('sidebar.SCR0008') }}</p>
         </div>
       </div>
-      <div class="d-flex align-items-center gap-3">
+
+      <!-- Quick Action Tools (Language, Theme, Notification) -->
+      <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
         <!-- Language Switcher -->
         <div class="dropdown">
           <button 
@@ -44,23 +47,29 @@
         </div>
 
         <!-- Theme Toggle -->
-        <button class="btn btn-light border-0 p-2 d-flex align-items-center justify-content-center" style="border-radius: 8px; width: 36px; height: 36px;" @click="toggleTheme" :title="$t('common.SCR0021')">
-          <i class="bi" :class="isDarkMode ? 'bi-sun-fill' : 'bi-moon-fill'"></i>
-        </button>
-        <!-- User Profile Dropdown -->
-        <div class="dropdown">
+        <ThemeToggle />
+
+        <!-- Notification Dropdown -->
+        <NotificationDropdown />
+
+        <div class="vr opacity-25 mx-1" style="height:28px"></div>
+      </div>
+
+      <!-- User Profile Dropdown: Occupies 2/10 (20%) of navbar width on desktop -->
+      <div class="account-nav-section d-flex align-items-center justify-content-end" style="flex: 0 0 20%; max-width: 20%; min-width: 170px;">
+        <div class="dropdown w-100">
           <button 
-            class="btn p-0 border-0 bg-transparent d-flex align-items-center gap-2 text-decoration-none" 
+            class="btn p-1 border-0 bg-transparent d-flex align-items-center gap-2 text-decoration-none w-100 justify-content-end" 
             type="button" 
             data-bs-toggle="dropdown" 
             aria-expanded="false"
             style="outline: none; box-shadow: none;"
           >
-            <div class="user-avatar-small bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width: 36px; height: 36px; font-size: 14px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
+            <div class="user-avatar-small bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle flex-shrink-0" style="width: 36px; height: 36px; font-size: 14px; background: linear-gradient(135deg, #4f46e5, #6366f1) !important;">
               {{ projectStore.currentInitial }}
             </div>
-            <div class="d-none d-md-block text-start" style="line-height: 1.2;">
-              <div class="fw-semibold small text-body text-truncate" style="max-width: 150px;">{{ projectStore.currentUserEmail }}</div>
+            <div class="d-none d-md-block text-start min-w-0 flex-grow-1" style="line-height: 1.2; overflow: hidden;">
+              <div class="fw-semibold small text-body text-truncate" :title="projectStore.currentUserEmail">{{ projectStore.currentUserEmail }}</div>
               <div class="text-muted" style="font-size: 10px; margin-top: 1px;">{{ $t('common.SCR0030') }}</div>
             </div>
           </button>
@@ -206,6 +215,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import NotificationDropdown from '../components/NotificationDropdown.vue'
+import ThemeToggle from '../components/ThemeToggle.vue'
 import { getProjects, createProject } from '../services/projectService.js'
 import { logout } from '../services/authService.js'
 import { useProjectStore } from '../stores/projectStore.js'
@@ -219,15 +230,6 @@ const { t, locale } = useI18n()
 const changeLocale = (lang) => {
   locale.value = lang
   localStorage.setItem('locale', lang)
-}
-
-const isDarkMode = ref(document.documentElement.getAttribute('data-bs-theme') === 'dark')
-
-const toggleTheme = () => {
-  isDarkMode.value = !isDarkMode.value
-  const theme = isDarkMode.value ? 'dark' : 'light'
-  document.documentElement.setAttribute('data-bs-theme', theme)
-  localStorage.setItem('theme', theme)
 }
 
 const projectsWithProgress = ref([])
