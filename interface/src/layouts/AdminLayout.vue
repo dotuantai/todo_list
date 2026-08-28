@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex vh-100 overflow-hidden bg-body-tertiary" style="font-family: 'Nunito Sans', sans-serif;">
+  <div class="d-flex vh-100 overflow-hidden bg-body-tertiary">
     <!-- Admin Sidebar -->
     <nav class="d-flex flex-column flex-shrink-0 bg-white border-end" style="width: 260px; height: 100vh; z-index: 1045;">
       <div class="px-4 py-4 d-flex align-items-center gap-3">
@@ -65,8 +65,10 @@
     <main class="flex-grow-1 d-flex flex-column overflow-hidden bg-body-tertiary">
       <!-- Admin Header -->
       <header class="px-4 py-3 border-bottom d-flex justify-content-between align-items-center flex-shrink-0 bg-white" style="height: 70px;">
-        <h2 class="h5 mb-0 fw-bold text-dark">{{ $t('admin.SCR0907') }}</h2>
-        <div class="d-flex align-items-center gap-3">
+        <h2 class="h5 mb-0 fw-bold text-dark flex-grow-1 text-truncate" style="min-width: 0;">{{ $t('admin.SCR0907') }}</h2>
+        
+        <!-- Tools (Language, Theme, Notification) -->
+        <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
           <!-- Language Switcher -->
           <div class="dropdown">
             <button 
@@ -98,15 +100,25 @@
             </ul>
           </div>
 
-          <div class="text-end lh-1 d-none d-sm-block">
-            <div class="fw-semibold text-body small">{{ projectStore.currentUserEmail }}</div>
-            <div class="text-muted" style="font-size: 11px;">{{ $t('admin.SCR0908') }}</div>
-          </div>
-          
-          <div class="dropdown">
-            <button class="btn btn-link p-0 border-0 text-decoration-none d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <div class="user-avatar-small text-white d-flex align-items-center justify-content-center fw-bold rounded-circle shadow-sm" style="width: 38px; height: 38px; font-size: 15px; background-color: #6366F1 !important; transition: transform 0.2s;">
+          <!-- Theme Toggle -->
+          <ThemeToggle />
+
+          <!-- Notification Dropdown -->
+          <NotificationDropdown />
+
+          <div class="vr opacity-25 mx-1" style="height:28px"></div>
+        </div>
+
+        <!-- Admin Account Section: Occupies 2/10 (20%) width on desktop -->
+        <div class="account-nav-section d-flex align-items-center justify-content-end" style="flex: 0 0 20%; max-width: 20%; min-width: 170px;">
+          <div class="dropdown w-100">
+            <button class="btn p-1 border-0 text-decoration-none d-flex align-items-center gap-2 w-100 justify-content-end" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <div class="user-avatar-small text-white d-flex align-items-center justify-content-center fw-bold rounded-circle shadow-sm flex-shrink-0" style="width: 38px; height: 38px; font-size: 15px; background-color: #6366F1 !important; transition: transform 0.2s;">
                 {{ projectStore.currentInitial }}
+              </div>
+              <div class="text-start lh-1 d-none d-sm-block min-w-0 flex-grow-1" style="overflow: hidden;">
+                <div class="fw-semibold text-body small text-truncate" :title="projectStore.currentUserEmail">{{ projectStore.currentUserEmail }}</div>
+                <div class="text-muted text-truncate" style="font-size: 11px; margin-top: 2px;">{{ $t('admin.SCR0908') }}</div>
               </div>
             </button>
             <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" style="border-radius: 12px; min-width: 220px; padding: 8px 0;">
@@ -143,6 +155,8 @@ import { useProjectStore } from '../stores/projectStore.js'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { logout } from '../services/authService.js'
+import ThemeToggle from '../components/ThemeToggle.vue'
+import NotificationDropdown from '../components/NotificationDropdown.vue'
 
 const projectStore = useProjectStore()
 const router = useRouter()

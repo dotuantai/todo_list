@@ -8,8 +8,8 @@
       <!-- Top Navbar -->
       <header class="top-navbar px-3 px-md-4 d-flex align-items-center justify-content-between border-bottom bg-body flex-shrink-0" style="height: 60px;">
         
-        <!-- Toggle button and logo on mobile -->
-        <div class="d-flex align-items-center">
+        <!-- Left Side: Toggle button and logo on mobile -->
+        <div class="d-flex align-items-center flex-grow-1" style="min-width: 0;">
           <button 
             class="btn btn-light border-0 p-2 d-lg-none me-2 rounded-2" 
             type="button" 
@@ -23,12 +23,12 @@
             <div class="bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-2" :style="{ background: getProjectColor(projectStore.currentProject?.Name) }" style="width: 28px; height: 28px; font-size: 12px;">
               {{ projectStore.currentProject ? projectStore.currentProject.Name[0].toUpperCase() : 'P' }}
             </div>
-            <span class="fw-bold text-body mb-0 fs-6">{{ projectStore.currentProject?.Name || $t('common.SCR0035') }}</span>
+            <span class="fw-bold text-body mb-0 fs-6 text-truncate">{{ projectStore.currentProject?.Name || $t('common.SCR0035') }}</span>
           </div>
         </div>
 
-        <!-- Right Side: Profile & notification & language -->
-        <div class="d-flex align-items-center gap-2 ms-auto">
+        <!-- Right Side: Tools (Language, Theme, Notification) -->
+        <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
           <!-- Language Switcher -->
           <div class="dropdown">
             <button 
@@ -60,28 +60,33 @@
             </ul>
           </div>
 
+          <!-- Theme Switcher -->
+          <ThemeToggle />
+
           <!-- Notification Dropdown -->
           <NotificationDropdown />
           
           <div class="vr opacity-25 mx-1" style="height:28px"></div>
-          
-          <!-- User Profile Dropdown -->
-          <div class="dropdown">
+        </div>
+
+        <!-- User Profile Dropdown: Occupies 2/10 (20%) of navbar width on desktop -->
+        <div class="account-nav-section d-flex align-items-center justify-content-end" style="flex: 0 0 20%; max-width: 20%; min-width: 170px;">
+          <div class="dropdown w-100">
             <button 
-              class="btn p-0 border-0 bg-transparent d-flex align-items-center gap-2 text-decoration-none" 
+              class="btn p-1 border-0 bg-transparent d-flex align-items-center gap-2 text-decoration-none w-100 justify-content-end" 
               type="button" 
               data-bs-toggle="dropdown" 
               aria-expanded="false"
               style="outline: none; box-shadow: none;"
             >
-              <div class="user-avatar-small bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle" style="width: 36px; height: 36px; font-size: 14px; background: linear-gradient(135deg, #059669, #10b981) !important;">
+              <div class="user-avatar-small bg-primary text-white d-flex align-items-center justify-content-center fw-bold rounded-circle flex-shrink-0" style="width: 36px; height: 36px; font-size: 14px; background: linear-gradient(135deg, #059669, #10b981) !important;">
                 {{ projectStore.currentInitial }}
               </div>
               
-              <div class="d-none d-md-block text-start lh-sm">
-                <div class="fw-semibold small text-body text-truncate" style="max-width: 150px;" :title="projectStore.currentUserEmail">{{ projectStore.currentUserEmail }}</div>
+              <div class="d-none d-md-block text-start lh-sm min-w-0 flex-grow-1" style="overflow: hidden;">
+                <div class="fw-semibold small text-body text-truncate" :title="projectStore.currentUserEmail">{{ projectStore.currentUserEmail }}</div>
                 <div class="text-muted" style="font-size:10px; margin-top:2px" v-if="projectStore.currentProject">
-                  <span class="badge text-uppercase font-monospace" :class="getRoleBadgeClass(projectStore.userRole)" style="font-size: 8px; padding: 2px 4px;">{{ projectStore.userRole }}</span>
+                  <span class="badge text-uppercase font-monospace text-truncate d-inline-block" :class="getRoleBadgeClass(projectStore.userRole)" style="font-size: 8px; padding: 2px 4px; max-width: 100%;">{{ projectStore.userRole }}</span>
                 </div>
               </div>
             </button>
@@ -126,13 +131,16 @@ import { useI18n } from 'vue-i18n'
 import TaskModal from './components/TaskModal.vue'
 import Sidebar from './components/Sidebar.vue'
 import NotificationDropdown from './components/NotificationDropdown.vue'
+import ThemeToggle from './components/ThemeToggle.vue'
 import { logout } from './services/authService.js'
 import { useProjectStore } from './stores/projectStore.js'
 import { useSignalR } from './composables/useSignalR.js'
+import { useTheme } from './composables/useTheme.js'
 
 const router = useRouter()
 const { locale } = useI18n()
 const { initSignalR, stopSignalR } = useSignalR()
+const { initTheme } = useTheme()
 
 const changeLocale = (lang) => {
   locale.value = lang
@@ -189,16 +197,8 @@ const getProjectColor = (name) => {
   return colors[index]
 }
 
-const getPreferredTheme = () => {
-  const saved = localStorage.getItem('theme')
-  if (saved) return saved
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-  return prefersDark ? 'dark' : 'light'
-}
-
 onMounted(() => {
-  const currentTheme = getPreferredTheme()
-  document.documentElement.setAttribute('data-bs-theme', currentTheme)
+  initTheme()
   projectStore.decodeToken()
   if (projectStore.isAuthenticated) {
     initSignalR()

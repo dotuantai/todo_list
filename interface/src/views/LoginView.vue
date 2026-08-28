@@ -1,11 +1,11 @@
 <template>
   <div class="auth-shell min-vh-100 d-flex align-items-stretch position-relative">
-    <!-- Floating Language Switcher -->
-    <div class="position-absolute top-0 end-0 p-3" style="z-index: 1050;">
+    <!-- Floating Language & Theme Switcher -->
+    <div class="position-absolute top-0 end-0 p-3 d-flex align-items-center gap-2" style="z-index: 1050;">
       <div class="dropdown">
         <button 
           class="btn btn-light p-0 border rounded-3 d-flex align-items-center justify-content-center" 
-          style="width: 36px; height: 36px; outline: none; box-shadow: none;"
+          style="width: 36px; height: 36px; outline: none; box-shadow: none;" 
           type="button"
           data-bs-toggle="dropdown"
           aria-expanded="false"
@@ -31,6 +31,8 @@
           </li>
         </ul>
       </div>
+
+      <ThemeToggle />
     </div>
 
 
@@ -256,6 +258,7 @@ import { useI18n } from 'vue-i18n'
 import { login as apiLogin, googleLogin } from '../services/authService.js'
 import { toastError, extractMessage } from '../utils/swal.js'
 import { useProjectStore } from '../stores/projectStore.js'
+import ThemeToggle from '../components/ThemeToggle.vue'
 
 const router = useRouter()
 const { locale, t } = useI18n()

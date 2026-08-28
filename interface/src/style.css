@@ -1,8 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  /* Font Family - Premium Combination */
-  --font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Font Family - Matching Dark Mode Orbitron & JetBrains Mono Stack */
+  --font-family: 'JetBrains Mono', 'Plus Jakarta Sans', monospace;
+  --font-heading: 'Orbitron', 'Share Tech Mono', monospace;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-accent: 'Share Tech Mono', monospace;
   
   /* 70% Dominant Canvas (Light Mode - Minty Off-White) */
   --bs-body-bg: #f5fbfb;
@@ -62,67 +65,99 @@
 }
 
 [data-bs-theme="dark"] {
-  /* ── Canvas (70%) ─────────────────────────────────────────────────────────
-     Soft slate-teal dark — NOT pitch black. Feels like a premium app at night.
-     Inspired by Linear, Vercel, and Raycast dark themes.
-  ──────────────────────────────────────────────────────────────────────── */
-  --bs-body-bg: #0f1a19;
-  --bs-body-bg-rgb: 15, 26, 25;
-  --bs-body-color: #d4e8e5;
-  --bs-heading-color: #eef6f5;
+  /* ── Cyberpunk / Glitch Design Tokens ─────────────────────────────────────
+     High-Tech, Low-Life: Void Black (#0a0a0f) + Electric Matrix Green (#00ff88)
+     Hot Magenta (#ff00ff) + Electric Cyan (#00d4ff)
+  ────────────────────────────────────────────────────────────────────────── */
+  --font-family: 'JetBrains Mono', 'Plus Jakarta Sans', monospace;
+  --font-heading: 'Orbitron', 'Share Tech Mono', monospace;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-accent: 'Share Tech Mono', monospace;
 
-  /* ── Structural Surfaces (30%) ────────────────────────────────────────── */
-  --bs-card-bg: #162422;
-  --bs-card-color: #d4e8e5;
-  --bs-secondary-bg: #1e3330;
-  --bs-secondary-bg-rgb: 30, 51, 48;
-  --bs-tertiary-bg: #274440;
-  --bs-tertiary-bg-rgb: 39, 68, 64;
+  /* ── Canvas & Surfaces ─────────────────────────────────────────────────── */
+  --bs-body-bg: #0a0a0f;
+  --bs-body-bg-rgb: 10, 10, 15;
+  --bs-body-color: #e0e0e0;
+  --bs-heading-color: #00ff88;
+
+  /* ── Structural Surfaces ──────────────────────────────────────────────── */
+  --bs-card-bg: #12121a;
+  --bs-card-color: #e0e0e0;
+  --bs-secondary-bg: #1c1c2e;
+  --bs-secondary-bg-rgb: 28, 28, 46;
+  --bs-tertiary-bg: #242438;
+  --bs-tertiary-bg-rgb: 36, 36, 56;
+
+  /* ── Neon Highlights ──────────────────────────────────────────────────── */
+  --bs-primary: #00ff88;
+  --bs-primary-hover: #00cc6a;
+  --bs-primary-rgb: 0, 255, 136;
+  --accent-secondary: #ff00ff;
+  --accent-tertiary: #00d4ff;
+  --destructive: #ff3366;
+
+  --bs-danger: #ff3366;
+  --bs-danger-rgb: 255, 51, 102;
+  --bs-info: #00d4ff;
+  --bs-info-rgb: 0, 212, 255;
+  --bs-warning: #ffb703;
+  --bs-warning-rgb: 255, 183, 3;
+  --bs-success: #00ff88;
+  --bs-success-rgb: 0, 255, 136;
 
   /* ── Borders ─────────────────────────────────────────────────────────── */
-  --bs-border-color: #2c4542;
-  --bs-border-color-translucent: rgba(255, 255, 255, 0.05);
+  --bs-border-color: #2a2a3a;
+  --bs-border-color-translucent: rgba(0, 255, 136, 0.12);
 
   /* ── Sidebar ─────────────────────────────────────────────────────────── */
-  --sidebar-bg: #0f1a19;
-  --sidebar-border: #2c4542;
-  --sidebar-text: #7fa9a5;
-  --sidebar-text-active: #eef6f5;
-  --sidebar-active-bg: rgba(13, 148, 136, 0.15);
+  --sidebar-bg: #0a0a0f;
+  --sidebar-border: #2a2a3a;
+  --sidebar-text: #8b9bb4;
+  --sidebar-text-active: #00ff88;
+  --sidebar-active-bg: rgba(0, 255, 136, 0.1);
 
   /* ── Links ───────────────────────────────────────────────────────────── */
-  --bs-link-color: #2dd4bf;
-  --bs-link-hover-color: #5eead4;
+  --bs-link-color: #00ff88;
+  --bs-link-hover-color: #00d4ff;
 
   /* ── Scrollbars ──────────────────────────────────────────────────────── */
-  --scrollbar-thumb: #2c4542;
-  --scrollbar-thumb-hover: #3a5854;
+  --scrollbar-thumb: #2a2a3a;
+  --scrollbar-thumb-hover: #00ff88;
 
-  /* ── Shadows (softer, teal-tinted) ───────────────────────────────────── */
-  --shadow-sm:      0 1px 3px 0 rgba(0, 0, 0, 0.25);
-  --shadow-md:      0 4px 8px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
-  --shadow-lg:      0 10px 20px -4px rgba(0, 0, 0, 0.35), 0 4px 8px -4px rgba(0, 0, 0, 0.25);
-  --shadow-premium: 0 20px 30px -8px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
-  --shadow-card-hover: 0 12px 24px -8px rgba(13, 148, 136, 0.2), 0 0 0 1px rgba(13, 148, 136, 0.18);
+  /* ── Neon Glow System ────────────────────────────────────────────────── */
+  --box-shadow-neon: 0 0 5px #00ff88, 0 0 12px rgba(0, 255, 136, 0.4);
+  --box-shadow-neon-sm: 0 0 3px #00ff88, 0 0 6px rgba(0, 255, 136, 0.3);
+  --box-shadow-neon-lg: 0 0 10px #00ff88, 0 0 20px rgba(0, 255, 136, 0.5), 0 0 40px rgba(0, 255, 136, 0.25);
+  --box-shadow-neon-secondary: 0 0 5px #ff00ff, 0 0 15px rgba(255, 0, 255, 0.4);
+  --box-shadow-neon-tertiary: 0 0 5px #00d4ff, 0 0 15px rgba(0, 212, 255, 0.4);
 
-  /* ── Status Colors (Dark Mode) ───────────────────────────────────────── */
-  --status-todo-color:          #94a3b8;
-  --status-todo-bg-light:       #1e2a38;
-  --status-todo-bg-mid:         #2a3d52;
+  --shadow-sm:      0 1px 3px 0 rgba(0, 0, 0, 0.6);
+  --shadow-md:      0 4px 10px -1px rgba(0, 0, 0, 0.8), 0 0 1px rgba(0, 255, 136, 0.2);
+  --shadow-lg:      0 10px 25px -4px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 255, 136, 0.3);
+  --shadow-premium: 0 0 20px rgba(0, 255, 136, 0.08), 0 20px 35px -8px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(0, 255, 136, 0.18);
+  --shadow-card-hover: 0 0 15px rgba(0, 255, 136, 0.25), 0 12px 24px -8px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(0, 255, 136, 0.5);
 
-  --status-inprogress-color:    #38bdf8;
-  --status-inprogress-bg-light: #0c3650;
-  --status-inprogress-bg-mid:   #0369a1;
+  /* ── Status Colors (Cyberpunk Neon) ──────────────────────────────────── */
+  --status-todo-color:          #8b9bb4;
+  --status-todo-bg-light:       #161824;
+  --status-todo-bg-mid:         #25283b;
 
-  --status-done-color:          #34d399;
-  --status-done-bg-light:       #0d3328;
-  --status-done-bg-mid:         #0d9488;
+  --status-inprogress-color:    #00d4ff;
+  --status-inprogress-bg-light: rgba(0, 212, 255, 0.12);
+  --status-inprogress-bg-mid:   rgba(0, 212, 255, 0.25);
 
-  --status-closed-color:        #fb923c;
-  --status-closed-bg-light:     #3d1f0a;
-  --status-closed-bg-mid:       #c2410c;
+  --status-done-color:          #00ff88;
+  --status-done-bg-light:       rgba(0, 255, 136, 0.12);
+  --status-done-bg-mid:         rgba(0, 255, 136, 0.25);
+
+  --status-closed-color:        #ff00ff;
+  --status-closed-bg-light:     rgba(255, 0, 255, 0.12);
+  --status-closed-bg-mid:       rgba(255, 0, 255, 0.25);
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   GLOBAL BASE STYLES
+   ══════════════════════════════════════════════════════════════════════════ */
 body {
   margin: 0;
   padding: 0;
@@ -131,6 +166,82 @@ body {
   color: var(--bs-body-color);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Dark Mode Scanline & Circuit Grid ─────────────────────────────────── */
+[data-bs-theme="dark"] body {
+  background-image:
+    linear-gradient(rgba(0, 255, 136, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 136, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+[data-bs-theme="dark"] body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.25) 2px,
+    rgba(0, 0, 0, 0.25) 4px
+  );
+  pointer-events: none;
+  z-index: 99999;
+  opacity: 0.35;
+}
+
+/* ── Global Typography (Orbitron Headings & Monospace Labels) ────────── */
+h1, h2, h3, h4, .h1, .h2, .h3, .h4 {
+  font-family: 'Orbitron', 'Share Tech Mono', monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+h5, h6, .h5, .h6 {
+  font-family: 'Orbitron', 'Share Tech Mono', monospace;
+  letter-spacing: 0.04em;
+}
+
+/* ── Cyberpunk Chamfered Utility Classes ───────────────────────────────── */
+.cyber-chamfer {
+  clip-path: polygon(
+    0 10px, 10px 0,
+    calc(100% - 10px) 0, 100% 10px,
+    100% calc(100% - 10px), calc(100% - 10px) 100%,
+    10px 100%, 0 calc(100% - 10px)
+  );
+}
+
+.cyber-chamfer-sm {
+  clip-path: polygon(
+    0 5px, 5px 0,
+    calc(100% - 5px) 0, 100% 5px,
+    100% calc(100% - 5px), calc(100% - 5px) 100%,
+    5px 100%, 0 calc(100% - 5px)
+  );
+}
+
+/* ── Keyframe Animations ──────────────────────────────────────────────── */
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+@keyframes glitch {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(2px, -2px); }
+  60% { transform: translate(-1px, -1px); }
+  80% { transform: translate(1px, 1px); }
+}
+
+@keyframes rgbShift {
+  0%, 100% { text-shadow: -1.5px 0 #ff00ff, 1.5px 0 #00d4ff; }
+  50% { text-shadow: 1.5px 0 #ff00ff, -1.5px 0 #00d4ff; }
 }
 
 /* Custom Scrollbars */
@@ -203,6 +314,42 @@ nav.offcanvas-lg .border-top {
   background-color: rgba(239, 68, 68, 0.08) !important;
 }
 
+/* Dark Mode Sidebar Overrides */
+[data-bs-theme="dark"] .sidebar-link {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.02em;
+}
+[data-bs-theme="dark"] .sidebar-link:hover {
+  color: #00ff88 !important;
+  background-color: rgba(0, 255, 136, 0.08) !important;
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+}
+[data-bs-theme="dark"] .sidebar-link:hover i {
+  color: #00ff88 !important;
+  filter: drop-shadow(0 0 4px #00ff88);
+}
+[data-bs-theme="dark"] .active-project {
+  background: rgba(0, 255, 136, 0.12) !important;
+  color: #00ff88 !important;
+  border-left: 3px solid #00ff88 !important;
+  box-shadow: inset 0 0 12px rgba(0, 255, 136, 0.08);
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+}
+[data-bs-theme="dark"] .active-project i,
+[data-bs-theme="dark"] .active-project span {
+  color: #00ff88 !important;
+}
+[data-bs-theme="dark"] .sidebar-link-danger {
+  color: #ff3366 !important;
+}
+[data-bs-theme="dark"] .sidebar-link-danger i {
+  color: #ff3366 !important;
+}
+[data-bs-theme="dark"] .sidebar-link-danger:hover {
+  background-color: rgba(255, 51, 102, 0.1) !important;
+  text-shadow: 0 0 8px rgba(255, 51, 102, 0.5);
+}
+
 /* Mobile offcanvas close button adjustment in dark mode */
 [data-bs-theme="dark"] nav.offcanvas-lg .btn-close {
   filter: invert(1);
@@ -212,7 +359,7 @@ nav.offcanvas-lg .border-top {
 header,
 .top-navbar {
   position: relative !important;
-  z-index: 1025 !important; /* Ensure it stays higher than page content card stacking context */
+  z-index: 1025 !important;
   backdrop-filter: blur(12px);
   background-color: rgba(var(--bs-body-bg-rgb, 245, 251, 251), 0.8) !important;
   border-bottom: 1px solid var(--bs-border-color) !important;
@@ -220,7 +367,9 @@ header,
 
 [data-bs-theme="dark"] header,
 [data-bs-theme="dark"] .top-navbar {
-  background-color: rgba(var(--bs-body-bg-rgb, 15, 26, 25), 0.85) !important;
+  background-color: rgba(10, 10, 15, 0.9) !important;
+  border-bottom: 1px solid #2a2a3a !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
 }
 
 /* Dropdowns Z-index alignment */
@@ -228,7 +377,7 @@ header,
   z-index: 1060 !important;
 }
 
-/* Buttons Styling Override */
+/* Buttons Styling */
 .btn {
   font-family: var(--font-family);
   font-weight: 500;
@@ -277,7 +426,59 @@ header,
   color: var(--bs-body-color) !important;
 }
 
-/* Card Styling Override */
+/* Dark Mode Button Overrides (Cyberpunk) */
+[data-bs-theme="dark"] .btn {
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.85rem;
+}
+[data-bs-theme="dark"] .btn-primary {
+  background: #00ff88 !important;
+  color: #0a0a0f !important;
+  font-weight: 700 !important;
+  border: 1px solid #00ff88 !important;
+  box-shadow: var(--box-shadow-neon-sm) !important;
+}
+[data-bs-theme="dark"] .btn-primary:hover {
+  background: #00cc6a !important;
+  color: #000000 !important;
+  box-shadow: var(--box-shadow-neon) !important;
+  transform: translateY(-1px);
+}
+[data-bs-theme="dark"] .btn-outline-secondary {
+  border-color: #2a2a3a !important;
+  color: #e0e0e0 !important;
+  background: #12121a !important;
+}
+[data-bs-theme="dark"] .btn-outline-secondary:hover {
+  border-color: #00ff88 !important;
+  color: #00ff88 !important;
+  box-shadow: var(--box-shadow-neon-sm) !important;
+}
+[data-bs-theme="dark"] .btn-light {
+  background-color: #1c1c2e !important;
+  border: 1px solid #2a2a3a !important;
+  color: #e0e0e0 !important;
+}
+[data-bs-theme="dark"] .btn-light:hover {
+  background-color: #242438 !important;
+  border-color: #00d4ff !important;
+  color: #00d4ff !important;
+  box-shadow: var(--box-shadow-neon-tertiary) !important;
+}
+[data-bs-theme="dark"] .btn-outline-danger {
+  border-color: #ff3366 !important;
+  color: #ff3366 !important;
+  background: transparent !important;
+}
+[data-bs-theme="dark"] .btn-outline-danger:hover {
+  background-color: #ff3366 !important;
+  color: #0a0a0f !important;
+  box-shadow: 0 0 10px rgba(255, 51, 102, 0.4) !important;
+}
+
+/* Card Styling */
 .card {
   background-color: var(--bs-card-bg);
   border: 1px solid var(--bs-border-color) !important;
@@ -313,7 +514,30 @@ header,
   cursor: grabbing !important;
 }
 
-/* Form Inputs Styling Override */
+/* Dark Mode Card Overrides */
+[data-bs-theme="dark"] .card {
+  background-color: #12121a;
+  border: 1px solid #2a2a3a !important;
+  box-shadow: var(--shadow-md) !important;
+}
+[data-bs-theme="dark"] .project-card:hover {
+  transform: translateY(-3px);
+  border-color: #00ff88 !important;
+  box-shadow: var(--shadow-card-hover) !important;
+}
+[data-bs-theme="dark"] .task-tag-card {
+  background-color: #12121a;
+  border: 1px solid #2a2a3a !important;
+  border-top-width: 3px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6) !important;
+}
+[data-bs-theme="dark"] .task-tag-card:hover {
+  transform: translateY(-2px);
+  border-color: #00ff88 !important;
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.25), 0 4px 12px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Form Inputs Styling */
 .form-control,
 .form-select {
   font-family: var(--font-family);
@@ -340,8 +564,30 @@ header,
   transition: all 0.2s ease;
 }
 
+/* Dark Mode Form Inputs Overrides */
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select {
+  background-color: #12121a;
+  border-color: #2a2a3a !important;
+  color: #e0e0e0;
+  font-family: 'JetBrains Mono', monospace;
+}
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-select:focus {
+  background-color: #161622;
+  border-color: #00ff88 !important;
+  box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2), var(--box-shadow-neon-sm) !important;
+  color: #ffffff;
+}
+[data-bs-theme="dark"] .input-group-text {
+  background-color: #1c1c2e;
+  border-color: #2a2a3a !important;
+  color: #8b9bb4;
+}
+
 /* Tables Custom Overlay */
 .table {
+  font-family: var(--font-family);
   color: var(--bs-body-color);
   background-color: transparent !important;
   border: none !important;
@@ -353,18 +599,33 @@ header,
 .table-light {
   --bs-table-bg: var(--bs-secondary-bg) !important;
   --bs-table-color: var(--bs-body-color) !important;
+  font-family: 'Orbitron', 'Share Tech Mono', monospace;
   font-weight: 600;
   text-transform: uppercase;
   font-size: 11px;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   color: #64748b !important;
-}
-[data-bs-theme="dark"] .table-light {
-  --bs-table-bg: #162422 !important;
-  --bs-table-color: #7fa9a5 !important;
 }
 .table-hover tbody tr:hover {
   background-color: rgba(13, 148, 136, 0.03) !important;
+}
+
+/* Dark Mode Tables Overrides */
+[data-bs-theme="dark"] .table {
+  font-family: 'JetBrains Mono', monospace;
+}
+[data-bs-theme="dark"] .table-light {
+  --bs-table-bg: #161622 !important;
+  --bs-table-color: #00ff88 !important;
+  font-family: 'Orbitron', 'Share Tech Mono', monospace;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid #2a2a3a !important;
+}
+[data-bs-theme="dark"] .table-hover tbody tr:hover {
+  background-color: rgba(0, 255, 136, 0.04) !important;
+}
+[data-bs-theme="dark"] .table > :not(caption) > * > * {
+  border-bottom: 1px solid #2a2a3a !important;
 }
 
 /* Modals Override */
@@ -387,6 +648,20 @@ header,
   background-color: var(--bs-secondary-bg) !important;
 }
 
+/* Dark Mode Modals Overrides */
+[data-bs-theme="dark"] .modal-content {
+  background-color: #12121a;
+  border: 1px solid #2a2a3a !important;
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.1), 0 25px 50px -12px rgba(0, 0, 0, 0.9) !important;
+}
+[data-bs-theme="dark"] .modal-header {
+  border-bottom: 1px solid #2a2a3a !important;
+}
+[data-bs-theme="dark"] .modal-footer {
+  background-color: #0e0e16 !important;
+  border-top: 1px solid #2a2a3a !important;
+}
+
 /* Kanban Board Styling */
 .kanban-col {
   background-color: rgba(var(--bs-secondary-bg-rgb, 235, 245, 244), 0.55) !important;
@@ -397,11 +672,11 @@ header,
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04) !important;
 }
 
-/* Dark mode kanban column — explicit solid bg for layered depth */
+/* Dark mode kanban column — Cyberpunk HUD panel */
 [data-bs-theme="dark"] .kanban-col {
-  background-color: #1a2e2b !important;
-  border-color: #344e4b !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.02) !important;
+  background-color: #0e0e16 !important;
+  border: 1px solid #2a2a3a !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(0, 255, 136, 0.05) !important;
 }
 
 .kanban-col--dragover {
@@ -410,13 +685,26 @@ header,
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1) !important;
 }
 
-/* Badges Styling Override */
+[data-bs-theme="dark"] .kanban-col--dragover {
+  background-color: rgba(0, 255, 136, 0.05) !important;
+  border-color: #00ff88 !important;
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3) !important;
+}
+
+/* Badges Styling */
 .badge {
+  font-family: 'JetBrains Mono', monospace;
   font-weight: 600;
   border-radius: var(--radius-sm);
   padding: 4px 8px;
   font-size: 11px;
   border: none !important;
+  letter-spacing: 0.05em;
+}
+
+[data-bs-theme="dark"] .badge {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em;
 }
 
 /* Notification and dropdowns styles */
@@ -437,6 +725,19 @@ header,
   color: var(--bs-heading-color, inherit);
 }
 
+[data-bs-theme="dark"] .dropdown-menu {
+  background-color: #12121a !important;
+  border: 1px solid #2a2a3a !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 255, 136, 0.1) !important;
+}
+[data-bs-theme="dark"] .dropdown-item {
+  color: #e0e0e0;
+}
+[data-bs-theme="dark"] .dropdown-item:hover {
+  background-color: rgba(0, 255, 136, 0.1) !important;
+  color: #00ff88 !important;
+}
+
 /* SweetAlert customization */
 .swal2-popup {
   font-family: var(--font-family) !important;
@@ -447,6 +748,9 @@ header,
   box-shadow: var(--shadow-premium) !important;
 }
 .swal2-title {
+  font-family: 'Orbitron', 'Share Tech Mono', monospace !important;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--bs-heading-color, #0f1a1a) !important;
 }
 .swal2-confirm {
@@ -463,6 +767,30 @@ header,
   box-shadow: none !important;
 }
 
+/* Dark Mode SweetAlert Overrides (Cyberpunk) */
+[data-bs-theme="dark"] .swal2-popup {
+  background-color: #12121a !important;
+  border: 1px solid #00ff88 !important;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.25), 0 20px 40px rgba(0, 0, 0, 0.9) !important;
+}
+[data-bs-theme="dark"] .swal2-title {
+  font-family: 'Orbitron', monospace !important;
+  color: #00ff88 !important;
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+}
+[data-bs-theme="dark"] .swal2-confirm {
+  background: #00ff88 !important;
+  color: #0a0a0f !important;
+  font-weight: 700 !important;
+  border: 1px solid #00ff88 !important;
+  box-shadow: var(--box-shadow-neon-sm) !important;
+}
+[data-bs-theme="dark"] .swal2-cancel {
+  background: #1c1c2e !important;
+  color: #e0e0e0 !important;
+  border-color: #2a2a3a !important;
+}
+
 /* Interactive elements pointer */
 .interactive,
 [role="button"],
@@ -470,3 +798,4 @@ header,
 .sidebar-link {
   cursor: pointer;
 }
+
