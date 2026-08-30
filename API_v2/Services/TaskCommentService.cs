@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using API_v2.Datas;
+using API_v2.Exceptions;
 using API_v2.Models;
 using API_v2.Models.DTOs;
+using API_v2.Repositories.IRepositories;
 using API_v2.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace API_v2.Services
@@ -18,16 +18,25 @@ namespace API_v2.Services
             @"(?<![\w@])@(?<email>[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,})",
             RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-        private readonly AppDbContext _context;
+        private readonly ITaskRepository _taskRepository;
+        private readonly ITaskCommentRepository _commentRepository;
+        private readonly IProjectRepository _projectRepository;
+        private readonly IUserRepository _userRepository;
         private readonly INotificationService _notificationService;
         private readonly ILogger<TaskCommentService> _logger;
 
         public TaskCommentService(
-            AppDbContext context,
+            ITaskRepository taskRepository,
+            ITaskCommentRepository commentRepository,
+            IProjectRepository projectRepository,
+            IUserRepository userRepository,
             INotificationService notificationService,
             ILogger<TaskCommentService> logger)
         {
-            _context = context;
+            _taskRepository = taskRepository;
+            _commentRepository = commentRepository;
+            _projectRepository = projectRepository;
+            _userRepository = userRepository;
             _notificationService = notificationService;
             _logger = logger;
         }
@@ -48,26 +57,17 @@ namespace API_v2.Services
                 return;
             }
 
-            var task = await _context.Tasks
-                .AsNoTracking()
-                .Where(t => t.Id == taskId)
-                .Select(t => new { t.ProjectId, t.Title })
-                .FirstOrDefaultAsync();
+            var task = await _taskRepository.GetByIdAsync(taskId);
 
             if (task?.ProjectId == null)
             {
                 return;
             }
 
-            var recipients = await _context.ProjectMembers
-                .AsNoTracking()
-                .Where(pm => pm.ProjectId == task.ProjectId.Value
-                    && pm.UserId != currentUserId
-                    && pm.User.IsActive
-                    && mentionedEmails.Contains(pm.User.Email.ToLower()))
-                .Select(pm => pm.UserId)
-                .Distinct()
-                .ToListAsync();
+            var recipients = (await _projectRepository.GetProjectMembersAsync(task.ProjectId.Value))
+                .Where(member => member.UserId != currentUserId && member.User.IsActive &&
+                    mentionedEmails.Contains(member.User.Email.ToLowerInvariant()))
+                .Select(member => member.UserId).Distinct().ToList();
 
             foreach (var userId in recipients)
             {
@@ -93,23 +93,21 @@ namespace API_v2.Services
 
         private async Task ValidateUserAccessToTask(int taskId, Guid currentUserId)
         {
-            var task = await _context.Tasks
-                .Include(t => t.Project)
-                .FirstOrDefaultAsync(t => t.Id == taskId);
+            var task = await _taskRepository.GetByIdWithDetailsAsync(taskId);
 
             if (task == null)
             {
-                throw new Exception("Task not found.");
+                throw ApiException.NotFound("Task not found.");
             }
 
             if (task.ProjectId.HasValue)
             {
-                var isMember = await _context.ProjectMembers
-                    .AnyAsync(pm => pm.ProjectId == task.ProjectId.Value && pm.UserId == currentUserId);
+                var isMember = await _projectRepository.GetMemberAsync(task.ProjectId.Value, currentUserId) is not null ||
+                    await _projectRepository.IsSystemAdminAsync(currentUserId);
 
                 if (!isMember)
                 {
-                    throw new Exception("You do not have access to this task.");
+                    throw ApiException.Forbidden("You do not have access to this task.");
                 }
             }
             else
@@ -117,7 +115,7 @@ namespace API_v2.Services
                 // If the task has no project, maybe only the creator can comment (or we allow it).
                 if (task.CreatorId != currentUserId)
                 {
-                    throw new Exception("You do not have access to this task.");
+                    throw ApiException.Forbidden("You do not have access to this task.");
                 }
             }
         }
@@ -126,17 +124,8 @@ namespace API_v2.Services
         {
             await ValidateUserAccessToTask(taskId, currentUserId);
 
-            var query = _context.TaskComments
-                .Include(tc => tc.User)
-                .Where(tc => tc.TaskId == taskId);
-
-            var totalCount = await query.CountAsync();
-
-            var comments = await query
-                .OrderByDescending(tc => tc.CreatedAt)
-                .Skip((page - 1) * limit)
-                .Take(limit)
-                .Select(tc => new TaskCommentResponse
+            var (comments, totalCount) = await _commentRepository.GetByTaskIdAsync(taskId, page, limit);
+            var responses = comments.Select(tc => new TaskCommentResponse
                 {
                     Id = tc.Id,
                     TaskId = tc.TaskId,
@@ -144,14 +133,13 @@ namespace API_v2.Services
                     UserName = tc.User.Email,
                     Content = tc.Content,
                     CreatedAt = tc.CreatedAt
-                })
-                .ToListAsync();
+                }).ToList();
 
-            comments.Reverse();
+            responses.Reverse();
 
             return new PagedResponse<TaskCommentResponse>
             {
-                Items = comments,
+                Items = responses,
                 TotalCount = totalCount,
                 Page = page,
                 PageSize = limit
@@ -170,10 +158,10 @@ namespace API_v2.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.TaskComments.Add(comment);
-            await _context.SaveChangesAsync();
+            _commentRepository.Add(comment);
+            await _commentRepository.SaveAsync();
 
-            var user = await _context.Users.FindAsync(currentUserId);
+            var user = await _userRepository.GetByIdAsync(currentUserId);
             var authorEmail = user?.Email ?? "Unknown";
 
             await SendMentionNotificationsAsync(
@@ -195,22 +183,20 @@ namespace API_v2.Services
 
         public async Task<TaskCommentResponse> UpdateCommentAsync(int commentId, UpdateTaskCommentRequest req, Guid currentUserId)
         {
-            var comment = await _context.TaskComments
-                .Include(tc => tc.User)
-                .FirstOrDefaultAsync(tc => tc.Id == commentId);
+            var comment = await _commentRepository.GetByIdAsync(commentId);
 
             if (comment == null)
             {
-                throw new Exception("Comment not found.");
+                throw ApiException.NotFound("Comment not found.");
             }
 
             if (comment.UserId != currentUserId)
             {
-                throw new Exception("You can only edit your own comments.");
+                throw ApiException.Forbidden("You can only edit your own comments.");
             }
 
             comment.Content = req.Content;
-            await _context.SaveChangesAsync();
+            await _commentRepository.SaveAsync();
 
             return new TaskCommentResponse
             {
@@ -225,19 +211,19 @@ namespace API_v2.Services
 
         public async Task DeleteCommentAsync(int commentId, Guid currentUserId)
         {
-            var comment = await _context.TaskComments.FindAsync(commentId);
+            var comment = await _commentRepository.GetByIdAsync(commentId);
             if (comment == null)
             {
-                throw new Exception("Comment not found.");
+                throw ApiException.NotFound("Comment not found.");
             }
 
             if (comment.UserId != currentUserId)
             {
-                throw new Exception("You can only delete your own comments.");
+                throw ApiException.Forbidden("You can only delete your own comments.");
             }
 
-            _context.TaskComments.Remove(comment);
-            await _context.SaveChangesAsync();
+            _commentRepository.Remove(comment);
+            await _commentRepository.SaveAsync();
         }
     }
 }

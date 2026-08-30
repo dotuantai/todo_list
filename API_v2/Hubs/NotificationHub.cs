@@ -34,7 +34,7 @@ namespace API_v2.Hubs
             if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId)) return;
 
             var member = await _projectRepo.GetMemberAsync(projectGuid, userId);
-            if (member != null)
+            if (member != null || await _projectRepo.IsSystemAdminAsync(userId))
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, $"Project_{projectId}");
             }

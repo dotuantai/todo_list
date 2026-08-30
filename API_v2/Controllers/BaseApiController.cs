@@ -2,11 +2,13 @@ using System;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using API_v2.Exceptions;
-using API_v2.Models;
-using API_v2.Models.DTOs;
 
 namespace API_v2.Controllers
 {
+    /// <summary>
+    /// Common authenticated-controller helpers. Service exceptions flow to
+    /// GlobalExceptionHandlerMiddleware; controllers must not catch and expose them.
+    /// </summary>
     [ApiController]
     public abstract class BaseApiController : ControllerBase
     {
@@ -24,37 +26,5 @@ namespace API_v2.Controllers
             }
         }
 
-        protected ActionResult Execute(Action action)
-        {
-            try
-            {
-                action();
-                return Ok(new ApiResponse<object>(true, "Success", null));
-            }
-            catch (ApiException ex)
-            {
-                return StatusCode((int)ex.StatusCode, CreateErrorResponse(ex));
-            }
-        }
-
-        protected ActionResult Execute<T>(Func<T> action)
-        {
-            try
-            {
-                var result = action();
-                return Ok(new ApiResponse<T>(true, "Success", result));
-            }
-            catch (ApiException ex)
-            {
-                return StatusCode((int)ex.StatusCode, CreateErrorResponse(ex));
-            }
-        }
-
-        private ApiErrorResponse CreateErrorResponse(ApiException exception) => new()
-        {
-            ErrorCode = exception.ErrorCode,
-            Message = exception.Message,
-            CorrelationId = HttpContext.TraceIdentifier
-        };
     }
 }

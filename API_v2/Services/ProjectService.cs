@@ -83,7 +83,18 @@ namespace API_v2.Services
 
         public async Task<PagedResponse<ProjectResponse>> GetProjectsForUserAsync(Guid currentUserId, int page, int pageSize)
         {
-            return await _projectRepo.GetProjectDashboardsAsync(currentUserId, page, pageSize);
+            var (projects, totalCount) = await _projectRepo.GetProjectDashboardsAsync(currentUserId, page, pageSize);
+            return new PagedResponse<ProjectResponse>
+            {
+                Items = projects.Select(project => new ProjectResponse
+                {
+                    Id = project.Id, Name = project.Name, Description = project.Description,
+                    OwnerId = project.OwnerId, OwnerEmail = project.OwnerEmail,
+                    CreatedAt = project.CreatedAt, UpdatedAt = project.UpdatedAt, UserRole = project.UserRole,
+                    MemberCount = project.MemberCount, CompletedTasks = project.CompletedTasks, TotalTasks = project.TotalTasks
+                }).ToList(),
+                TotalCount = totalCount, Page = page, PageSize = pageSize
+            };
         }
 
         public async Task<ProjectResponse> GetProjectDetailAsync(Guid projectId, Guid currentUserId)
@@ -95,12 +106,13 @@ namespace API_v2.Services
             }
 
             var member = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (member is null)
+            var isAdmin = await _projectRepo.IsSystemAdminAsync(currentUserId);
+            if (member is null && !isAdmin)
             {
                 throw ApiException.Forbidden("You do not have access to this project.");
             }
 
-            return MapToProjectResponse(project, member.Role);
+            return MapToProjectResponse(project, isAdmin ? ProjectRoles.Owner : member!.Role);
         }
 
         public async Task<ProjectResponse> UpdateProjectAsync(Guid projectId, UpdateProjectRequest req, Guid currentUserId)
@@ -112,7 +124,8 @@ namespace API_v2.Services
             }
 
             var member = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (member is null || !member.Role.Equals(ProjectRoles.Owner, StringComparison.OrdinalIgnoreCase))
+            var isAdmin = await _projectRepo.IsSystemAdminAsync(currentUserId);
+            if (!isAdmin && (member is null || !member.Role.Equals(ProjectRoles.Owner, StringComparison.OrdinalIgnoreCase)))
             {
                 throw ApiException.Forbidden("Only the Owner is allowed to edit project information.");
             }
@@ -127,7 +140,7 @@ namespace API_v2.Services
             project.UpdatedAt = DateTime.UtcNow;
 
             await _projectRepo.SaveAsync();
-            return MapToProjectResponse(project, member.Role);
+            return MapToProjectResponse(project, isAdmin ? ProjectRoles.Owner : member!.Role);
         }
 
         public async Task DeleteProjectAsync(Guid projectId, Guid currentUserId)
@@ -150,7 +163,7 @@ namespace API_v2.Services
         public async Task<List<MemberResponse>> GetMembersAsync(Guid projectId, Guid currentUserId)
         {
             var member = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (member is null)
+            if (member is null && !await _projectRepo.IsSystemAdminAsync(currentUserId))
             {
                 throw ApiException.Forbidden("You do not have access to this project.");
             }
@@ -168,7 +181,8 @@ namespace API_v2.Services
         public async Task<MemberResponse> AddMemberAsync(Guid projectId, AddMemberRequest req, Guid currentUserId)
         {
             var currentMember = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (currentMember is null || !currentMember.Role.Equals(ProjectRoles.Owner, StringComparison.OrdinalIgnoreCase))
+            if (!await _projectRepo.IsSystemAdminAsync(currentUserId) &&
+                (currentMember is null || !currentMember.Role.Equals(ProjectRoles.Owner, StringComparison.OrdinalIgnoreCase)))
             {
                 throw ApiException.Forbidden("Only the project owner is allowed to manage members.");
             }
@@ -237,7 +251,8 @@ namespace API_v2.Services
         public async Task<MemberResponse> UpdateMemberRoleAsync(Guid projectId, Guid userId, UpdateMemberRequest req, Guid currentUserId)
         {
             var currentMember = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (currentMember is null || !currentMember.Role.Equals(ProjectRoles.Owner, StringComparison.OrdinalIgnoreCase))
+            if (!await _projectRepo.IsSystemAdminAsync(currentUserId) &&
+                (currentMember is null || !currentMember.Role.Equals(ProjectRoles.Owner, StringComparison.OrdinalIgnoreCase)))
             {
                 throw ApiException.Forbidden("Only the project owner is allowed to manage members.");
             }
@@ -279,7 +294,8 @@ namespace API_v2.Services
         public async Task RemoveMemberAsync(Guid projectId, Guid userId, Guid currentUserId)
         {
             var currentMember = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (currentMember is null || !currentMember.Role.Equals(ProjectRoles.Owner, StringComparison.OrdinalIgnoreCase))
+            if (!await _projectRepo.IsSystemAdminAsync(currentUserId) &&
+                (currentMember is null || !currentMember.Role.Equals(ProjectRoles.Owner, StringComparison.OrdinalIgnoreCase)))
             {
                 throw ApiException.Forbidden("Only the project owner is allowed to manage members.");
             }

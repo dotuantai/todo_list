@@ -1,7 +1,6 @@
 using API_v2.Datas;
 using API_v2.Models;
 using API_v2.Models.Constants;
-using API_v2.Models.DTOs;
 using API_v2.Repositories.IRepositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -53,31 +52,15 @@ namespace API_v2.Repositories
 
         public async Task<ProjectMember?> GetMemberAsync(Guid projectId, Guid userId)
         {
-            var member = await _dbContext.ProjectMembers
+            return await _dbContext.ProjectMembers
                 .FirstOrDefaultAsync(pm => pm.ProjectId == projectId && pm.UserId == userId);
-                
-            var user = await _dbContext.Users.AsNoTracking().Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == userId);
-            bool isAdmin = user?.Role?.Name == "Admin";
+        }
 
-            if (isAdmin)
-            {
-                if (member != null)
-                {
-                    _dbContext.Entry(member).State = EntityState.Detached;
-                    member.Role = ProjectRoles.Owner;
-                    return member;
-                }
-                
-                return new ProjectMember
-                {
-                    ProjectId = projectId,
-                    UserId = userId,
-                    Role = ProjectRoles.Owner,
-                    JoinedAt = DateTime.UtcNow
-                };
-            }
-
-            return member;
+        public async Task<bool> IsSystemAdminAsync(Guid userId)
+        {
+            return await _dbContext.Users
+                .AsNoTracking()
+                .AnyAsync(user => user.Id == userId && user.Role.Name == "Admin");
         }
 
         public void AddMember(ProjectMember member)
@@ -105,22 +88,11 @@ namespace API_v2.Repositories
                 .ToListAsync();
         }
 
-        public async Task<PagedResponse<ProjectResponse>> GetProjectDashboardsAsync(Guid userId, int page, int pageSize)
+        public async Task<(List<ProjectDashboardRecord> Items, int TotalCount)> GetProjectDashboardsAsync(Guid userId, int page, int pageSize)
         {
             var user = await _dbContext.Users.AsNoTracking().Include(u => u.Role).FirstOrDefaultAsync(u => u.Id == userId);
             bool isAdmin = user?.Role?.Name == "Admin";
 
-            var query = _dbContext.ProjectMembers.AsNoTracking();
-
-            if (!isAdmin)
-            {
-                query = query.Where(pm => pm.UserId == userId);
-            }
-            
-            // To prevent duplicate projects for Admin when they are also a member, we group by Project
-            // But Wait, if Admin, what UserRole should they see if they didn't join? Default to empty or Viewer.
-            // Since ProjectResponse requires UserRole, if Admin is not a member, we can just say "Admin" or something.
-            // A better way is:
             var projectsQuery = _dbContext.Projects
                 .AsNoTracking()
                 .Include(p => p.Owner)
@@ -133,31 +105,12 @@ namespace API_v2.Repositories
                 .OrderByDescending(p => p.UpdatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(p => new ProjectResponse
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Description = p.Description,
-                    OwnerId = p.OwnerId,
-                    OwnerEmail = p.Owner.Email,
-                    CreatedAt = p.CreatedAt,
-                    UpdatedAt = p.UpdatedAt,
-                    UserRole = p.ProjectMembers.FirstOrDefault(pm => pm.UserId == userId) != null 
-                        ? p.ProjectMembers.FirstOrDefault(pm => pm.UserId == userId).Role 
-                        : "Admin", // Fallback for Admin who isn't a member
-                    MemberCount = p.ProjectMembers.Count(),
-                    TotalTasks = p.Tasks.Count(),
-                    CompletedTasks = p.Tasks.Count(t => t.Column != null && t.Column.IsCompletedStage)
-                })
+                .Select(p => new ProjectDashboardRecord(
+                    p.Id, p.Name, p.Description, p.OwnerId, p.Owner.Email, p.CreatedAt, p.UpdatedAt,
+                    p.ProjectMembers.Where(pm => pm.UserId == userId).Select(pm => pm.Role).FirstOrDefault() ?? "Admin",
+                    p.ProjectMembers.Count(), p.Tasks.Count(t => t.Column != null && t.Column.IsCompletedStage), p.Tasks.Count()))
                 .ToListAsync();
-
-            return new PagedResponse<ProjectResponse>
-            {
-                Items = projects,
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize
-            };
+            return (projects, totalCount);
         }
     }
 }

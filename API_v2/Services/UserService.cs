@@ -30,8 +30,20 @@ namespace API_v2.Services
             _emailQueue = emailQueue;
         }
 
-        public Task<PagedResponse<AdminUserResponse>> GetUsersAsync(int page, int pageSize)
-            => _userRepository.GetAllUsersAsync(page, pageSize);
+        public async Task<PagedResponse<AdminUserResponse>> GetUsersAsync(int page, int pageSize)
+        {
+            var (users, totalCount) = await _userRepository.GetAllUsersAsync(page, pageSize);
+            return new PagedResponse<AdminUserResponse>
+            {
+                Items = users.Select(user => new AdminUserResponse
+                {
+                    UserId = user.Id, FullName = user.FullName, Email = user.Email,
+                    Role = user.Role?.Name ?? "Member", IsActive = user.IsActive,
+                    RequiresPasswordChange = user.RequiresPasswordChange, CreatedAt = user.CreatedAt
+                }).ToList(),
+                TotalCount = totalCount, Page = page, PageSize = pageSize
+            };
+        }
 
         public async Task CreateUserAsync(CreateUserRequest request)
         {

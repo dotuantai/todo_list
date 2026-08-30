@@ -4,7 +4,6 @@ using API_v2.Models;
 using API_v2.Models.DTOs;
 using API_v2.Repositories.IRepositories;
 using API_v2.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
 
 namespace API_v2.Services
 {
@@ -34,10 +33,13 @@ namespace API_v2.Services
             Guid projectId,
             Guid fileId,
             Guid currentUserId,
-            IFormFile file,
+            Stream fileStream,
+            string fileName,
+            string contentType,
+            long fileSize,
             string? changeNote = null)
         {
-            if (file.Length == 0) throw ApiException.BadRequest("A valid file is required.");
+            if (!fileStream.CanRead || fileSize <= 0) throw ApiException.BadRequest("A valid file is required.");
             await EnsureMemberAsync(projectId, currentUserId);
             var projectFile = await GetProjectFileAsync(projectId, fileId);
             var project = await _projectRepository.GetByIdAsync(projectId)
@@ -51,11 +53,10 @@ namespace API_v2.Services
             string driveFileId;
             try
             {
-                await using var stream = file.OpenReadStream();
                 driveFileId = (await _googleDriveService.UploadFileAsync(
-                    stream,
-                    file.FileName,
-                    file.ContentType,
+                    fileStream,
+                    fileName,
+                    contentType,
                     targetDriveFolderId)).FileId;
             }
             catch (Exception exception)
@@ -71,23 +72,23 @@ namespace API_v2.Services
                 ProjectFileId = projectFile.Id,
                 VersionNumber = versionNumber,
                 GoogleDriveFileId = driveFileId,
-                FileName = file.FileName,
-                FileSize = file.Length,
-                MimeType = file.ContentType,
+                FileName = fileName,
+                FileSize = fileSize,
+                MimeType = contentType,
                 ChangeNote = string.IsNullOrWhiteSpace(changeNote) ? $"Version {versionNumber}" : changeNote,
                 UploadedById = currentUserId,
                 CreatedAt = DateTime.UtcNow
             });
 
             projectFile.GoogleDriveFileId = driveFileId;
-            projectFile.FileName = file.FileName;
-            projectFile.FileSize = file.Length;
-            projectFile.MimeType = file.ContentType;
+            projectFile.FileName = fileName;
+            projectFile.FileSize = fileSize;
+            projectFile.MimeType = contentType;
             projectFile.CurrentVersion = versionNumber;
             projectFile.UpdatedAt = DateTime.UtcNow;
             projectFile.UpdatedById = currentUserId;
             await _fileRepository.UpdateFileAsync(projectFile);
-            await AddActivityAsync(projectId, currentUserId, file.FileName, versionNumber, changeNote);
+            await AddActivityAsync(projectId, currentUserId, fileName, versionNumber, changeNote);
 
             var user = await _userRepository.GetByIdAsync(currentUserId);
             return MapFile(projectFile, user?.FullName ?? user?.Email);
@@ -234,7 +235,8 @@ namespace API_v2.Services
 
         private async Task EnsureMemberAsync(Guid projectId, Guid userId)
         {
-            if (await _projectRepository.GetMemberAsync(projectId, userId) is null)
+            if (await _projectRepository.GetMemberAsync(projectId, userId) is null &&
+                !await _projectRepository.IsSystemAdminAsync(userId))
                 throw ApiException.Forbidden("You do not have access to this project's files.");
         }
 
