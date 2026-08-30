@@ -29,11 +29,6 @@ namespace API_v2.Controllers
         [HttpPost]
         public async Task<ActionResult> CreateColumn(Guid projectId, [FromBody] CreateProjectColumnRequest req)
         {
-            if (req is null || !ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse<object>(false, "Invalid column data.", null));
-            }
-
             var result = await _columnService.CreateColumnAsync(projectId, req, CurrentUserId);
             return Ok(new ApiResponse<ProjectColumnResponse>(true, "Column created successfully.", result));
         }
@@ -41,11 +36,6 @@ namespace API_v2.Controllers
         [HttpPut("{columnId:int}")]
         public async Task<ActionResult> UpdateColumn(Guid projectId, int columnId, [FromBody] UpdateProjectColumnRequest req)
         {
-            if (req is null || !ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse<object>(false, "Invalid column data.", null));
-            }
-
             var result = await _columnService.UpdateColumnAsync(columnId, req, CurrentUserId);
             return Ok(new ApiResponse<ProjectColumnResponse>(true, "Column updated successfully.", result));
         }

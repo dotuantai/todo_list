@@ -155,7 +155,8 @@ namespace API_v2.Services
 
         private async Task EnsureProjectMemberAsync(Guid projectId, Guid userId)
         {
-            if (await _projectRepository.GetMemberAsync(projectId, userId) is null)
+            if (await _projectRepository.GetMemberAsync(projectId, userId) is null &&
+                !await _projectRepository.IsSystemAdminAsync(userId))
             {
                 throw ApiException.Forbidden("You do not have access to this project.");
             }
@@ -163,6 +164,11 @@ namespace API_v2.Services
 
         private async Task EnsureProjectManagerAsync(Guid projectId, Guid userId)
         {
+            if (await _projectRepository.IsSystemAdminAsync(userId))
+            {
+                return;
+            }
+
             var member = await _projectRepository.GetMemberAsync(projectId, userId);
             if (member is null || !ProjectRoles.IsOwnerOrManager(member.Role))
             {

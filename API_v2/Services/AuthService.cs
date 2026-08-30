@@ -354,7 +354,8 @@ namespace API_v2.Services
                 return new List<UserSearchResponse>();
             }
 
-            return await _userRepo.SearchUsersAsync(keyword);
+            var users = await _userRepo.SearchUsersAsync(keyword);
+            return users.Select(user => new UserSearchResponse { UserId = user.Id, Email = user.Email }).ToList();
         }
 
         public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest req)

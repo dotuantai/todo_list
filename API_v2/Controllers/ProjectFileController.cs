@@ -52,7 +52,9 @@ namespace API_v2.Controllers
                 return BadRequest(new ApiResponse<object>(false, "Vui lòng chọn tệp để tải lên.", null));
             }
 
-            var result = await _fileService.UploadFileAsync(projectId, CurrentUserId, file, folderId, taskId);
+            await using var stream = file.OpenReadStream();
+            var result = await _fileService.UploadFileAsync(
+                projectId, CurrentUserId, stream, file.FileName, file.ContentType, file.Length, folderId, taskId);
             return Ok(new ApiResponse<ProjectFileResponse>(true, "Tải tệp lên thành công.", result));
         }
 
@@ -65,7 +67,9 @@ namespace API_v2.Controllers
                 return BadRequest(new ApiResponse<object>(false, "Vui lòng chọn tệp mới để cập nhật phiên bản.", null));
             }
 
-            var result = await _transferService.UpdateFileVersionAsync(projectId, fileId, CurrentUserId, file, changeNote);
+            await using var stream = file.OpenReadStream();
+            var result = await _transferService.UpdateFileVersionAsync(
+                projectId, fileId, CurrentUserId, stream, file.FileName, file.ContentType, file.Length, changeNote);
             return Ok(new ApiResponse<ProjectFileResponse>(true, "Cập nhật phiên bản tệp thành công.", result));
         }
 

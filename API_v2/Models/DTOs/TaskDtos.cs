@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using API_v2.Models.DTOs.Validation;
 
 namespace API_v2.Models.DTOs
 {
@@ -11,10 +12,14 @@ namespace API_v2.Models.DTOs
         [MaxLength(5000, ErrorMessage = "Description must not exceed 5000 characters")]
         public string? Description { get; set; }
         [Required(ErrorMessage = "Deadline is required")]
-        public DateTime Deadline { get; set; }
+        public DateTime? Deadline { get; set; }
+        [Required(ErrorMessage = "Start date is required")]
         public DateTime? StartDate { get; set; }
+        [Range(0, double.MaxValue, ErrorMessage = "Estimated hours must be non-negative")]
         public double? EstimatedHours { get; set; }
+        [Range(0, double.MaxValue, ErrorMessage = "Actual hours must be non-negative")]
         public double? ActualHours { get; set; }
+        [Range(1, int.MaxValue, ErrorMessage = "Column ID must be greater than 0")]
         public int ColumnId { get; set; }
         public API_v2.Models.Enums.TaskPriority Priority { get; set; } = API_v2.Models.Enums.TaskPriority.Medium;
         public string? AssigneeId { get; set; }
@@ -29,10 +34,14 @@ namespace API_v2.Models.DTOs
         [MaxLength(5000, ErrorMessage = "Description must not exceed 5000 characters")]
         public string? Description { get; set; }
         [Required(ErrorMessage = "Deadline is required")]
-        public DateTime Deadline { get; set; }
+        public DateTime? Deadline { get; set; }
+        [Required(ErrorMessage = "Start date is required")]
         public DateTime? StartDate { get; set; }
+        [Range(0, double.MaxValue, ErrorMessage = "Estimated hours must be non-negative")]
         public double? EstimatedHours { get; set; }
+        [Range(0, double.MaxValue, ErrorMessage = "Actual hours must be non-negative")]
         public double? ActualHours { get; set; }
+        [Range(1, int.MaxValue, ErrorMessage = "Column ID must be greater than 0")]
         public int ColumnId { get; set; }
         public API_v2.Models.Enums.TaskPriority Priority { get; set; } = API_v2.Models.Enums.TaskPriority.Medium;
         public List<string>? AssignedUserIds { get; set; }
@@ -40,10 +49,10 @@ namespace API_v2.Models.DTOs
 
     public class AssignTaskRequest
     {
-        [Required(ErrorMessage = "Task id is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Task ID must be greater than 0")]
         public int TaskId { get; set; }
 
-        [Required(ErrorMessage = "User id is required")]
+        [ValidGuid(ErrorMessage = "User ID is not valid")]
         public Guid UserId { get; set; }
     }
 
@@ -51,10 +60,10 @@ namespace API_v2.Models.DTOs
 
     public class ChangeTaskColumnRequest
     {
-        [Required(ErrorMessage = "Task id is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Task ID must be greater than 0")]
         public int TaskId { get; set; }
 
-        [Required(ErrorMessage = "ColumnId is required")]
+        [Range(1, int.MaxValue, ErrorMessage = "Column ID must be greater than 0")]
         public int ColumnId { get; set; }
     }
 

@@ -1,6 +1,5 @@
 using API_v2.Datas;
 using API_v2.Models;
-using API_v2.Models.DTOs;
 using API_v2.Repositories.IRepositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +29,14 @@ namespace API_v2.Repositories
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
 
+        public async Task<Dictionary<Guid, string>> GetEmailsByIdsAsync(IEnumerable<Guid> ids)
+        {
+            var userIds = ids.Distinct().ToList();
+            return await _db.Users.AsNoTracking()
+                .Where(user => userIds.Contains(user.Id))
+                .ToDictionaryAsync(user => user.Id, user => user.Email);
+        }
+
         public void Create(User user)
         {
             _db.Users.Add(user);
@@ -40,7 +47,7 @@ namespace API_v2.Repositories
             await _db.SaveChangesAsync();
         }
 
-        public async Task<List<UserSearchResponse>> SearchUsersAsync(string keyword)
+        public async Task<List<User>> SearchUsersAsync(string keyword)
         {
             var lower = keyword.Trim().ToLower();
             return await _db.Users
@@ -48,15 +55,10 @@ namespace API_v2.Repositories
                 .Where(u => u.IsActive && u.Email.Contains(lower))
                 .OrderBy(u => u.Email)
                 .Take(10)
-                .Select(u => new UserSearchResponse
-                {
-                    UserId = u.Id,
-                    Email = u.Email
-                })
                 .ToListAsync();
         }
 
-        public async Task<PagedResponse<AdminUserResponse>> GetAllUsersAsync(int page, int pageSize)
+        public async Task<(List<User> Items, int TotalCount)> GetAllUsersAsync(int page, int pageSize)
         {
             var query = _db.Users
                 .AsNoTracking()
@@ -66,25 +68,8 @@ namespace API_v2.Repositories
                 .OrderByDescending(u => u.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(u => new AdminUserResponse
-                {
-                    UserId = u.Id,
-                    FullName = u.FullName,
-                    Email = u.Email,
-                    Role = u.Role != null ? u.Role.Name : "Member",
-                    IsActive = u.IsActive,
-                    RequiresPasswordChange = u.RequiresPasswordChange,
-                    CreatedAt = u.CreatedAt
-                })
                 .ToListAsync();
-
-            return new PagedResponse<AdminUserResponse>
-            {
-                Items = items,
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize
-            };
+            return (items, totalCount);
         }
 
         public async Task<Guid?> GetRoleIdByNameAsync(string roleName)

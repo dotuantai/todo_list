@@ -9,6 +9,8 @@ namespace API_v2.Repositories.IRepositories
     {
         Task<List<ProjectColumn>> GetColumnsByProjectIdAsync(Guid projectId);
         Task<ProjectColumn?> GetByIdAsync(int id);
+        Task<(ProjectColumn Column, List<ProjectColumn> Columns)> CreateAtOrderAsync(ProjectColumn column, int requestedOrder);
+        Task<(ProjectColumn Column, List<ProjectColumn> Columns)> UpdateAndReorderAsync(int columnId, string name, int requestedOrder, bool isCompletedStage);
         void Add(ProjectColumn column);
         void Delete(ProjectColumn column);
         Task SaveAsync();

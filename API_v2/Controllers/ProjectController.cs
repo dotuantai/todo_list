@@ -11,12 +11,10 @@ namespace API_v2.Controllers
     public class ProjectController : BaseApiController
     {
         private readonly IProjectService _projectService;
-        private readonly ITaskService _taskService;
 
-        public ProjectController(IProjectService projectService, ITaskService taskService)
+        public ProjectController(IProjectService projectService)
         {
             _projectService = projectService;
-            _taskService = taskService;
         }
 
         [HttpGet]
@@ -32,11 +30,6 @@ namespace API_v2.Controllers
         [Authorize(Roles = "Admin,Manager")]
         public async Task<ActionResult> Create([FromBody] CreateProjectRequest req)
         {
-            if (req is null || !ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse<object>(false, "Invalid project data.", null));
-            }
-
             var result = await _projectService.CreateProjectAsync(req, CurrentUserId);
             return Ok(new ApiResponse<ProjectResponse>(true, "Project created successfully.", result));
         }
@@ -51,11 +44,6 @@ namespace API_v2.Controllers
         [HttpPut("{projectId:guid}")]
         public async Task<ActionResult> UpdateProject(Guid projectId, [FromBody] UpdateProjectRequest req)
         {
-            if (req is null || !ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse<object>(false, "Invalid project data.", null));
-            }
-
             var result = await _projectService.UpdateProjectAsync(projectId, req, CurrentUserId);
             return Ok(new ApiResponse<ProjectResponse>(true, "Project updated successfully.", result));
         }
@@ -77,11 +65,6 @@ namespace API_v2.Controllers
         [HttpPost("{projectId:guid}/members")]
         public async Task<ActionResult> AddMember(Guid projectId, [FromBody] AddMemberRequest req)
         {
-            if (req is null || !ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse<object>(false, "Invalid member data.", null));
-            }
-
             var result = await _projectService.AddMemberAsync(projectId, req, CurrentUserId);
             return Ok(new ApiResponse<MemberResponse>(true, "Member added successfully.", result));
         }
@@ -89,11 +72,6 @@ namespace API_v2.Controllers
         [HttpPut("{projectId:guid}/members/{userId:guid}")]
         public async Task<ActionResult> UpdateMemberRole(Guid projectId, Guid userId, [FromBody] UpdateMemberRequest req)
         {
-            if (req is null || !ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse<object>(false, "Invalid member data.", null));
-            }
-
             var result = await _projectService.UpdateMemberRoleAsync(projectId, userId, req, CurrentUserId);
             return Ok(new ApiResponse<MemberResponse>(true, "Member role updated successfully.", result));
         }
@@ -105,55 +83,5 @@ namespace API_v2.Controllers
             return Ok(new ApiResponse<object>(true, "Member removed successfully.", null));
         }
 
-        [HttpGet("{projectId:guid}/tasks")]
-        public async Task<ActionResult> GetProjectTasks(Guid projectId, [FromQuery] int? columnId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string search = null, [FromQuery] API_v2.Models.Enums.TaskPriority? priority = null, [FromQuery] Guid? assigneeId = null)
-        {
-            if (page < 1) page = 1;
-            if (pageSize < 1) pageSize = 20;
-            if (pageSize > 200) pageSize = 200;
-
-            var result = await _taskService.GetProjectTasksAsync(projectId, CurrentUserId, columnId, page, pageSize, search, priority, assigneeId);
-            return Ok(new ApiResponse<PagedResponse<TaskDetailResponse>>(true, "Success", result));
-        }
-
-        [HttpGet("{projectId:guid}/tasks/stats")]
-        public async Task<ActionResult> GetTaskStats(Guid projectId)
-        {
-            var result = await _taskService.GetTaskStatsAsync(projectId, CurrentUserId);
-            return Ok(new ApiResponse<TaskStatsResponse>(true, "Success", result));
-        }
-
-        [HttpPost("{projectId:guid}/tasks")]
-        public async Task<ActionResult> CreateTask(Guid projectId, [FromBody] CreateTaskRequest req)
-        {
-            if (req is null || !ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse<object>(false, "Invalid task data.", null));
-            }
-
-            var result = await _taskService.CreateTaskAsync(req, CurrentUserId, projectId);
-            return Ok(new ApiResponse<string>(true, result, null));
-        }
-
-        [HttpGet("tasks/template")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetTaskTemplate()
-        {
-            var fileBytes = await _taskService.GetTaskTemplateAsync();
-            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "TaskTemplate.xlsx");
-        }
-
-        [HttpPost("{projectId:guid}/tasks/import")]
-        public async Task<ActionResult> ImportTasks(Guid projectId, Microsoft.AspNetCore.Http.IFormFile file)
-        {
-            if (file == null || file.Length == 0)
-            {
-                return BadRequest(new ApiResponse<object>(false, "No file uploaded.", null));
-            }
-
-            using var stream = file.OpenReadStream();
-            var count = await _taskService.ImportTasksAsync(projectId, CurrentUserId, stream, file.FileName);
-            return Ok(new ApiResponse<int>(true, $"{count} tasks imported successfully.", count));
-        }
     }
 }

@@ -1,5 +1,3 @@
-using System;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using API_v2.Models.DTOs;
 using API_v2.Services.Interfaces;
@@ -11,7 +9,7 @@ namespace API_v2.Controllers
     [ApiController]
     [Route("api/tasks")]
     [Authorize]
-    public class TaskCommentController : ControllerBase
+    public class TaskCommentController : BaseApiController
     {
         private readonly ITaskCommentService _commentService;
 
@@ -20,84 +18,32 @@ namespace API_v2.Controllers
             _commentService = commentService;
         }
 
-        private Guid GetCurrentUserId()
-        {
-            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdStr))
-            {
-                throw new UnauthorizedAccessException("User not found in token.");
-            }
-            return Guid.Parse(userIdStr);
-        }
-
         [HttpGet("{taskId}/comments")]
         public async Task<IActionResult> GetComments(int taskId, [FromQuery] int page = 1, [FromQuery] int limit = 5)
         {
-            try
-            {
-                var userId = GetCurrentUserId();
-                var comments = await _commentService.GetCommentsAsync(taskId, userId, page, limit);
-                return Ok(new ApiResponse<object>(true, "Comments retrieved successfully.", comments));
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new ApiResponse<object>(false, ex.Message, null));
-            }
+            var comments = await _commentService.GetCommentsAsync(taskId, CurrentUserId, page, limit);
+            return Ok(new ApiResponse<object>(true, "Comments retrieved successfully.", comments));
         }
 
         [HttpPost("{taskId}/comments")]
         public async Task<IActionResult> CreateComment(int taskId, [FromBody] CreateTaskCommentRequest req)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse<object>(false, "Invalid data.", null));
-            }
-
-            try
-            {
-                var userId = GetCurrentUserId();
-                var comment = await _commentService.CreateCommentAsync(taskId, req, userId);
-                return Ok(new ApiResponse<object>(true, "Comment added successfully.", comment));
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new ApiResponse<object>(false, ex.Message, null));
-            }
+            var comment = await _commentService.CreateCommentAsync(taskId, req, CurrentUserId);
+            return Ok(new ApiResponse<object>(true, "Comment added successfully.", comment));
         }
 
         [HttpPut("comments/{id}")]
         public async Task<IActionResult> UpdateComment(int id, [FromBody] UpdateTaskCommentRequest req)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse<object>(false, "Invalid data.", null));
-            }
-
-            try
-            {
-                var userId = GetCurrentUserId();
-                var comment = await _commentService.UpdateCommentAsync(id, req, userId);
-                return Ok(new ApiResponse<object>(true, "Comment updated successfully.", comment));
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new ApiResponse<object>(false, ex.Message, null));
-            }
+            var comment = await _commentService.UpdateCommentAsync(id, req, CurrentUserId);
+            return Ok(new ApiResponse<object>(true, "Comment updated successfully.", comment));
         }
 
         [HttpDelete("comments/{id}")]
         public async Task<IActionResult> DeleteComment(int id)
         {
-            try
-            {
-                var userId = GetCurrentUserId();
-                await _commentService.DeleteCommentAsync(id, userId);
-                return Ok(new ApiResponse<object>(true, "Comment deleted successfully.", null));
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new ApiResponse<object>(false, ex.Message, null));
-            }
+            await _commentService.DeleteCommentAsync(id, CurrentUserId);
+            return Ok(new ApiResponse<object>(true, "Comment deleted successfully.", null));
         }
     }
 }

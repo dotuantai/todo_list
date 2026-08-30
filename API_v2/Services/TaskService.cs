@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using MiniExcelLibs;
 using API_v2.Exceptions;
 using API_v2.Models;
 using API_v2.Models.DTOs;
@@ -22,6 +21,8 @@ namespace API_v2.Services
         private readonly ITaskAssignmentRepository _assignRepo;
         private readonly IProjectRepository _projectRepo;
         private readonly IProjectColumnRepository _projectColumnRepo;
+        private readonly IUserRepository _userRepo;
+        private readonly ITaskActivityRepository _activityRepo;
         private readonly INotificationService _notificationService;
         private readonly ILogger<TaskService> _logger;
         private readonly API_v2.Datas.AppDbContext _db;
@@ -31,6 +32,8 @@ namespace API_v2.Services
             ITaskAssignmentRepository assignRepo, 
             IProjectRepository projectRepo,
             IProjectColumnRepository projectColumnRepo,
+            IUserRepository userRepo,
+            ITaskActivityRepository activityRepo,
             INotificationService notificationService,
             API_v2.Datas.AppDbContext db,
             ILogger<TaskService> logger)
@@ -39,6 +42,8 @@ namespace API_v2.Services
             _assignRepo = assignRepo;
             _projectRepo = projectRepo;
             _projectColumnRepo = projectColumnRepo;
+            _userRepo = userRepo;
+            _activityRepo = activityRepo;
             _notificationService = notificationService;
             _db = db;
             _logger = logger;
@@ -51,6 +56,19 @@ namespace API_v2.Services
             if (string.IsNullOrWhiteSpace(req.Title))
             {
                 throw ApiException.BadRequest("Task title cannot be empty.");
+            }
+
+            var deadline = NormalizeToUtc(req.Deadline)
+                ?? throw ApiException.BadRequest("Deadline is required.");
+            var startDate = NormalizeToUtc(req.StartDate)
+                ?? throw ApiException.BadRequest("Start date is required.");
+            if (startDate > deadline)
+            {
+                throw ApiException.BadRequest("Start date cannot be after the deadline.");
+            }
+            if (!Enum.IsDefined(req.Priority))
+            {
+                throw ApiException.BadRequest("Invalid task priority value.");
             }
 
             await VerifyColumnBelongsToProjectAsync(req.ColumnId, projectId);
@@ -73,27 +91,38 @@ namespace API_v2.Services
                 Description = req.Description?.Trim(),
                 CreatedAt = DateTime.UtcNow,
                 CreatorId = creatorId,
-                Deadline = NormalizeToUtc(req.Deadline).Value,
-                StartDate = NormalizeToUtc(req.StartDate).Value,
+                Deadline = deadline,
+                StartDate = startDate,
                 EstimatedHours = req.EstimatedHours,
                 ActualHours = req.ActualHours,
                 ColumnId = req.ColumnId,
                 ProjectId = projectId,
                 Priority = req.Priority
             };
-            _taskRepo.Add(task);
-            await _taskRepo.SaveAsync();
-
-            if (assigneeId.HasValue)
+            await using (var transaction = await _db.Database.BeginTransactionAsync())
             {
-                var assignment = new TaskAssignment
+                try
                 {
-                    TaskId = task.Id,
-                    UserId = assigneeId.Value,
-                    AssignedAt = DateTime.UtcNow
-                };
-                _assignRepo.Add(assignment);
-                await _assignRepo.SaveAsync();
+                    _taskRepo.Add(task);
+
+                    if (assigneeId.HasValue)
+                    {
+                        _assignRepo.Add(new TaskAssignment
+                        {
+                            Task = task,
+                            UserId = assigneeId.Value,
+                            AssignedAt = DateTime.UtcNow
+                        });
+                    }
+
+                    await _taskRepo.SaveAsync();
+                    await transaction.CommitAsync();
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
             }
 
             try
@@ -144,6 +173,19 @@ namespace API_v2.Services
                     throw ApiException.BadRequest("Task title cannot be empty.");
                 }
 
+                var normalizedDeadline = NormalizeToUtc(req.Deadline)
+                    ?? throw ApiException.BadRequest("Deadline is required.");
+                var normalizedStart = NormalizeToUtc(req.StartDate)
+                    ?? throw ApiException.BadRequest("Start date is required.");
+                if (normalizedStart > normalizedDeadline)
+                {
+                    throw ApiException.BadRequest("Start date cannot be after the deadline.");
+                }
+                if (!Enum.IsDefined(req.Priority))
+                {
+                    throw ApiException.BadRequest("Invalid task priority value.");
+                }
+
                 await VerifyColumnBelongsToProjectAsync(req.ColumnId, task.ProjectId);
 
                 if (task.ProjectId.HasValue && req.AssignedUserIds != null)
@@ -172,13 +214,11 @@ namespace API_v2.Services
                 if (oldDesc != newDesc)
                     changes.Add(new FieldChange { Field = "Description", OldValue = null, NewValue = "__description_changed__" });
 
-                var normalizedDeadline = NormalizeToUtc(req.Deadline);
-                if (task.Deadline.Date != normalizedDeadline?.Date)
-                    changes.Add(new FieldChange { Field = "Deadline", OldValue = task.Deadline.ToString("MMM d, yyyy"), NewValue = normalizedDeadline?.ToString("MMM d, yyyy") });
+                if (task.Deadline.Date != normalizedDeadline.Date)
+                    changes.Add(new FieldChange { Field = "Deadline", OldValue = task.Deadline.ToString("MMM d, yyyy"), NewValue = normalizedDeadline.ToString("MMM d, yyyy") });
 
-                var normalizedStart = NormalizeToUtc(req.StartDate);
-                if (task.StartDate.Date != normalizedStart?.Date)
-                    changes.Add(new FieldChange { Field = "Start Date", OldValue = task.StartDate.ToString("MMM d, yyyy"), NewValue = normalizedStart?.ToString("MMM d, yyyy") });
+                if (task.StartDate.Date != normalizedStart.Date)
+                    changes.Add(new FieldChange { Field = "Start Date", OldValue = task.StartDate.ToString("MMM d, yyyy"), NewValue = normalizedStart.ToString("MMM d, yyyy") });
 
                 if (task.EstimatedHours != req.EstimatedHours)
                     changes.Add(new FieldChange { Field = "Est. Hours", OldValue = task.EstimatedHours?.ToString() ?? "empty", NewValue = req.EstimatedHours?.ToString() ?? "empty" });
@@ -208,11 +248,10 @@ namespace API_v2.Services
                         .Select(id => Guid.TryParse(id, out var g) ? g : (Guid?)null)
                         .Where(g => g.HasValue).Select(g => g!.Value).ToList();
 
-                    var userEmailMap = allRelevantIds.Any()
-                        ? await _db.Users
-                            .Where(u => allRelevantIds.Contains(u.Id))
-                            .ToDictionaryAsync(u => u.Id.ToString(), u => u.Email)
-                        : new Dictionary<string, string>();
+                    var emailsById = allRelevantIds.Any()
+                        ? await _userRepo.GetEmailsByIdsAsync(allRelevantIds)
+                        : new Dictionary<Guid, string>();
+                    var userEmailMap = emailsById.ToDictionary(item => item.Key.ToString(), item => item.Value);
 
                     string ResolveEmails(List<string> ids) =>
                         string.Join(", ", ids.Select(id => userEmailMap.TryGetValue(id, out var email) ? email : id));
@@ -225,8 +264,8 @@ namespace API_v2.Services
 
                 task.Title = req.Title.Trim();
                 task.Description = req.Description?.Trim();
-                task.Deadline = NormalizeToUtc(req.Deadline).Value;
-                task.StartDate = NormalizeToUtc(req.StartDate).Value;
+                task.Deadline = normalizedDeadline;
+                task.StartDate = normalizedStart;
                 task.EstimatedHours = req.EstimatedHours;
                 task.ActualHours = req.ActualHours;
                 task.ColumnId = req.ColumnId;
@@ -234,7 +273,7 @@ namespace API_v2.Services
 
                 if (changes.Any())
                 {
-                    _db.TaskActivities.Add(new TaskActivity
+                    _activityRepo.Add(new TaskActivity
                     {
                         TaskId = taskId,
                         UserId = currentUserId,
@@ -403,10 +442,10 @@ namespace API_v2.Services
             return "Task assigned successfully.";
         }
 
-        public async Task<PagedResponse<TaskDetailResponse>> GetProjectTasksAsync(Guid projectId, Guid userId, int? columnId, int page, int pageSize, string search = null, API_v2.Models.Enums.TaskPriority? priority = null, Guid? assigneeId = null)
+        public async Task<PagedResponse<TaskDetailResponse>> GetProjectTasksAsync(Guid projectId, Guid userId, int? columnId, int page, int pageSize, string? search = null, API_v2.Models.Enums.TaskPriority? priority = null, Guid? assigneeId = null)
         {
             var member = await _projectRepo.GetMemberAsync(projectId, userId);
-            if (member is null)
+            if (member is null && !await _projectRepo.IsSystemAdminAsync(userId))
             {
                 throw ApiException.Forbidden("You are not a member of this project.");
             }
@@ -425,12 +464,21 @@ namespace API_v2.Services
         public async Task<TaskStatsResponse> GetTaskStatsAsync(Guid projectId, Guid userId)
         {
             var member = await _projectRepo.GetMemberAsync(projectId, userId);
-            if (member is null)
+            if (member is null && !await _projectRepo.IsSystemAdminAsync(userId))
             {
                 throw ApiException.Forbidden("You are not a member of this project.");
             }
 
-            return await _taskRepo.GetTaskStatsByProjectIdAsync(projectId);
+            var columns = await _taskRepo.GetTaskStatsByProjectIdAsync(projectId);
+            return new TaskStatsResponse
+            {
+                TotalTasks = columns.Sum(column => column.TaskCount),
+                CompletedTasks = columns.Where(column => column.IsCompletedStage).Sum(column => column.TaskCount),
+                ColumnStats = columns.Select(column => new ColumnStat
+                {
+                    ColumnId = column.ColumnId, ColumnName = column.ColumnName, TaskCount = column.TaskCount
+                }).ToList()
+            };
         }
 
 
@@ -481,9 +529,14 @@ namespace API_v2.Services
 
             if (task.ProjectId.HasValue)
             {
-                var member = await GetMemberOrThrowAsync(task.ProjectId.Value, currentUserId);
+                var isAdmin = await _projectRepo.IsSystemAdminAsync(currentUserId);
+                var member = await _projectRepo.GetMemberAsync(task.ProjectId.Value, currentUserId);
+                if (member is null && !isAdmin)
+                {
+                    throw ApiException.Forbidden("You do not have access to this project.");
+                }
 
-                if (!IsOwnerOrManager(member))
+                if (!isAdmin && !IsOwnerOrManager(member!))
                 {
                     var isAssigned = await _assignRepo.ExistsAsync(req.TaskId, currentUserId);
                     if (!isAssigned)
@@ -520,95 +573,6 @@ namespace API_v2.Services
                 }
                 catch (Exception ex) { _logger.LogWarning(ex, "Failed to send task updated notification."); }
             }
-        }
-
-        public async Task<byte[]> GetTaskTemplateAsync()
-        {
-            var template = new List<dynamic>
-            {
-                new { Title = "Example Task 1", Description = "Description of task 1", Deadline = DateTime.UtcNow.AddDays(3).ToString("yyyy-MM-dd"), StartDate = DateTime.UtcNow.ToString("yyyy-MM-dd"), EstimatedHours = 4.5, Priority = "High" },
-                new { Title = "Example Task 2", Description = "Description of task 2", Deadline = DateTime.UtcNow.AddDays(7).ToString("yyyy-MM-dd"), StartDate = DateTime.UtcNow.ToString("yyyy-MM-dd"), EstimatedHours = 2.0, Priority = "Medium" }
-            };
-
-            using var stream = new MemoryStream();
-            await stream.SaveAsAsync(template);
-            return stream.ToArray();
-        }
-
-        public async Task<int> ImportTasksAsync(Guid projectId, Guid currentUserId, Stream fileStream, string fileName)
-        {
-            await VerifyOwnerOrManagerAsync(projectId, currentUserId, "Only Owners or Managers can import tasks.");
-
-            var columns = await _projectColumnRepo.GetColumnsByProjectIdAsync(projectId);
-            var defaultColumn = columns.OrderBy(c => c.Order).FirstOrDefault();
-            if (defaultColumn == null)
-            {
-                throw ApiException.BadRequest("Project has no columns to assign tasks to.");
-            }
-
-            var importedTasks = new List<TodoTask>();
-            var rows = await fileStream.QueryAsync(useHeaderRow: true);
-            foreach (var row in rows)
-            {
-                var rowDict = row as IDictionary<string, object>;
-                if (rowDict == null) continue;
-
-                var title = rowDict.ContainsKey("Title") ? rowDict["Title"]?.ToString() : null;
-                if (string.IsNullOrWhiteSpace(title)) continue;
-
-                var description = rowDict.ContainsKey("Description") ? rowDict["Description"]?.ToString() : null;
-                
-                if (!rowDict.ContainsKey("Deadline") || !DateTime.TryParse(rowDict["Deadline"]?.ToString(), out var parsedDeadline))
-                {
-                    throw ApiException.BadRequest($"Task '{title}' is missing a valid Deadline.");
-                }
-                DateTime deadline = NormalizeToUtc(parsedDeadline).Value;
-
-                if (!rowDict.ContainsKey("StartDate") || !DateTime.TryParse(rowDict["StartDate"]?.ToString(), out var parsedStartDate))
-                {
-                    throw ApiException.BadRequest($"Task '{title}' is missing a valid StartDate.");
-                }
-                DateTime startDate = NormalizeToUtc(parsedStartDate).Value;
-
-                double? estHours = null;
-                if (rowDict.ContainsKey("EstimatedHours") && double.TryParse(rowDict["EstimatedHours"]?.ToString(), out var parsedEst))
-                {
-                    estHours = parsedEst;
-                }
-
-                var priorityStr = rowDict.ContainsKey("Priority") ? rowDict["Priority"]?.ToString() : null;
-                if (!Enum.TryParse<API_v2.Models.Enums.TaskPriority>(priorityStr, true, out var priority))
-                {
-                    priority = API_v2.Models.Enums.TaskPriority.Medium;
-                }
-
-                importedTasks.Add(new TodoTask
-                {
-                    Title = title.Trim(),
-                    Description = description?.Trim(),
-                    CreatedAt = DateTime.UtcNow,
-                    CreatorId = currentUserId,
-                    Deadline = deadline,
-                    StartDate = startDate,
-                    EstimatedHours = estHours,
-                    ColumnId = defaultColumn.Id,
-                    ProjectId = projectId,
-                    Priority = priority
-                });
-            }
-
-            if (!importedTasks.Any())
-            {
-                throw ApiException.BadRequest("No valid tasks found in the uploaded file. Ensure 'Title' column exists.");
-            }
-
-            foreach (var t in importedTasks)
-            {
-                _taskRepo.Add(t);
-            }
-            await _taskRepo.SaveAsync();
-
-            return importedTasks.Count;
         }
 
         private async Task<TodoTask> GetTaskOrThrowAsync(int taskId)
@@ -682,6 +646,11 @@ namespace API_v2.Services
 
         private async Task VerifyOwnerOrManagerAsync(Guid projectId, Guid userId, string errorMessage)
         {
+            if (await _projectRepo.IsSystemAdminAsync(userId))
+            {
+                return;
+            }
+
             var member = await _projectRepo.GetMemberAsync(projectId, userId);
             if (member is null)
             {
@@ -691,16 +660,6 @@ namespace API_v2.Services
             {
                 throw ApiException.Forbidden(errorMessage);
             }
-        }
-
-        private async Task<ProjectMember> GetMemberOrThrowAsync(Guid projectId, Guid userId, string errorMessage = "You do not have access to this project.")
-        {
-            var member = await _projectRepo.GetMemberAsync(projectId, userId);
-            if (member is null)
-            {
-                throw ApiException.Forbidden(errorMessage);
-            }
-            return member;
         }
 
         private bool IsOwnerOrManager(ProjectMember member)

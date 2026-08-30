@@ -1,73 +1,51 @@
 using System.Text.Json;
-using API_v2.Datas;
 using API_v2.Exceptions;
 using API_v2.Models.DTOs;
 using API_v2.Models.Constants;
 using API_v2.Repositories.IRepositories;
 using API_v2.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace API_v2.Services
 {
     public class TaskActivityService : ITaskActivityService
     {
-        private readonly AppDbContext _db;
+        private readonly ITaskRepository _taskRepository;
+        private readonly ITaskActivityRepository _activityRepository;
         private readonly IProjectRepository _projectRepository;
 
-        public TaskActivityService(AppDbContext db, IProjectRepository projectRepository)
+        public TaskActivityService(ITaskRepository taskRepository, ITaskActivityRepository activityRepository, IProjectRepository projectRepository)
         {
-            _db = db;
+            _taskRepository = taskRepository;
+            _activityRepository = activityRepository;
             _projectRepository = projectRepository;
         }
 
         public async Task<List<TaskActivityResponse>> GetActivitiesAsync(int taskId, Guid currentUserId)
         {
-            var task = await _db.Tasks
-                .AsNoTracking()
-                .Where(t => t.Id == taskId)
-                .Select(t => new
-                {
-                    t.ProjectId,
-                    t.CreatorId,
-                    IsAssigned = t.Assignments.Any(a => a.UserId == currentUserId)
-                })
-                .FirstOrDefaultAsync()
+            var task = await _taskRepository.GetByIdWithDetailsAsync(taskId)
                 ?? throw ApiException.NotFound($"Task #{taskId} not found.", ErrorCodes.TaskNotFound);
 
             if (task.ProjectId.HasValue)
             {
                 var member = await _projectRepository.GetMemberAsync(task.ProjectId.Value, currentUserId);
-                if (member is null)
+                if (member is null && !await _projectRepository.IsSystemAdminAsync(currentUserId))
                 {
                     throw ApiException.Forbidden("You do not have access to this task.");
                 }
             }
-            else if (task.CreatorId != currentUserId && !task.IsAssigned)
+            else if (task.CreatorId != currentUserId && !task.Assignments.Any(assignment => assignment.UserId == currentUserId))
             {
                 throw ApiException.Forbidden("You do not have access to this task.");
             }
 
-            var activities = await _db.TaskActivities
-                .AsNoTracking()
-                .Where(activity => activity.TaskId == taskId)
-                .OrderBy(activity => activity.ChangedAt)
-                .Select(activity => new
-                {
-                    activity.Id,
-                    activity.TaskId,
-                    activity.UserId,
-                    UserEmail = activity.User.Email,
-                    activity.ChangedAt,
-                    activity.Changes
-                })
-                .ToListAsync();
+            var activities = await _activityRepository.GetByTaskIdAsync(taskId);
 
             return activities.Select(activity => new TaskActivityResponse
             {
                 Id = activity.Id,
                 TaskId = activity.TaskId,
                 UserId = activity.UserId,
-                UserEmail = activity.UserEmail,
+                UserEmail = activity.User.Email,
                 ChangedAt = activity.ChangedAt,
                 Changes = DeserializeChanges(activity.Changes)
             }).ToList();

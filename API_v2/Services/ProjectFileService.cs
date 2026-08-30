@@ -10,7 +10,6 @@ using API_v2.Models.Constants;
 using API_v2.Models.DTOs;
 using API_v2.Repositories.IRepositories;
 using API_v2.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace API_v2.Services
@@ -48,7 +47,7 @@ namespace API_v2.Services
         public async Task<List<ProjectFileResponse>> GetFilesAsync(Guid projectId, Guid currentUserId, Guid? folderId = null, int? taskId = null)
         {
             var member = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (member == null)
+            if (member == null && !await _projectRepo.IsSystemAdminAsync(currentUserId))
             {
                 throw ApiException.Forbidden("Bạn không có quyền truy cập vào dự án này.");
             }
@@ -60,9 +59,10 @@ namespace API_v2.Services
             return files.Select(file => MapToFileResponse(file, null, null, null)).ToList();
         }
 
-        public async Task<ProjectFileResponse> UploadFileAsync(Guid projectId, Guid currentUserId, IFormFile file, Guid? folderId = null, int? taskId = null)
+        public async Task<ProjectFileResponse> UploadFileAsync(Guid projectId, Guid currentUserId, Stream fileStream,
+            string fileName, string contentType, long fileSize, Guid? folderId = null, int? taskId = null)
         {
-            if (file == null || file.Length == 0)
+            if (fileStream == null || !fileStream.CanRead || fileSize <= 0)
             {
                 throw ApiException.BadRequest("Vui lòng chọn tệp hợp lệ để tải lên.");
             }
@@ -74,7 +74,7 @@ namespace API_v2.Services
             }
 
             var member = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (member == null)
+            if (member == null && !await _projectRepo.IsSystemAdminAsync(currentUserId))
             {
                 throw ApiException.Forbidden("Bạn không có quyền tải tệp lên dự án này.");
             }
@@ -95,15 +95,15 @@ namespace API_v2.Services
             }
 
             // Check if a file with the same name already exists in the same folder
-            var existingFile = await _fileRepo.GetFileByNameAsync(projectId, folderId, file.FileName);
+            var existingFile = await _fileRepo.GetFileByNameAsync(projectId, folderId, fileName);
             if (existingFile != null)
             {
-                _logger.LogInformation("File '{FileName}' already exists in folder {FolderId}. Automatically updating to version {NextVersion}", file.FileName, folderId, existingFile.CurrentVersion + 1);
+                _logger.LogInformation("File '{FileName}' already exists in folder {FolderId}. Automatically updating to version {NextVersion}", fileName, folderId, existingFile.CurrentVersion + 1);
                 return await _transferService.UpdateFileVersionAsync(
                     projectId, 
                     existingFile.Id, 
                     currentUserId, 
-                    file, 
+                    fileStream, fileName, contentType, fileSize,
                     "Tự động nâng phiên bản khi tải lên tệp cùng tên"
                 );
             }
@@ -131,18 +131,17 @@ namespace API_v2.Services
             string googleDriveFileId;
             try
             {
-                using var stream = file.OpenReadStream();
                 var uploadResult = await _googleDriveService.UploadFileAsync(
-                    stream,
-                    file.FileName,
-                    file.ContentType,
+                    fileStream,
+                    fileName,
+                    contentType,
                     targetDriveFolderId
                 );
                 googleDriveFileId = uploadResult.FileId;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to upload file '{FileName}' to Google Drive for project {ProjectId}", file.FileName, projectId);
+                _logger.LogError(ex, "Failed to upload file '{FileName}' to Google Drive for project {ProjectId}", fileName, projectId);
                 throw ApiException.InternalServerError($"Lỗi tải file lên Google Drive: {ex.Message}");
             }
 
@@ -153,9 +152,9 @@ namespace API_v2.Services
                 FolderId = folderId,
                 TaskId = taskId,
                 GoogleDriveFileId = googleDriveFileId,
-                FileName = file.FileName,
-                FileSize = file.Length,
-                MimeType = file.ContentType,
+                FileName = fileName,
+                FileSize = fileSize,
+                MimeType = contentType,
                 CurrentVersion = 1,
                 UploadedById = currentUserId,
                 CreatedAt = DateTime.UtcNow,
@@ -171,9 +170,9 @@ namespace API_v2.Services
                 ProjectFileId = savedFile.Id,
                 VersionNumber = 1,
                 GoogleDriveFileId = googleDriveFileId,
-                FileName = file.FileName,
-                FileSize = file.Length,
-                MimeType = file.ContentType,
+                FileName = fileName,
+                FileSize = fileSize,
+                MimeType = contentType,
                 ChangeNote = "Phiên bản khởi tạo",
                 UploadedById = currentUserId,
                 CreatedAt = DateTime.UtcNow
@@ -187,7 +186,7 @@ namespace API_v2.Services
                 ProjectId = projectId,
                 UserId = currentUserId,
                 ActionType = "UploadFile",
-                TargetName = file.FileName,
+                TargetName = fileName,
                 Details = targetFolder != null ? $"Tải tệp vào thư mục '{targetFolder.Name}'" : "Tải tệp vào thư mục gốc",
                 CreatedAt = DateTime.UtcNow
             });
@@ -198,13 +197,13 @@ namespace API_v2.Services
         public async Task DeleteMultipleAsync(Guid projectId, Guid currentUserId, List<Guid> fileIds, List<Guid>? folderIds = null)
         {
             var member = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (member == null)
+            var isAdmin = await _projectRepo.IsSystemAdminAsync(currentUserId);
+            if (member == null && !isAdmin)
             {
                 throw ApiException.Forbidden("Bạn không có quyền thao tác trên dự án này.");
             }
 
-            var user = await _userRepo.GetByIdAsync(currentUserId);
-            bool isPrivileged = (user != null && string.Equals(user.Role?.Name, "Admin", StringComparison.OrdinalIgnoreCase)) || ProjectRoles.IsOwnerOrManager(member.Role);
+            bool isPrivileged = isAdmin || ProjectRoles.IsOwnerOrManager(member!.Role);
             if (!isPrivileged)
             {
                 throw ApiException.Forbidden("Chỉ Quản lý hoặc Quản trị viên mới có quyền xóa hàng loạt.");
@@ -263,7 +262,7 @@ namespace API_v2.Services
             }
 
             var member = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (member == null)
+            if (member == null && !await _projectRepo.IsSystemAdminAsync(currentUserId))
             {
                 throw ApiException.Forbidden("Bạn không có quyền thao tác trên dự án này.");
             }
@@ -297,12 +296,13 @@ namespace API_v2.Services
         public async Task DeleteFileAsync(Guid projectId, Guid fileId, Guid currentUserId)
         {
             var member = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (member == null)
+            var isAdmin = await _projectRepo.IsSystemAdminAsync(currentUserId);
+            if (member == null && !isAdmin)
             {
                 throw ApiException.Forbidden("Bạn không có quyền truy cập vào dự án này.");
             }
 
-            if (!ProjectRoles.IsOwnerOrManager(member.Role))
+            if (!isAdmin && !ProjectRoles.IsOwnerOrManager(member!.Role))
             {
                 throw ApiException.Forbidden("Chỉ Quản lý dự án (Manager) trở lên mới có quyền xóa tài liệu.");
             }
@@ -341,7 +341,7 @@ namespace API_v2.Services
         public async Task<List<ProjectFileActivityResponse>> GetActivitiesAsync(Guid projectId, Guid currentUserId)
         {
             var member = await _projectRepo.GetMemberAsync(projectId, currentUserId);
-            if (member == null)
+            if (member == null && !await _projectRepo.IsSystemAdminAsync(currentUserId))
             {
                 throw ApiException.Forbidden("Bạn không có quyền truy cập vào dự án này.");
             }
