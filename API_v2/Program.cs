@@ -189,7 +189,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "https://todo-list-tutai.vercel.app")
+        policy.WithOrigins("http://localhost:5173", "https://tutatodolist.vercel.app")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
